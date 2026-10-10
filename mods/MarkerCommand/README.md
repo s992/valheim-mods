@@ -2,7 +2,7 @@
 
 ## ai usage disclaimer
 
-code is ai-generated, this text is not.
+with the exception of this readme, everything in this repo is ai-generated.
 
 ## description
 
