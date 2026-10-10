@@ -8,13 +8,25 @@ with the exception of this readme, everything in this repo is ai-generated.
 
 this mod adds a detailed stability overlay to help plan structures or better understand how valheim's stability works.
 
-![mod screenshot](https://raw.githubusercontent.com/s992/ValheimStabilityView/main/screenshot.jpg)
-
 ## usage
 
-with your hammer out, press F7 to enable the overlay. there are some additional keybinds that can be configured via settings.
+with a building tool (hammer, hoe, cultivator) out, press F7 to enable the overlay.
 
-### settings
+### label colors
+
+label colors follow the spirit of valheim's stability colors, but spread the gradient over the entire range (valheim shows bright green once a piece is > 50% stable, but this mod shows slightly more detail).
+
+### snapshots
+
+immediately before placing or removing a piece, the mod takes a snapshot of every piece's stability. afterwards, labels are displayed under the stability value of each affected piece that indicate how the addition or removal changed that piece's stability. positive = stability improved, negative = stability got worse.
+
+if you want to compare stability values across multiple changes, press F8 to take a manual stability snapshot. once you've done that, all snapshot labels will be anchored on your snapshot rather than the most recent change. you can press shift+F8 to clear the manual snapshot.
+
+### support lines
+
+lines run from the piece back to its support(s) so that you can see how pieces are contributing to the overall structure health.
+
+## settings
 
 settings are configurable via editing the settings file directly (`BepinEx/config/s992.StabilityView.cfg`) or via a [configuration manager](https://thunderstore.io/c/valheim/p/shudnal/ConfigurationManager/).
 
@@ -107,12 +119,12 @@ ToggleOverlay = F7
 # Default value: F9
 ToggleSourceLines = F9
 
-## Record current support values; changes are then shown relative to them.
+## Record current support values; changes are then shown relative to them, and automatic snapshots pause until it's cleared.
 # Setting type: KeyboardShortcut
 # Default value: F8
 TakeSnapshot = F8
 
-## Forget the snapshot and stop showing changes.
+## Forget the snapshot and stop showing changes (resumes automatic snapshots).
 # Setting type: KeyboardShortcut
 # Default value: F8 + LeftShift
 ClearSnapshot = F8 + LeftShift
