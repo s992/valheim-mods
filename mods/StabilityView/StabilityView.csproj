@@ -1,0 +1,47 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.1</TargetFramework>
+    <AssemblyName>StabilityView</AssemblyName>
+    <RootNamespace>StabilityView</RootNamespace>
+    <Version>0.1.0</Version>
+    <Description>Shows structure support values, where support comes from, and how changes affect it.</Description>
+
+    <!-- Generates MyPluginInfo (GUID/name/version) via BepInEx.PluginInfoProps -->
+    <BepInExPluginGuid>sean.valheim.stabilityview</BepInExPluginGuid>
+    <BepInExPluginName>StabilityView</BepInExPluginName>
+
+    <!-- Needed by the publicizer so private game members can be used directly -->
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+
+    <CopyLocalLockFileAssemblies>false</CopyLocalLockFileAssemblies>
+    <GenerateDocumentationFile>false</GenerateDocumentationFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="BepInEx.Core" Version="5.4.21" PrivateAssets="all" />
+    <PackageReference Include="BepInEx.PluginInfoProps" Version="2.1.0" PrivateAssets="all" />
+    <PackageReference Include="BepInEx.Analyzers" Version="1.0.8" PrivateAssets="all" />
+    <PackageReference Include="BepInEx.AssemblyPublicizer.MSBuild" Version="0.4.3" PrivateAssets="all" />
+  </ItemGroup>
+
+  <!-- Game assemblies are referenced from a local install and never committed -->
+  <ItemGroup>
+    <!-- Publicized: the support calculation it mirrors lives in private WearNTear members -->
+    <Reference Include="assembly_valheim" HintPath="$(ValheimManagedDir)\assembly_valheim.dll" Private="false" Publicize="true" />
+    <Reference Include="assembly_utils" HintPath="$(ValheimManagedDir)\assembly_utils.dll" Private="false" />
+    <Reference Include="Splatform" HintPath="$(ValheimManagedDir)\Splatform.dll" Private="false" />
+    <Reference Include="UnityEngine" HintPath="$(ValheimManagedDir)\UnityEngine.dll" Private="false" />
+    <Reference Include="UnityEngine.CoreModule" HintPath="$(ValheimManagedDir)\UnityEngine.CoreModule.dll" Private="false" />
+    <Reference Include="UnityEngine.PhysicsModule" HintPath="$(ValheimManagedDir)\UnityEngine.PhysicsModule.dll" Private="false" />
+    <Reference Include="UnityEngine.IMGUIModule" HintPath="$(ValheimManagedDir)\UnityEngine.IMGUIModule.dll" Private="false" />
+    <Reference Include="UnityEngine.TextRenderingModule" HintPath="$(ValheimManagedDir)\UnityEngine.TextRenderingModule.dll" Private="false" />
+  </ItemGroup>
+
+  <!-- Copy the build into the local mod profile for testing; skipped in CI -->
+  <Target Name="DeployToPlugins" AfterTargets="Build" Condition="'$(CI)' != 'true' and Exists('$(PluginsDir)')">
+    <Copy SourceFiles="$(TargetPath)" DestinationFolder="$(PluginsDir)\$(AssemblyName)" />
+    <Message Importance="high" Text="Deployed $(AssemblyName) to $(PluginsDir)\$(AssemblyName)" />
+  </Target>
+
+</Project>

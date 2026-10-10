@@ -1,0 +1,28 @@
+<Project>
+
+  <!-- Machine-specific overrides (gitignored); see the properties below for what can be set -->
+  <Import Project="$(MSBuildThisFileDirectory)Directory.Build.user.props" Condition="Exists('$(MSBuildThisFileDirectory)Directory.Build.user.props')" />
+
+  <PropertyGroup>
+    <LangVersion>latest</LangVersion>
+    <Nullable>disable</Nullable>
+    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+    <!-- Game assemblies target Unity's slightly newer System.* versions than netstandard2.1; harmless at runtime -->
+    <MSBuildWarningsAsMessages>$(MSBuildWarningsAsMessages);MSB3277</MSBuildWarningsAsMessages>
+  </PropertyGroup>
+
+  <!--
+    Paths. Each can be overridden in Directory.Build.user.props, with an environment variable
+    of the same name, or on the command line (-p:ValheimDir=...).
+  -->
+  <PropertyGroup>
+    <!-- Game install (client or dedicated server); provides the game and Unity assemblies -->
+    <ValheimDir Condition="'$(ValheimDir)' == ''">C:\Program Files (x86)\Steam\steamapps\common\Valheim</ValheimDir>
+    <ValheimManagedDir Condition="'$(ValheimManagedDir)' == '' and Exists('$(ValheimDir)\valheim_Data\Managed')">$(ValheimDir)\valheim_Data\Managed</ValheimManagedDir>
+    <ValheimManagedDir Condition="'$(ValheimManagedDir)' == ''">$(ValheimDir)\valheim_server_Data\Managed</ValheimManagedDir>
+
+    <!-- Where builds are copied for local testing (r2modman profile by default) -->
+    <PluginsDir Condition="'$(PluginsDir)' == ''">$(APPDATA)\r2modmanPlus-local\Valheim\profiles\Default\BepInEx\plugins</PluginsDir>
+  </PropertyGroup>
+
+</Project>
