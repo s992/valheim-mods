@@ -8,7 +8,7 @@
     <Description>Shows structure support values, where support comes from, and how changes affect it.</Description>
 
     <!-- Generates MyPluginInfo (GUID/name/version) via BepInEx.PluginInfoProps -->
-    <BepInExPluginGuid>sean.valheim.stabilityview</BepInExPluginGuid>
+    <BepInExPluginGuid>s992.StabilityView</BepInExPluginGuid>
     <BepInExPluginName>StabilityView</BepInExPluginName>
 
     <!-- Needed by the publicizer so private game members can be used directly -->
