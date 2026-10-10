@@ -1,0 +1,30 @@
+[config]
+schemaVersion = "0.0.1"
+
+[package]
+namespace = "s992"
+name = "StabilityView"
+# Placeholder: release builds pass --package-version from <Version> in StabilityView.csproj
+versionNumber = "0.0.0"
+description = "Debug overlay for structure stability: support values on every piece, where support comes from, and how building or removing changes it."
+websiteUrl = "https://github.com/s992/ValheimStabilityView"
+containsNsfwContent = false
+
+[package.dependencies]
+denikson-BepInExPack_Valheim = "5.4.2351"
+
+[build]
+icon = "./icon.png"
+readme = "./README.md"
+outdir = "./build"
+
+[[build.copy]]
+source = "./src/StabilityView/bin/Release/netstandard2.1/StabilityView.dll"
+target = "plugins/StabilityView.dll"
+
+[publish]
+repository = "https://thunderstore.io"
+communities = ["valheim"]
+
+[publish.categories]
+valheim = ["tools", "building", "client-side"]
