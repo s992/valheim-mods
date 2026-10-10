@@ -13,6 +13,7 @@ namespace StabilityView
         public static ConfigEntry<bool> OnlyInBuildMode;
         public static ConfigEntry<float> Radius;
         public static ConfigEntry<int> MaxPieces;
+        public static ConfigEntry<bool> ShowStatus;
         public static ConfigEntry<int> FontSize;
         public static ConfigEntry<bool> ShowMaterial;
         public static ConfigEntry<bool> ShowMaxSupport;
@@ -40,10 +41,12 @@ namespace StabilityView
 
             OnlyInBuildMode = config.Bind("Display", "OnlyInBuildMode", true,
                 "Only show the overlay while a building tool (hammer, hoe, ...) is equipped.");
-            Radius = config.Bind("Display", "Radius", 20f,
-                new ConfigDescription("Show pieces within this many metres of the player.", new AcceptableValueRange<float>(2f, 100f)));
-            MaxPieces = config.Bind("Display", "MaxPieces", 150,
-                new ConfigDescription("Show at most this many pieces (closest first).", new AcceptableValueRange<int>(1, 1000)));
+            Radius = config.Bind("Display", "Radius", 30f,
+                new ConfigDescription("Show on-screen pieces within this many metres of the camera.", new AcceptableValueRange<float>(2f, 150f)));
+            MaxPieces = config.Bind("Display", "MaxPieces", 200,
+                new ConfigDescription("Show at most this many on-screen pieces (closest to the camera first).", new AcceptableValueRange<int>(1, 1000)));
+            ShowStatus = config.Bind("Display", "ShowStatus", true,
+                "Show a status line with how many pieces are labelled and how many were left out.");
             FontSize = config.Bind("Display", "FontSize", 13,
                 new ConfigDescription("Label font size.", new AcceptableValueRange<int>(8, 32)));
             ShowMaterial = config.Bind("Display", "ShowMaterial", false,

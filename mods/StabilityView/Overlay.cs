@@ -43,6 +43,8 @@ namespace StabilityView
         private HashSet<GameObject> _nextHighlighted = new HashSet<GameObject>();
         private float _nextRefresh;
         private int _sourceCursor;
+        private int _hiddenByLimit;
+        private int _hiddenByRadius;
         private GUIStyle _style;
         private GUIStyle _shadowStyle;
         private Material _lineMaterial;
@@ -146,24 +148,38 @@ namespace StabilityView
 
         private void Refresh()
         {
-            Vector3 origin = Player.m_localPlayer.transform.position;
+            Camera camera = GameCamera.instance.m_camera;
+            if (!camera) return;
+
+            // Measured from the camera rather than the player, so free/build cameras work,
+            // and only on-screen pieces count towards the limits
+            Vector3 origin = camera.transform.position;
             float radiusSquared = Settings.Radius.Value * Settings.Radius.Value;
+            int beyondRadius = 0;
 
             var nearby = new List<KeyValuePair<float, WearNTear>>();
             foreach (WearNTear wnt in WearNTear.GetAllInstances())
             {
                 if (!wnt || !Stability.UsesSupport(wnt)) continue;
-                float distanceSquared = (wnt.transform.position - origin).sqrMagnitude;
+                Vector3 com = Stability.CenterOfMass(wnt);
+                if (!IsOnScreen(camera, com)) continue;
+                float distanceSquared = (com - origin).sqrMagnitude;
                 if (distanceSquared <= radiusSquared)
                     nearby.Add(new KeyValuePair<float, WearNTear>(distanceSquared, wnt));
+                else
+                    beyondRadius++;
             }
             nearby.Sort((a, b) => a.Key.CompareTo(b.Key));
+
+            int limit = Settings.MaxPieces.Value;
+            _hiddenByLimit = Math.Max(0, nearby.Count - limit);
+            _hiddenByRadius = beyondRadius;
 
             bool showChanges = Snapshot.Active;
             _entries.Clear();
             _nextHighlighted.Clear();
 
-            foreach (var pair in nearby.Take(Settings.MaxPieces.Value))
+            foreach (var pair in nearby.Take(limit))
             {
                 WearNTear wnt = pair.Value;
                 float support = Stability.Support(wnt);
@@ -206,6 +222,14 @@ namespace StabilityView
             var visible = new HashSet<WearNTear>(_entries.Select(e => e.Piece));
             foreach (WearNTear stale in _sources.Keys.Where(k => !k || !visible.Contains(k)).ToList())
                 _sources.Remove(stale);
+        }
+
+        private static bool IsOnScreen(Camera camera, Vector3 position)
+        {
+            Vector3 viewport = camera.WorldToViewportPoint(position);
+            return viewport.z > 0f
+                && viewport.x >= -0.05f && viewport.x <= 1.05f
+                && viewport.y >= -0.05f && viewport.y <= 1.05f;
         }
 
         private static void BuildText(Entry entry, WearNTear wnt, float support, MaterialInfo material, float? delta, bool isNew)
@@ -284,11 +308,13 @@ namespace StabilityView
 
         private void OnGUI()
         {
-            if (!IsShowing || _entries.Count == 0 || Event.current.type != EventType.Repaint) return;
+            if (!IsShowing || Event.current.type != EventType.Repaint) return;
             Camera camera = GameCamera.instance ? GameCamera.instance.m_camera : null;
             if (!camera) return;
 
             EnsureStyles();
+            if (Settings.ShowStatus.Value)
+                DrawStatus();
             foreach (Entry entry in _entries)
             {
                 if (!entry.Piece) continue;
@@ -299,6 +325,24 @@ namespace StabilityView
                 GUI.Label(new Rect(rect.x + 1f, rect.y + 1f, rect.width, rect.height), entry.Plain, _shadowStyle);
                 GUI.Label(rect, entry.Text, _style);
             }
+        }
+
+        // Says when pieces were left out, so missing labels are never a mystery
+        private void DrawStatus()
+        {
+            var status = new StringBuilder("StabilityView: ").Append(_entries.Count).Append(" shown");
+            if (_hiddenByLimit > 0)
+                status.Append(" · ").Append(_hiddenByLimit).Append(" hidden by MaxPieces (").Append(Settings.MaxPieces.Value).Append(')');
+            if (_hiddenByRadius > 0)
+                status.Append(" · ").Append(_hiddenByRadius).Append(" beyond ").Append(Settings.Radius.Value.ToString("0")).Append(" m");
+            if (Snapshot.Active)
+                status.Append(" · showing changes");
+
+            string text = status.ToString();
+            // Top centre, under the compass (the bottom is taken by the build hints)
+            var rect = new Rect(0f, 44f, Screen.width, 24f);
+            GUI.Label(new Rect(rect.x + 1f, rect.y + 1f, rect.width, rect.height), text, _shadowStyle);
+            GUI.Label(rect, text, _style);
         }
 
         private void EnsureStyles()
