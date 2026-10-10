@@ -118,8 +118,10 @@ namespace StabilityView
             }
             if (Pressed(Settings.TakeSnapshot))
             {
-                Snapshot.Capture();
-                Message("Stability snapshot taken");
+                Snapshot.Capture(manual: true);
+                Message(Settings.AutoSnapshot.Value
+                    ? "Stability snapshot taken (automatic snapshots paused until cleared)"
+                    : "Stability snapshot taken");
             }
         }
 
@@ -336,7 +338,9 @@ namespace StabilityView
             if (_hiddenByRadius > 0)
                 status.Append(" · ").Append(_hiddenByRadius).Append(" beyond ").Append(Settings.Radius.Value.ToString("0")).Append(" m");
             if (Snapshot.Active)
-                status.Append(" · showing changes");
+                status.Append(Snapshot.IsManual
+                    ? $" · changes since manual snapshot ({Settings.ClearSnapshot.Value} clears)"
+                    : " · showing changes");
 
             string text = status.ToString();
             // Top centre, under the compass (the bottom is taken by the build hints)

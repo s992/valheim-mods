@@ -35,9 +35,9 @@ namespace StabilityView
             ToggleSourceLines = config.Bind("Keys", "ToggleSourceLines", new KeyboardShortcut(KeyCode.F9),
                 "Show or hide the lines to where each piece gets its support.");
             TakeSnapshot = config.Bind("Keys", "TakeSnapshot", new KeyboardShortcut(KeyCode.F8),
-                "Record current support values; changes are then shown relative to them.");
+                "Record current support values; changes are then shown relative to them, and automatic snapshots pause until it's cleared.");
             ClearSnapshot = config.Bind("Keys", "ClearSnapshot", new KeyboardShortcut(KeyCode.F8, KeyCode.LeftShift),
-                "Forget the snapshot and stop showing changes.");
+                "Forget the snapshot and stop showing changes (resumes automatic snapshots).");
 
             OnlyInBuildMode = config.Bind("Display", "OnlyInBuildMode", true,
                 "Only show the overlay while a building tool (hammer, hoe, ...) is equipped.");

@@ -12,7 +12,11 @@ namespace StabilityView
         public static bool Active =>
             s_values != null && (Settings.ChangeDuration.Value <= 0f || Time.time - s_takenAt <= Settings.ChangeDuration.Value);
 
-        public static void Capture()
+        // A manual snapshot stays put (automatic ones are skipped) until it's cleared,
+        // so changes can be compared across several builds/removals
+        public static bool IsManual { get; private set; }
+
+        public static void Capture(bool manual)
         {
             s_values = new Dictionary<ZDOID, float>();
             foreach (WearNTear wnt in WearNTear.GetAllInstances())
@@ -21,9 +25,14 @@ namespace StabilityView
                     s_values[wnt.m_nview.GetZDO().m_uid] = Stability.Support(wnt);
             }
             s_takenAt = Time.time;
+            IsManual = manual;
         }
 
-        public static void Clear() => s_values = null;
+        public static void Clear()
+        {
+            s_values = null;
+            IsManual = false;
+        }
 
         // False for pieces that didn't exist when the snapshot was taken
         public static bool TryGet(WearNTear wnt, out float support)

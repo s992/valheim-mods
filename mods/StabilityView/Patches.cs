@@ -17,8 +17,9 @@ namespace StabilityView
 
         private static void Capture(Player player)
         {
-            if (player == Player.m_localPlayer && Settings.AutoSnapshot.Value && Overlay.Instance && Overlay.Instance.IsShowing)
-                Snapshot.Capture();
+            if (player == Player.m_localPlayer && Settings.AutoSnapshot.Value && !Snapshot.IsManual
+                && Overlay.Instance && Overlay.Instance.IsShowing)
+                Snapshot.Capture(manual: false);
         }
     }
 }
