@@ -16,7 +16,7 @@ this project will not make any attempt to support icons not included in the "sup
 
 you can enter these into the [developer console](https://valheim.weirdgloop.org/w/Developer_console) or chat. if you are entering them in chat you must prefix them with `/`, e.g. `/marker me`.
 
-all parameters other than position (`me` or `<x> <y>`) are optional. if an icon type is not specified, the default `dot` (`icon3`) is used.
+all parameters other than position (`me` or `<x> <z>`) are optional. if an icon type is not specified, the default `dot` (`icon3`) is used.
 
 **place marker at current position**
 
@@ -24,7 +24,7 @@ all parameters other than position (`me` or `<x> <y>`) are optional. if an icon 
 
 **place marker at coordinates**
 
-`marker <x> <y> [name] [icon]`
+`marker <x> <z> [name] [icon]`
 
 ### examples
 
@@ -67,4 +67,4 @@ icons that are not normally placeable by the player. i have not tested these wit
 - `ping`
 - `eventarea`
 - `memorial`
-- `hildir1`, `hildir2, `hildir3`
+- `hildir1`, `hildir2`, `hildir3`
