@@ -28,7 +28,7 @@ lines run from the piece back to its support(s) so that you can see how pieces a
 
 ## settings
 
-settings are configurable via editing the settings file directly (`BepinEx/config/s992.StabilityView.cfg`) or via a [configuration manager](https://thunderstore.io/c/valheim/p/shudnal/ConfigurationManager/).
+settings are configurable via editing the settings file directly (`BepInEx/config/s992.StabilityView.cfg`) or via a [configuration manager](https://thunderstore.io/c/valheim/p/shudnal/ConfigurationManager/).
 
 these are the default settings:
 
