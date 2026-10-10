@@ -22,7 +22,7 @@ jobs:
 
   package:
     needs: build
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     outputs:
       version: ${{ steps.version.outputs.version }}
       file: ${{ steps.package.outputs.file }}
@@ -77,7 +77,7 @@ jobs:
   github-release:
     needs: package
     if: github.ref_type == 'tag'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     permissions:
       contents: write
     steps:
@@ -99,7 +99,7 @@ jobs:
   thunderstore:
     needs: package
     if: github.ref_type == 'tag'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       # tcli publish reads thunderstore.toml for the repository, community and categories
       - uses: actions/checkout@v7
