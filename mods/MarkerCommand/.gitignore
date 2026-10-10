@@ -486,3 +486,6 @@ $RECYCLE.BIN/
 # Machine-specific build overrides
 Directory.Build.user.props
 
+
+# Thunderstore package output (tcli build)
+/build/
