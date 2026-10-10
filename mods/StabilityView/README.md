@@ -8,6 +8,8 @@ with the exception of this readme, everything in this repo is ai-generated.
 
 this mod adds a detailed stability overlay to help plan structures or better understand how valheim's stability works.
 
+![mod screenshot](https://raw.githubusercontent.com/s992/ValheimStabilityView/main/screenshot.jpg)
+
 ## usage
 
 with a building tool (hammer, hoe, cultivator) out, press F7 to enable the overlay.
