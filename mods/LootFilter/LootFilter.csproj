@@ -1,0 +1,46 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.1</TargetFramework>
+    <AssemblyName>LootFilter</AssemblyName>
+    <RootNamespace>LootFilter</RootNamespace>
+    <Version>0.1.0</Version>
+    <Description>Marks items, item types or Epic Loot rarities as junk: no auto-pickup and no sparkles or loot beams.</Description>
+
+    <!-- Generates MyPluginInfo (GUID/name/version) via BepInEx.PluginInfoProps -->
+    <BepInExPluginGuid>s992.LootFilter</BepInExPluginGuid>
+    <BepInExPluginName>LootFilter</BepInExPluginName>
+
+    <!-- Needed by the publicizer so private game members can be used directly -->
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+
+    <CopyLocalLockFileAssemblies>false</CopyLocalLockFileAssemblies>
+    <GenerateDocumentationFile>false</GenerateDocumentationFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="BepInEx.Core" Version="5.4.21" PrivateAssets="all" />
+    <PackageReference Include="BepInEx.PluginInfoProps" Version="2.1.0" PrivateAssets="all" />
+    <PackageReference Include="BepInEx.Analyzers" Version="1.0.8" PrivateAssets="all" />
+    <PackageReference Include="BepInEx.AssemblyPublicizer.MSBuild" Version="0.4.3" PrivateAssets="all" />
+  </ItemGroup>
+
+  <!-- Game assemblies are referenced from a local install and never committed -->
+  <ItemGroup>
+    <!-- Publicized: inventory hover, drop list and auto-pickup are private members -->
+    <Reference Include="assembly_valheim" HintPath="$(ValheimManagedDir)\assembly_valheim.dll" Private="false" Publicize="true" />
+    <Reference Include="assembly_guiutils" HintPath="$(ValheimManagedDir)\assembly_guiutils.dll" Private="false" />
+    <Reference Include="assembly_utils" HintPath="$(ValheimManagedDir)\assembly_utils.dll" Private="false" />
+    <Reference Include="Splatform" HintPath="$(ValheimManagedDir)\Splatform.dll" Private="false" />
+    <Reference Include="UnityEngine" HintPath="$(ValheimManagedDir)\UnityEngine.dll" Private="false" />
+    <Reference Include="UnityEngine.CoreModule" HintPath="$(ValheimManagedDir)\UnityEngine.CoreModule.dll" Private="false" />
+    <Reference Include="UnityEngine.ParticleSystemModule" HintPath="$(ValheimManagedDir)\UnityEngine.ParticleSystemModule.dll" Private="false" />
+  </ItemGroup>
+
+  <!-- Copy the build into the local mod profile for testing; skipped in CI -->
+  <Target Name="DeployToPlugins" AfterTargets="Build" Condition="'$(CI)' != 'true' and Exists('$(PluginsDir)')">
+    <Copy SourceFiles="$(TargetPath)" DestinationFolder="$(PluginsDir)\$(AssemblyName)" />
+    <Message Importance="high" Text="Deployed $(AssemblyName) to $(PluginsDir)\$(AssemblyName)" />
+  </Target>
+
+</Project>
