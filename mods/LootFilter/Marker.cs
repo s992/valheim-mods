@@ -12,14 +12,16 @@ namespace LootFilter
             bool item = Input.Pressed(Settings.ToggleItem);
             bool group = Input.Pressed(Settings.ToggleGroup);
             bool rarity = Input.Pressed(Settings.ToggleRarity);
-            if (!item && !group && !rarity) return;
+            bool outdated = Input.Pressed(Settings.ToggleOutdatedRarity);
+            if (!item && !group && !rarity && !outdated) return;
 
             ItemDrop.ItemData target = HoveredItem();
             if (target == null) return;
 
             if (item) MarkItem(target);
             if (group) MarkGroup(target);
-            if (rarity) MarkRarity(target);
+            if (rarity) MarkRarity(target, outdatedOnly: false);
+            if (outdated) MarkRarity(target, outdatedOnly: true);
         }
 
         private static void MarkItem(ItemDrop.ItemData target)
@@ -41,11 +43,16 @@ namespace LootFilter
             Message($"All {Groups.Describe(group).ToLowerInvariant()}: {(filtered ? "filtered" : "not filtered")}");
         }
 
-        private static void MarkRarity(ItemDrop.ItemData target)
+        private static void MarkRarity(ItemDrop.ItemData target, bool outdatedOnly)
         {
             if (!EpicLootCompat.Available)
             {
                 Message("Rarity rules need Epic Loot");
+                return;
+            }
+            if (outdatedOnly && !EpicLootCompat.BiomeTiersAvailable)
+            {
+                Message("Outdated-item rules aren't supported by this Epic Loot version");
                 return;
             }
             if (!EpicLootCompat.TryGetRarity(target, out Rarities rarity, out bool isMagicItem))
@@ -54,8 +61,11 @@ namespace LootFilter
                 return;
             }
 
-            bool filtered = Rules.ToggleRarity(rarity);
-            string message = $"{rarity} items: {(filtered ? "filtered" : "not filtered")}";
+            bool filtered = outdatedOnly ? Rules.ToggleOutdatedRarity(rarity) : Rules.ToggleRarity(rarity);
+            string what = outdatedOnly ? $"Outdated {rarity} items" : $"{rarity} items";
+            string message = $"{what}: {(filtered ? "filtered" : "not filtered")}";
+            if (filtered && !outdatedOnly && (Settings.OutdatedRarities.Value & rarity) != 0)
+                message += " (all of them, not just outdated ones)";
             if (!isMagicItem && !Settings.IncludeMagicMaterials.Value)
                 message += " (materials and runestones need IncludeMagicMaterials)";
             Message(message);

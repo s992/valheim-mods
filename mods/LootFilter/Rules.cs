@@ -10,6 +10,7 @@ namespace LootFilter
         Item,
         Group,
         Rarity,
+        OutdatedRarity,
     }
 
     internal static class Rules
@@ -25,6 +26,8 @@ namespace LootFilter
             Settings.FilteredItems.SettingChanged += (_, __) => { ParseItems(); Version++; };
             Settings.FilteredGroups.SettingChanged += (_, __) => Version++;
             Settings.FilteredRarities.SettingChanged += (_, __) => Version++;
+            Settings.OutdatedRarities.SettingChanged += (_, __) => Version++;
+            Settings.OutdatedBiomeMargin.SettingChanged += (_, __) => Version++;
             Settings.IncludeMagicMaterials.SettingChanged += (_, __) => Version++;
         }
 
@@ -51,6 +54,8 @@ namespace LootFilter
                 bool rarityApplies = isMagicItem || Settings.IncludeMagicMaterials.Value;
                 if (rarityApplies && (Settings.FilteredRarities.Value & rarity) != 0)
                     return FilterReason.Rarity;
+                if (rarityApplies && (Settings.OutdatedRarities.Value & rarity) != 0 && IsOutdated(item, out _, out _))
+                    return FilterReason.OutdatedRarity;
                 if (isMagicItem)
                     return FilterReason.NotFiltered;
             }
@@ -60,6 +65,21 @@ namespace LootFilter
             if ((Settings.FilteredGroups.Value & Groups.Of(item)) != 0)
                 return FilterReason.Group;
             return FilterReason.NotFiltered;
+        }
+
+        // An item is outdated when Epic Loot places it in an earlier biome than the one the player is in
+        // (minus the configured margin). Items without a known tier are never outdated.
+        public static bool IsOutdated(ItemDrop.ItemData item, out Heightmap.Biome itemBiome, out Heightmap.Biome currentBiome)
+        {
+            itemBiome = Heightmap.Biome.None;
+            currentBiome = Heightmap.Biome.None;
+            Player player = Player.m_localPlayer;
+            if (!player || !EpicLootCompat.TryGetItemBiome(ItemName(item), out itemBiome, out int itemOrder))
+                return false;
+
+            currentBiome = player.GetCurrentBiome();
+            int currentOrder = EpicLootCompat.BiomeOrder(currentBiome);
+            return currentOrder >= 0 && itemOrder < currentOrder - Settings.OutdatedBiomeMargin.Value;
         }
 
         // --- toggles; each returns the new state (true = filtered) ---
@@ -84,6 +104,12 @@ namespace LootFilter
         {
             Settings.FilteredRarities.Value ^= rarity;
             return (Settings.FilteredRarities.Value & rarity) != 0;
+        }
+
+        public static bool ToggleOutdatedRarity(Rarities rarity)
+        {
+            Settings.OutdatedRarities.Value ^= rarity;
+            return (Settings.OutdatedRarities.Value & rarity) != 0;
         }
     }
 }
