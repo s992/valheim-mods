@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using BepInEx.Configuration;
 
 namespace LootFilter
 {
@@ -10,6 +11,7 @@ namespace LootFilter
         Item,
         Group,
         Rarity,
+        BiomeRarity,
         OutdatedRarity,
     }
 
@@ -28,7 +30,10 @@ namespace LootFilter
             Settings.FilteredRarities.SettingChanged += (_, __) => Version++;
             Settings.OutdatedRarities.SettingChanged += (_, __) => Version++;
             Settings.OutdatedBiomeMargin.SettingChanged += (_, __) => Version++;
+            Settings.OutdatedComparedTo.SettingChanged += (_, __) => Version++;
             Settings.IncludeMagicMaterials.SettingChanged += (_, __) => Version++;
+            foreach (var entry in Settings.RaritiesByItemBiome.Values)
+                entry.SettingChanged += (_, __) => Version++;
         }
 
         private static void ParseItems()
@@ -54,6 +59,8 @@ namespace LootFilter
                 bool rarityApplies = isMagicItem || Settings.IncludeMagicMaterials.Value;
                 if (rarityApplies && (Settings.FilteredRarities.Value & rarity) != 0)
                     return FilterReason.Rarity;
+                if (rarityApplies && (BiomeRarities(item, out _) & rarity) != 0)
+                    return FilterReason.BiomeRarity;
                 if (rarityApplies && (Settings.OutdatedRarities.Value & rarity) != 0 && IsOutdated(item, out _, out _))
                     return FilterReason.OutdatedRarity;
                 if (isMagicItem)
@@ -67,19 +74,33 @@ namespace LootFilter
             return FilterReason.NotFiltered;
         }
 
-        // An item is outdated when Epic Loot places it in an earlier biome than the one the player is in
-        // (minus the configured margin). Items without a known tier are never outdated.
+        // Rarities filtered for the item's tier biome ("Rarities by item biome")
+        public static Rarities BiomeRarities(ItemDrop.ItemData item, out Heightmap.Biome itemBiome)
+        {
+            if (!EpicLootCompat.TryGetItemBiome(ItemName(item), out itemBiome, out _))
+                return Rarities.None;
+            return Settings.RaritiesByItemBiome.TryGetValue(itemBiome, out var entry) ? entry.Value : Rarities.None;
+        }
+
+        // An item is outdated when Epic Loot places it in an earlier biome than the player's current one
+        // (progression or location, minus the configured margin). Items without a known tier are never outdated.
         public static bool IsOutdated(ItemDrop.ItemData item, out Heightmap.Biome itemBiome, out Heightmap.Biome currentBiome)
         {
             itemBiome = Heightmap.Biome.None;
-            currentBiome = Heightmap.Biome.None;
-            Player player = Player.m_localPlayer;
-            if (!player || !EpicLootCompat.TryGetItemBiome(ItemName(item), out itemBiome, out int itemOrder))
+            currentBiome = CurrentBiome();
+            if (currentBiome == Heightmap.Biome.None || !EpicLootCompat.TryGetItemBiome(ItemName(item), out itemBiome, out int itemOrder))
                 return false;
 
-            currentBiome = player.GetCurrentBiome();
             int currentOrder = EpicLootCompat.BiomeOrder(currentBiome);
             return currentOrder >= 0 && itemOrder < currentOrder - Settings.OutdatedBiomeMargin.Value;
+        }
+
+        public static Heightmap.Biome CurrentBiome()
+        {
+            if (Settings.OutdatedComparedTo.Value == BiomeReference.Progression)
+                return EpicLootCompat.ProgressionBiome();
+            Player player = Player.m_localPlayer;
+            return player ? player.GetCurrentBiome() : Heightmap.Biome.None;
         }
 
         // --- toggles; each returns the new state (true = filtered) ---
@@ -104,6 +125,13 @@ namespace LootFilter
         {
             Settings.FilteredRarities.Value ^= rarity;
             return (Settings.FilteredRarities.Value & rarity) != 0;
+        }
+
+        public static bool ToggleBiomeRarity(Heightmap.Biome biome, Rarities rarity)
+        {
+            ConfigEntry<Rarities> entry = Settings.RaritiesByItemBiome[biome];
+            entry.Value ^= rarity;
+            return (entry.Value & rarity) != 0;
         }
 
         public static bool ToggleOutdatedRarity(Rarities rarity)

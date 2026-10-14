@@ -1,10 +1,12 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
 using BepInEx.Bootstrap;
 using BepInEx.Logging;
 using HarmonyLib;
+using UnityEngine;
 
 namespace LootFilter
 {
@@ -23,9 +25,14 @@ namespace LootFilter
         // GatedItemTypeHelper.AllItemsWithDetails: item name -> GatedItemDetails { List<string> RequiredBosses }
         private static IDictionary s_itemsWithDetails;
         private static PropertyInfo s_requiredBosses;
-        // BiomeDataManager.GetFirstBiomeForBossKey / GetOrder
+        // BiomeDataManager.GetFirstBiomeForBossKey / GetOrder / HasAllBossKeys
         private static MethodInfo s_biomeForBossKey;
         private static MethodInfo s_biomeOrder;
+        private static MethodInfo s_hasAllBossKeys;
+
+        private const float ProgressionCacheSeconds = 2f;
+        private static Heightmap.Biome s_progressionBiome;
+        private static float s_progressionCheckedAt = float.NegativeInfinity;
 
         public static bool Available { get; private set; }
         public static bool BiomeTiersAvailable { get; private set; }
@@ -66,9 +73,11 @@ namespace LootFilter
                 s_requiredBosses = AccessTools.Property(details, "RequiredBosses");
                 s_biomeForBossKey = AccessTools.Method(biomes, "GetFirstBiomeForBossKey", new[] { typeof(string) });
                 s_biomeOrder = AccessTools.Method(biomes, "GetOrder", new[] { typeof(Heightmap.Biome) });
+                s_hasAllBossKeys = AccessTools.Method(biomes, "HasAllBossKeys", new[] { typeof(Heightmap.Biome) });
 
                 BiomeTiersAvailable = s_itemsWithDetails != null && s_requiredBosses != null
-                    && s_biomeForBossKey?.ReturnType == typeof(Heightmap.Biome) && s_biomeOrder != null;
+                    && s_biomeForBossKey?.ReturnType == typeof(Heightmap.Biome) && s_biomeOrder != null
+                    && s_hasAllBossKeys != null;
                 if (BiomeTiersAvailable)
                     log.LogInfo("Epic Loot item tiers found; outdated-rarity rules enabled");
                 else
@@ -125,5 +134,29 @@ namespace LootFilter
         // Position in Epic Loot's biome progression (Meadows first); -1 for none
         public static int BiomeOrder(Heightmap.Biome biome) =>
             BiomeTiersAvailable ? (int)s_biomeOrder.Invoke(null, new object[] { biome }) : -1;
+
+        // The first biome, in Epic Loot's order, whose boss hasn't been defeated in this world
+        // (the last biome once every boss is down). Same boss keys Epic Loot gates its loot on.
+        public static Heightmap.Biome ProgressionBiome()
+        {
+            if (!BiomeTiersAvailable) return Heightmap.Biome.None;
+            if (Time.time - s_progressionCheckedAt < ProgressionCacheSeconds) return s_progressionBiome;
+
+            var ordered = ((Heightmap.Biome[])Enum.GetValues(typeof(Heightmap.Biome)))
+                .Select(b => (biome: b, order: BiomeOrder(b)))
+                .Where(x => x.order >= 0 && x.order != int.MaxValue)
+                .OrderBy(x => x.order)
+                .ToList();
+
+            s_progressionBiome = Heightmap.Biome.None;
+            foreach (var entry in ordered)
+            {
+                s_progressionBiome = entry.biome;
+                if (!(bool)s_hasAllBossKeys.Invoke(null, new object[] { entry.biome }))
+                    break;
+            }
+            s_progressionCheckedAt = Time.time;
+            return s_progressionBiome;
+        }
     }
 }

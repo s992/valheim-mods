@@ -62,11 +62,18 @@ namespace LootFilter
                     EpicLootCompat.TryGetRarity(item, out Rarities rarity, out _);
                     __result += $"\n<color=#ff9a5c>Loot filter: filtered (rarity: {rarity})</color>";
                     break;
+                case FilterReason.BiomeRarity:
+                    EpicLootCompat.TryGetRarity(item, out Rarities biomeRarity, out _);
+                    Rules.BiomeRarities(item, out Heightmap.Biome tierBiome);
+                    __result += $"\n<color=#ff9a5c>Loot filter: filtered ({biomeRarity} from {tierBiome})</color>";
+                    break;
                 case FilterReason.OutdatedRarity:
                     EpicLootCompat.TryGetRarity(item, out Rarities outdatedRarity, out _);
                     Rules.IsOutdated(item, out Heightmap.Biome itemBiome, out Heightmap.Biome currentBiome);
-                    __result += $"\n<color=#ff9a5c>Loot filter: filtered (outdated {outdatedRarity}: " +
-                                $"{itemBiome} item, you're in {currentBiome})</color>";
+                    string where = Settings.OutdatedComparedTo.Value == BiomeReference.Progression
+                        ? $"you're progressing through {currentBiome}"
+                        : $"you're in {currentBiome}";
+                    __result += $"\n<color=#ff9a5c>Loot filter: filtered (outdated {outdatedRarity}: {itemBiome} item, {where})</color>";
                     break;
             }
         }

@@ -13,15 +13,24 @@ namespace LootFilter
             bool group = Input.Pressed(Settings.ToggleGroup);
             bool rarity = Input.Pressed(Settings.ToggleRarity);
             bool outdated = Input.Pressed(Settings.ToggleOutdatedRarity);
-            if (!item && !group && !rarity && !outdated) return;
+            bool biome = Input.Pressed(Settings.ToggleBiomeRarity);
+            if (!item && !group && !rarity && !outdated && !biome) return;
 
             ItemDrop.ItemData target = HoveredItem();
             if (target == null) return;
 
             if (item) MarkItem(target);
             if (group) MarkGroup(target);
-            if (rarity) MarkRarity(target, outdatedOnly: false);
-            if (outdated) MarkRarity(target, outdatedOnly: true);
+            if (rarity) MarkRarity(target, RarityRule.Always);
+            if (outdated) MarkRarity(target, RarityRule.Outdated);
+            if (biome) MarkRarity(target, RarityRule.ItemBiome);
+        }
+
+        private enum RarityRule
+        {
+            Always,
+            Outdated,
+            ItemBiome,
         }
 
         private static void MarkItem(ItemDrop.ItemData target)
@@ -43,16 +52,16 @@ namespace LootFilter
             Message($"All {Groups.Describe(group).ToLowerInvariant()}: {(filtered ? "filtered" : "not filtered")}");
         }
 
-        private static void MarkRarity(ItemDrop.ItemData target, bool outdatedOnly)
+        private static void MarkRarity(ItemDrop.ItemData target, RarityRule rule)
         {
             if (!EpicLootCompat.Available)
             {
                 Message("Rarity rules need Epic Loot");
                 return;
             }
-            if (outdatedOnly && !EpicLootCompat.BiomeTiersAvailable)
+            if (rule != RarityRule.Always && !EpicLootCompat.BiomeTiersAvailable)
             {
-                Message("Outdated-item rules aren't supported by this Epic Loot version");
+                Message("Biome-based rules aren't supported by this Epic Loot version");
                 return;
             }
             if (!EpicLootCompat.TryGetRarity(target, out Rarities rarity, out bool isMagicItem))
@@ -61,11 +70,33 @@ namespace LootFilter
                 return;
             }
 
-            bool filtered = outdatedOnly ? Rules.ToggleOutdatedRarity(rarity) : Rules.ToggleRarity(rarity);
-            string what = outdatedOnly ? $"Outdated {rarity} items" : $"{rarity} items";
+            bool filtered;
+            string what;
+            switch (rule)
+            {
+                case RarityRule.Outdated:
+                    filtered = Rules.ToggleOutdatedRarity(rarity);
+                    what = $"Outdated {rarity} items";
+                    break;
+                case RarityRule.ItemBiome:
+                    if (!EpicLootCompat.TryGetItemBiome(Rules.ItemName(target), out Heightmap.Biome itemBiome, out _)
+                        || !Settings.RaritiesByItemBiome.ContainsKey(itemBiome))
+                    {
+                        Message("Epic Loot doesn't assign this item to a biome tier");
+                        return;
+                    }
+                    filtered = Rules.ToggleBiomeRarity(itemBiome, rarity);
+                    what = $"{rarity} items from {itemBiome}";
+                    break;
+                default:
+                    filtered = Rules.ToggleRarity(rarity);
+                    what = $"{rarity} items";
+                    break;
+            }
+
             string message = $"{what}: {(filtered ? "filtered" : "not filtered")}";
-            if (filtered && !outdatedOnly && (Settings.OutdatedRarities.Value & rarity) != 0)
-                message += " (all of them, not just outdated ones)";
+            if (filtered && rule == RarityRule.Always)
+                message += " (from every biome)";
             if (!isMagicItem && !Settings.IncludeMagicMaterials.Value)
                 message += " (materials and runestones need IncludeMagicMaterials)";
             Message(message);
