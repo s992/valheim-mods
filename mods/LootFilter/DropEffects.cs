@@ -1,15 +1,12 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Reflection;
-using HarmonyLib;
 using UnityEngine;
 
 namespace LootFilter
 {
-    // Changes the effects of filtered drops lying on the ground, keeping the model and hover text:
-    // - Epic Loot's loot beam is hidden (HideLootBeams)
-    // - other particles and lights (sparkles, glow) are hidden, recolored or left alone (FilteredSparkles)
+    // Changes the sparkles and glow (particles and lights) of filtered drops lying on the ground:
+    // hidden, recolored or left alone (FilteredSparkles). The model and hover text are kept.
     // Everything changed is remembered so it can be put back exactly.
     internal sealed class DropEffects : MonoBehaviour
     {
@@ -18,17 +15,12 @@ namespace LootFilter
         private sealed class State
         {
             public readonly List<Behaviour> DisabledBehaviours = new List<Behaviour>();
-            public readonly List<GameObject> HiddenObjects = new List<GameObject>();
             public readonly List<ParticleSystem> StoppedParticles = new List<ParticleSystem>();
             public readonly Dictionary<ParticleSystem, ParticleSystem.MinMaxGradient> RecoloredParticles =
                 new Dictionary<ParticleSystem, ParticleSystem.MinMaxGradient>();
             public readonly Dictionary<Light, (Color color, float intensity)> RecoloredLights =
                 new Dictionary<Light, (Color, float)>();
         }
-
-        // Epic Loot adds a LootBeam component to magic drops, which spawns its beam object (_beam) in Update
-        private static readonly Type LootBeamType = AccessTools.TypeByName("EpicLoot.LootBeams.LootBeam");
-        private static readonly FieldInfo LootBeamObject = LootBeamType != null ? AccessTools.Field(LootBeamType, "_beam") : null;
 
         private readonly Dictionary<ItemDrop, State> _changed = new Dictionary<ItemDrop, State>();
         private float _nextScan;
@@ -40,7 +32,6 @@ namespace LootFilter
         {
             Settings.FilteredSparkles.SettingChanged += OnEffectSettingChanged;
             Settings.SparkleColor.SettingChanged += OnEffectSettingChanged;
-            Settings.HideLootBeams.SettingChanged += OnEffectSettingChanged;
         }
 
         private void OnEffectSettingChanged(object sender, EventArgs e) => _effectSettingsChanged = true;
@@ -74,7 +65,7 @@ namespace LootFilter
 
         private void Scan(bool revealing)
         {
-            bool anyEffect = Settings.HideLootBeams.Value || Settings.FilteredSparkles.Value != SparkleMode.Unchanged;
+            bool anyEffect = Settings.FilteredSparkles.Value != SparkleMode.Unchanged;
 
             foreach (ItemDrop drop in ItemDrop.s_instances)
             {
@@ -87,7 +78,7 @@ namespace LootFilter
                 if (change)
                 {
                     if (!isChanged) _changed[drop] = state = new State();
-                    // Run every scan: effects such as Epic Loot's beam can appear after the drop spawns
+                    // Run every scan: effects can start after the drop spawns
                     Apply(drop, state);
                 }
                 else if (isChanged)
@@ -104,35 +95,13 @@ namespace LootFilter
 
         private static void Apply(ItemDrop drop, State state)
         {
-            GameObject beam = null;
-            if (LootBeamType != null && drop.GetComponent(LootBeamType) is Behaviour lootBeam)
-            {
-                beam = LootBeamObject?.GetValue(lootBeam) as GameObject;
-                if (Settings.HideLootBeams.Value)
-                {
-                    if (lootBeam.enabled)
-                    {
-                        lootBeam.enabled = false;
-                        state.DisabledBehaviours.Add(lootBeam);
-                    }
-                    if (beam && beam.activeSelf)
-                    {
-                        beam.SetActive(false);
-                        state.HiddenObjects.Add(beam);
-                    }
-                }
-            }
-
-            SparkleMode mode = Settings.FilteredSparkles.Value;
-            if (mode == SparkleMode.Unchanged) return;
+            bool hide = Settings.FilteredSparkles.Value == SparkleMode.Hidden;
             Color color = Settings.SparkleColor.Value;
+            if (color.a <= 0f) hide = true;
 
             foreach (ParticleSystem particles in drop.GetComponentsInChildren<ParticleSystem>())
             {
-                // The beam has its own setting
-                if (beam && particles.transform.IsChildOf(beam.transform)) continue;
-
-                if (mode == SparkleMode.Hidden || color.a <= 0f)
+                if (hide)
                 {
                     if (particles.isPlaying)
                     {
@@ -152,9 +121,7 @@ namespace LootFilter
 
             foreach (Light light in drop.GetComponentsInChildren<Light>())
             {
-                if (beam && light.transform.IsChildOf(beam.transform)) continue;
-
-                if (mode == SparkleMode.Hidden || color.a <= 0f)
+                if (hide)
                 {
                     if (light.enabled)
                     {
@@ -173,8 +140,6 @@ namespace LootFilter
 
         private static void Restore(State state)
         {
-            foreach (GameObject hidden in state.HiddenObjects)
-                if (hidden) hidden.SetActive(true);
             foreach (Behaviour behaviour in state.DisabledBehaviours)
                 if (behaviour) behaviour.enabled = true;
             foreach (ParticleSystem particles in state.StoppedParticles)

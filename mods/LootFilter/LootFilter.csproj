@@ -5,7 +5,7 @@
     <AssemblyName>LootFilter</AssemblyName>
     <RootNamespace>LootFilter</RootNamespace>
     <Version>0.1.0</Version>
-    <Description>Marks items, item types or Epic Loot rarities as junk: no auto-pickup and no sparkles or loot beams.</Description>
+    <Description>Marks items or item groups as junk: no auto-pickup and no sparkles on the ground.</Description>
 
     <!-- Generates MyPluginInfo (GUID/name/version) via BepInEx.PluginInfoProps -->
     <BepInExPluginGuid>s992.LootFilter</BepInExPluginGuid>

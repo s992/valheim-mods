@@ -20,19 +20,6 @@ namespace LootFilter
         Misc = 1 << 10,
     }
 
-    // Epic Loot's ItemRarity values (0 = Magic ... 5 = Ancient) as flags
-    [Flags]
-    public enum Rarities
-    {
-        None = 0,
-        Magic = 1 << 0,
-        Rare = 1 << 1,
-        Epic = 1 << 2,
-        Legendary = 1 << 3,
-        Mythic = 1 << 4,
-        Ancient = 1 << 5,
-    }
-
     internal static class Groups
     {
         public static ItemGroups Of(ItemDrop.ItemData item)
@@ -85,8 +72,5 @@ namespace LootFilter
                 default: return group.ToString();
             }
         }
-
-        public static Rarities FromEpicLoot(int rarity) =>
-            rarity >= 0 && rarity < 31 ? (Rarities)(1 << rarity) : Rarities.None;
     }
 }
