@@ -18,6 +18,24 @@ namespace LootFilter
         // Bumped whenever any rule changes, so cached results can be refreshed
         public static int Version { get; private set; }
 
+        private static bool s_paused;
+
+        // Temporarily turns the filter's effects off (auto-pickup blocking and drop effects); not saved
+        public static bool Paused
+        {
+            get => s_paused;
+            set
+            {
+                if (s_paused == value) return;
+                s_paused = value;
+                Version++;
+            }
+        }
+
+        // Whether auto-pickup (by the player or a free camera) should skip this item
+        public static bool BlocksAutoPickup(ItemDrop.ItemData item) =>
+            Settings.BlockAutoPickup.Value && !Paused && IsFiltered(item);
+
         public static void Init()
         {
             ParseItems();

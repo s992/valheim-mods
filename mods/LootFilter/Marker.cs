@@ -9,6 +9,14 @@ namespace LootFilter
         {
             if (!Player.m_localPlayer || Input.IsTyping()) return;
 
+            if (Input.Pressed(Settings.TogglePause))
+            {
+                Rules.Paused = !Rules.Paused;
+                Message(Rules.Paused
+                    ? "Loot filter paused: filtered items will be picked up"
+                    : "Loot filter active");
+            }
+
             bool item = Input.Pressed(Settings.ToggleItem);
             bool group = Input.Pressed(Settings.ToggleGroup);
             if (!item && !group) return;

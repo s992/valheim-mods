@@ -71,8 +71,8 @@ namespace LootFilter
             {
                 if (!drop) continue;
 
-                // Items you dropped yourself (m_autoPickup off) are left alone
-                bool change = anyEffect && !revealing && drop.m_autoPickup && Rules.IsFiltered(drop.m_itemData);
+                // Includes items you dropped yourself: vanilla won't auto-pick those up, but they should still look filtered
+                bool change = anyEffect && !revealing && !Rules.Paused && Rules.IsFiltered(drop.m_itemData);
                 bool isChanged = _changed.TryGetValue(drop, out State state);
 
                 if (change)

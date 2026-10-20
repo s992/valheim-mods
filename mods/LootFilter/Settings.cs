@@ -25,6 +25,7 @@ namespace LootFilter
         public static ConfigEntry<KeyboardShortcut> ToggleItem;
         public static ConfigEntry<KeyboardShortcut> ToggleGroup;
         public static ConfigEntry<KeyboardShortcut> Reveal;
+        public static ConfigEntry<KeyboardShortcut> TogglePause;
 
         public static void Bind(ConfigFile config)
         {
@@ -50,6 +51,9 @@ namespace LootFilter
                 "Filter/unfilter the hovered item's group (Weapons, Trophies, ...).");
             Reveal = config.Bind("Keys", "Reveal", new KeyboardShortcut(KeyCode.LeftAlt),
                 "Hold to show the original effects of filtered items.");
+            TogglePause = config.Bind("Keys", "TogglePause", new KeyboardShortcut(KeyCode.Insert),
+                "Pause/resume the filter: while paused, filtered items are auto-picked up and keep their effects. " +
+                "The filter is always active again after restarting the game.");
         }
     }
 }
