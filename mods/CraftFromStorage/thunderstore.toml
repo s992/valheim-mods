@@ -1,0 +1,30 @@
+[config]
+schemaVersion = "0.0.1"
+
+[package]
+namespace = "s992"
+name = "Storage"
+# Placeholder: release builds pass --package-version from <Version> in Storage.csproj
+versionNumber = "0.0.0"
+description = "Craft, build, smelt and enchant from nearby chests. Works with Multi User Chest, Quick Stack Store Sort Trash Restock and Epic Loot."
+websiteUrl = "https://github.com/s992/ValheimStorage"
+containsNsfwContent = false
+
+[package.dependencies]
+denikson-BepInExPack_Valheim = "5.4.2351"
+
+[build]
+icon = "./icon.png"
+readme = "./README.md"
+outdir = "./build"
+
+[[build.copy]]
+source = "./src/Storage/bin/Release/netstandard2.1/Storage.dll"
+target = "plugins/Storage.dll"
+
+[publish]
+repository = "https://thunderstore.io"
+communities = ["valheim"]
+
+[publish.categories]
+valheim = ["ai-generated", "tools", "crafting"]
