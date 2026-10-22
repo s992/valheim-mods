@@ -24,9 +24,9 @@
     <!--
       Where builds are copied for local testing. Deliberately NOT the Default profile: this mod moves
       items between chests and conflicts with CraftFromChests, so it's only tested in a separate r2modman
-      profile. Nothing is copied until that profile exists (create "StorageTest" in r2modman).
+      profile ("testing storage": the usual mods minus CraftFromChests and Digi's add-on).
     -->
-    <PluginsDir Condition="'$(PluginsDir)' == ''">$(APPDATA)\r2modmanPlus-local\Valheim\profiles\StorageTest\BepInEx\plugins</PluginsDir>
+    <PluginsDir Condition="'$(PluginsDir)' == ''">$(APPDATA)\r2modmanPlus-local\Valheim\profiles\testing storage\BepInEx\plugins</PluginsDir>
   </PropertyGroup>
 
 </Project>
