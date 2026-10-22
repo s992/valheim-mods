@@ -1,0 +1,364 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using UnityEngine;
+
+namespace Storage
+{
+    // The only code that changes chest contents. Rules:
+    // - Chests we own are edited directly (synchronous), and only once our local copy is up to date.
+    // - Chests other players own are never edited: items are *pulled* into the player's inventory through MUC, using the
+    //   same call QSS restock uses, or the chest is *borrowed* (ownership handed over the way vanilla does on open).
+    internal static class ChestAccess
+    {
+        private const string BorrowRpc = "s992.Storage.Borrow";
+        private const string BorrowReplyRpc = "s992.Storage.BorrowReply";
+        private const float BorrowTimeout = 5f;
+        private const float BorrowCooldown = 15f;
+        private const float BorrowForInterval = 3f;
+        private const int MaxBorrowsPerCall = 8;
+        private const float PullTimeout = 5f;
+
+        // ------------------------------------------------------------------ owned chests
+
+        /// <summary>True when we may edit the chest now: we own it and our copy matches its saved contents.</summary>
+        public static bool PrepareOwned(Container chest)
+        {
+            ZNetView nview = chest.m_nview;
+            if (!nview || !nview.IsValid()) return false;
+            if (!nview.IsOwner())
+            {
+                // Alone in the world nobody else can write it, so claiming an ownerless chest is safe
+                if (nview.GetZDO().GetOwner() == 0L && StorageNetwork.IsSinglePlayer()) nview.ClaimOwnership();
+                else return false;
+            }
+            // Saving a stale copy as owner would overwrite the real contents (e.g. right after a borrow, the
+            // "granted" reply can arrive before the chest's latest data). Reload first; Load skips while the chest is
+            // open locally, and then the open copy is the one being saved anyway.
+            if (nview.GetZDO().DataRevision != chest.m_lastRevision && !chest.m_inUse) chest.Load();
+            return true;
+        }
+
+        /// <summary>Removes up to <paramref name="amount"/> matching items from chests we own, nearest first.</summary>
+        public static int TakeFromOwned(string name, int amount, int quality, bool worldLevelBased, string reason)
+        {
+            int remaining = amount;
+            foreach (Container chest in StorageNetwork.Usable)
+            {
+                if (remaining <= 0) break;
+                if (!StorageNetwork.IsOwnedForUse(chest) || !PrepareOwned(chest)) continue;
+                Inventory inventory = chest.GetInventory();
+                foreach (ItemDrop.ItemData item in inventory.m_inventory.ToList())
+                {
+                    if (remaining <= 0) break;
+                    if (!StorageNetwork.Matches(item, name, quality, worldLevelBased)) continue;
+                    int take = Mathf.Min(item.m_stack, remaining);
+                    if (!inventory.RemoveItem(item, take)) continue;
+                    remaining -= take;
+                    StorageLog.Action($"took {take} {name} from {Describe(chest)} for {reason}");
+                }
+            }
+            return amount - remaining;
+        }
+
+        /// <summary>Removes this exact item (e.g. a trophy Epic Loot listed) if it's in a chest we own.</summary>
+        public static int TakeExact(ItemDrop.ItemData item, int amount, string reason)
+        {
+            foreach (Container chest in StorageNetwork.Usable)
+            {
+                Inventory inventory = chest.GetInventory();
+                if (!inventory.ContainsItem(item) || !StorageNetwork.IsOwnedForUse(chest)) continue;
+                // The reference came from a copy that may since have been reloaded; only remove from a current copy
+                if (!chest.m_nview.IsOwner() || chest.m_nview.GetZDO().DataRevision != chest.m_lastRevision) return 0;
+                int take = Mathf.Min(item.m_stack, amount);
+                if (take <= 0 || !inventory.RemoveItem(item, take)) return 0;
+                StorageLog.Action($"took {take} {item.m_shared.m_name} from {Describe(chest)} for {reason}");
+                return take;
+            }
+            return 0;
+        }
+
+        // ------------------------------------------------------------------ borrowing
+
+        private static readonly Dictionary<ZDOID, float> s_borrowPending = new Dictionary<ZDOID, float>();
+        private static readonly Dictionary<ZDOID, float> s_awaitingOwnership = new Dictionary<ZDOID, float>();
+        private static readonly Dictionary<ZDOID, float> s_borrowCooldown = new Dictionary<ZDOID, float>();
+        private static readonly Dictionary<string, float> s_nextBorrowFor = new Dictionary<string, float>();
+
+        public static void RegisterRpcs()
+        {
+            ZRoutedRpc.instance.Register<ZDOID>(BorrowRpc, RPC_Borrow);
+            ZRoutedRpc.instance.Register<ZDOID, bool>(BorrowReplyRpc, RPC_BorrowReply);
+        }
+
+        /// <summary>Asks the owners of nearby chests holding matching items to hand them over (rate limited per key).</summary>
+        public static void BorrowFor(string key, Func<ItemDrop.ItemData, bool> match)
+        {
+            if (!Settings.Enabled.Value || ZRoutedRpc.instance == null) return;
+            if (s_nextBorrowFor.TryGetValue(key, out float next) && Time.time < next) return;
+            s_nextBorrowFor[key] = Time.time + BorrowForInterval;
+
+            int started = 0;
+            foreach (Container chest in StorageNetwork.Candidates)
+            {
+                if (started >= MaxBorrowsPerCall) break;
+                ZNetView nview = chest.m_nview;
+                if (!nview || !nview.IsValid() || nview.IsOwner()) continue;
+                ZDO zdo = nview.GetZDO();
+                long owner = zdo.GetOwner();
+                // Never while someone has it open; never ownerless ones (nobody to ask)
+                if (owner == 0L || zdo.GetInt(ZDOVars.s_inUse) == 1) continue;
+                ZDOID id = zdo.m_uid;
+                if (s_borrowPending.ContainsKey(id) || s_awaitingOwnership.ContainsKey(id)) continue;
+                if (s_borrowCooldown.TryGetValue(id, out float until) && Time.time < until) continue;
+                if (!chest.GetInventory().m_inventory.Any(item => StorageNetwork.IsUsableItem(item) && match(item))) continue;
+
+                s_borrowPending[id] = Time.time + BorrowTimeout;
+                ZRoutedRpc.instance.InvokeRoutedRPC(owner, BorrowRpc, id);
+                started++;
+            }
+        }
+
+        public static void BorrowFor(string itemName) =>
+            BorrowFor(itemName, item => item.m_shared.m_name == itemName);
+
+        // Runs on the chest's owner. Same transfer vanilla's Container.RPC_RequestOpen does, minus opening the UI.
+        private static void RPC_Borrow(long sender, ZDOID id)
+        {
+            bool granted = false;
+            ZDO zdo = ZDOMan.instance.GetZDO(id);
+            ZNetView nview = zdo != null ? ZNetScene.instance.FindInstance(zdo) : null;
+            Container chest = nview ? nview.GetComponentInChildren<Container>() : null;
+            if (chest && nview.IsOwner() && sender != ZDOMan.GetSessionID() &&
+                !chest.IsInUse() && !(chest.m_wagon && chest.m_wagon.InUse()) &&
+                !(InventoryGui.instance && InventoryGui.instance.m_currentContainer == chest))
+            {
+                ZDOMan.instance.ForceSendZDO(sender, zdo.m_uid);
+                zdo.SetOwner(sender);
+                granted = true;
+                StorageLog.Action($"handed {Describe(chest)} to player {sender}");
+            }
+            ZRoutedRpc.instance.InvokeRoutedRPC(sender, BorrowReplyRpc, id, granted);
+        }
+
+        private static void RPC_BorrowReply(long sender, ZDOID id, bool granted)
+        {
+            s_borrowPending.Remove(id);
+            // Either way, leave it alone for a while so two players crafting at once don't pass chests back and forth
+            s_borrowCooldown[id] = Time.time + BorrowCooldown;
+            if (granted) s_awaitingOwnership[id] = Time.time + BorrowTimeout;
+        }
+
+        // ------------------------------------------------------------------ pulls
+
+        public sealed class Pull
+        {
+            public Container Chest;
+            public string Name;
+            public int Amount;
+            public Vector2i Slot;
+            public int StartCount;
+            public float Deadline;
+            public bool Finished;
+        }
+
+        public sealed class PullPlan
+        {
+            public readonly List<(Container Chest, ItemDrop.ItemData Item, int Amount, Vector2i Slot)> Steps =
+                new List<(Container, ItemDrop.ItemData, int, Vector2i)>();
+            /// <summary>Items still missing after every reachable chest.</summary>
+            public int Missing;
+            /// <summary>Free inventory slots the whole plan would need on top of what's there.</summary>
+            public int SlotsShort;
+            public bool Ok => Missing == 0 && SlotsShort == 0;
+            public int Total => Steps.Sum(s => s.Amount);
+        }
+
+        /// <summary>Target slots handed out across several plans, so pulls never share a slot (MUC blocks one request per slot).</summary>
+        public sealed class SlotReservation
+        {
+            private readonly HashSet<Vector2i> m_reserved = new HashSet<Vector2i>(s_pending.Select(p => p.Slot));
+
+            public bool TryReserve(Inventory inventory, ItemDrop.ItemData item, int amount, out Vector2i slot)
+            {
+                // A partial stack of the same kind with room for all of it (no new slot needed)
+                foreach (ItemDrop.ItemData stack in inventory.m_inventory)
+                {
+                    if (m_reserved.Contains(stack.m_gridPos) || !stack.IsSameType(item) || stack.m_quality != item.m_quality) continue;
+                    if (stack.m_shared.m_maxStackSize - stack.m_stack < amount) continue;
+                    slot = stack.m_gridPos;
+                    m_reserved.Add(slot);
+                    return true;
+                }
+                // Otherwise an empty slot, leaving the hotbar row for last
+                for (int row = 1; row <= inventory.GetHeight(); row++)
+                {
+                    int y = row % inventory.GetHeight();
+                    for (int x = 0; x < inventory.GetWidth(); x++)
+                    {
+                        var candidate = new Vector2i(x, y);
+                        if (m_reserved.Contains(candidate) || inventory.GetItemAt(x, y) != null) continue;
+                        slot = candidate;
+                        m_reserved.Add(slot);
+                        return true;
+                    }
+                }
+                slot = default;
+                return false;
+            }
+        }
+
+        private static readonly List<Pull> s_pending = new List<Pull>();
+
+        public static int PendingPulls => s_pending.Count;
+
+        /// <summary>Plans pulling <paramref name="amount"/> items from chests other players own, nearest first. Changes nothing.</summary>
+        public static PullPlan PlanPulls(string name, int quality, int amount, SlotReservation slots)
+        {
+            var plan = new PullPlan();
+            Player player = Player.m_localPlayer;
+            int remaining = amount;
+            if (!player || amount <= 0 || !MucHealth.CanUseNonOwnedChests)
+            {
+                plan.Missing = Mathf.Max(0, amount);
+                return plan;
+            }
+            Inventory inventory = player.GetInventory();
+            foreach (Container chest in StorageNetwork.Usable)
+            {
+                if (remaining <= 0) break;
+                if (StorageNetwork.IsOwnedForUse(chest)) continue;
+                foreach (ItemDrop.ItemData item in chest.GetInventory().m_inventory)
+                {
+                    if (remaining <= 0) break;
+                    if (!StorageNetwork.Matches(item, name, quality, true)) continue;
+                    int take = Mathf.Min(item.m_stack, remaining, item.m_shared.m_maxStackSize);
+                    remaining -= take;
+                    if (slots.TryReserve(inventory, item, take, out Vector2i slot)) plan.Steps.Add((chest, item, take, slot));
+                    else plan.SlotsShort++;
+                }
+            }
+            plan.Missing = remaining;
+            return plan;
+        }
+
+        /// <summary>Starts every step of a plan. Returns the pulls that are now on their way.</summary>
+        public static List<Pull> Start(PullPlan plan, string reason)
+        {
+            var started = new List<Pull>();
+            Player player = Player.m_localPlayer;
+            if (!player) return started;
+            Inventory inventory = player.GetInventory();
+            foreach (var (chest, item, amount, slot) in plan.Steps)
+            {
+                if (!chest || !chest.GetInventory().ContainsItem(item)) continue;
+                string name = item.m_shared.m_name;
+                var pull = new Pull
+                {
+                    Chest = chest, Name = name, Amount = amount, Slot = slot,
+                    StartCount = inventory.CountItems(name, -1, false), Deadline = Time.time + PullTimeout,
+                };
+
+                if (StorageNetwork.IsOwnedForUse(chest))
+                {
+                    // Became ours since planning (a borrow finished): a plain local move
+                    if (!PrepareOwned(chest) || !chest.GetInventory().ContainsItem(item)) continue;
+                    inventory.MoveItemToThis(chest.GetInventory(), item, amount, slot.x, slot.y);
+                    pull.Finished = true;
+                    StorageLog.Action($"moved {amount} {name} from {Describe(chest)} for {reason}");
+                    started.Add(pull);
+                    continue;
+                }
+
+                // MUC turns this into a remove request to the chest's owner; the item arrives with the reply
+                bool sent = inventory.MoveItemToThis(chest.GetInventory(), item, amount, slot.x, slot.y);
+                if (MucInternals.Available ? !MucInternals.IsSlotBlocked(inventory, slot) : !sent)
+                {
+                    StorageLog.Warning($"Couldn't fetch {amount} {name} from {Describe(chest)}: MUC didn't send the request");
+                    continue;
+                }
+                s_pending.Add(pull);
+                started.Add(pull);
+                StorageLog.Action($"fetching {amount} {name} from {Describe(chest)} for {reason}");
+            }
+            return started;
+        }
+
+        // ------------------------------------------------------------------ per frame
+
+        public static void Tick()
+        {
+            float now = Time.time;
+            ExpireAll(s_borrowPending, now, id => StorageNetwork.MarkUnresponsive(FindChest(id)));
+            ExpireAll(s_borrowCooldown, now, null);
+
+            if (s_awaitingOwnership.Count > 0)
+            {
+                foreach (ZDOID id in s_awaitingOwnership.Keys.ToList())
+                {
+                    Container chest = FindChest(id);
+                    if (chest && chest.m_nview.IsOwner())
+                    {
+                        // Ownership and the chest's latest contents arrive together in one ZDO update
+                        PrepareOwned(chest);
+                        s_awaitingOwnership.Remove(id);
+                        StorageNetwork.Invalidate();
+                        StorageLog.Action($"borrowed {Describe(chest)}");
+                    }
+                    else if (now > s_awaitingOwnership[id]) s_awaitingOwnership.Remove(id);
+                }
+            }
+
+            Player player = Player.m_localPlayer;
+            if (!player || s_pending.Count == 0) return;
+            Inventory inventory = player.GetInventory();
+            foreach (Pull pull in s_pending)
+            {
+                bool arrived = MucInternals.Available
+                    ? !MucInternals.IsSlotBlocked(inventory, pull.Slot)
+                    : inventory.CountItems(pull.Name, -1, false) >= pull.StartCount + pull.Amount;
+                if (arrived)
+                {
+                    pull.Finished = true;
+                    StorageLog.Action($"fetch of {pull.Amount} {pull.Name} from {Describe(pull.Chest)} answered");
+                }
+                else if (now > pull.Deadline)
+                {
+                    // No reply (typically the owner disconnected). Unblock the slot so MUC lets auto-pickup work again;
+                    // a late reply still lands in the inventory or at the player's feet.
+                    MucInternals.ReleaseSlot(inventory, pull.Slot);
+                    pull.Finished = true;
+                    if (pull.Chest) StorageNetwork.MarkUnresponsive(pull.Chest);
+                    StorageLog.Warning($"Fetch of {pull.Amount} {pull.Name} from {Describe(pull.Chest)} got no reply in {PullTimeout:0} s");
+                    StorageLog.Action($"fetch of {pull.Amount} {pull.Name} from {Describe(pull.Chest)} timed out");
+                }
+            }
+            if (s_pending.RemoveAll(p => p.Finished) > 0) StorageNetwork.Invalidate();
+        }
+
+        private static void ExpireAll(Dictionary<ZDOID, float> deadlines, float now, Action<ZDOID> onExpired)
+        {
+            if (deadlines.Count == 0) return;
+            foreach (ZDOID id in deadlines.Where(kv => now > kv.Value).Select(kv => kv.Key).ToList())
+            {
+                deadlines.Remove(id);
+                onExpired?.Invoke(id);
+            }
+        }
+
+        private static Container FindChest(ZDOID id)
+        {
+            ZDO zdo = ZDOMan.instance?.GetZDO(id);
+            ZNetView nview = zdo != null ? ZNetScene.instance.FindInstance(zdo) : null;
+            return nview ? nview.GetComponentInChildren<Container>() : null;
+        }
+
+        public static string Describe(Container chest)
+        {
+            if (!chest) return "a chest that's gone";
+            Vector3 p = chest.transform.position;
+            string name = chest.m_nview ? StorageNetwork.PrefabName(chest.m_nview.gameObject) : chest.name;
+            return $"{name} at ({p.x:0}, {p.y:0}, {p.z:0})";
+        }
+    }
+}
