@@ -9,7 +9,6 @@ namespace Storage
     {
         private const float RefreshInterval = 0.5f;
         private const float UnresponsiveSeconds = 30f;
-        private const string CoinsName = "$item_coins";
 
         private static readonly List<Container> s_all = new List<Container>();
         private static readonly HashSet<Inventory> s_inventories = new HashSet<Inventory>();
@@ -77,8 +76,8 @@ namespace Storage
             return nview.IsOwner() || (nview.GetZDO().GetOwner() == 0L && IsSinglePlayer());
         }
 
-        public static bool IsUsableItem(ItemDrop.ItemData item) =>
-            (item.m_shared.m_name != CoinsName || Settings.UseCoins.Value) && !EpicLootCompat.IsEnchanted(item);
+        // Enchanted Epic Loot gear is never used up as a crafting material
+        public static bool IsUsableItem(ItemDrop.ItemData item) => !EpicLootCompat.IsEnchanted(item);
 
         public static bool Matches(ItemDrop.ItemData item, string name, int quality, bool matchWorldLevel) =>
             item.m_shared.m_name == name && (quality < 0 || item.m_quality == quality) &&

@@ -61,23 +61,6 @@ namespace Storage
             return amount - remaining;
         }
 
-        /// <summary>Removes this exact item (e.g. a trophy Epic Loot listed) if it's in a chest we own.</summary>
-        public static int TakeExact(ItemDrop.ItemData item, int amount, string reason)
-        {
-            foreach (Container chest in StorageNetwork.Usable)
-            {
-                Inventory inventory = chest.GetInventory();
-                if (!inventory.ContainsItem(item) || !StorageNetwork.IsOwnedForUse(chest)) continue;
-                // The reference came from a copy that may since have been reloaded; only remove from a current copy
-                if (!chest.m_nview.IsOwner() || chest.m_nview.GetZDO().DataRevision != chest.m_lastRevision) return 0;
-                int take = Mathf.Min(item.m_stack, amount);
-                if (take <= 0 || !inventory.RemoveItem(item, take)) return 0;
-                StorageLog.Action($"took {take} {item.m_shared.m_name} from {Describe(chest)} for {reason}");
-                return take;
-            }
-            return 0;
-        }
-
         // ------------------------------------------------------------------ borrowing
 
         private static readonly Dictionary<ZDOID, float> s_borrowPending = new Dictionary<ZDOID, float>();

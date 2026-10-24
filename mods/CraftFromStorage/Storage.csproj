@@ -38,10 +38,9 @@
     <!-- Status line (OnGUI) -->
     <Reference Include="UnityEngine.IMGUIModule" HintPath="$(ValheimManagedDir)\UnityEngine.IMGUIModule.dll" Private="false" />
     <Reference Include="UnityEngine.TextRenderingModule" HintPath="$(ValheimManagedDir)\UnityEngine.TextRenderingModule.dll" Private="false" />
-    <!-- Requirement text (TMP) and Epic Loot's Sacrifice checkbox (uGUI Toggle) -->
+    <!-- Requirement text ("have/need"); TMP_Text derives from a UnityEngine.UI type -->
     <Reference Include="Unity.TextMeshPro" HintPath="$(ValheimManagedDir)\Unity.TextMeshPro.dll" Private="false" />
     <Reference Include="UnityEngine.UI" HintPath="$(ValheimManagedDir)\UnityEngine.UI.dll" Private="false" />
-    <Reference Include="UnityEngine.UIModule" HintPath="$(ValheimManagedDir)\UnityEngine.UIModule.dll" Private="false" />
     <!--
       Add as needed (CS0012 errors name the missing assembly):
       gui_framework                    GuiInputField (Terminal.m_input)

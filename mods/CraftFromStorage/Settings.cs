@@ -16,17 +16,13 @@ namespace Storage
         public static ConfigEntry<bool> Crafting;
         public static ConfigEntry<bool> Building;
         public static ConfigEntry<bool> Smelting;
-        public static ConfigEntry<bool> EpicLoot;
 
         public static ConfigEntry<bool> CartsAndShips;
         public static ConfigEntry<string> ExcludedContainers;
-        public static ConfigEntry<bool> UseCoins;
 
         public static ConfigEntry<string> SmeltBlocklist;
         public static ConfigEntry<KeyboardShortcut> BlocklistKey;
         public static ConfigEntry<string> SmeltSelections;
-
-        public static ConfigEntry<bool> ChestTrophies;
 
         public static ConfigEntry<bool> Borrow;
         public static ConfigEntry<bool> LogActions;
@@ -40,7 +36,7 @@ namespace Storage
         public static void Bind(ConfigFile config)
         {
             Enabled = config.Bind("1. General", "Use nearby storage", true,
-                "Crafting, building, smelting and Epic Loot use materials from nearby chests. The toggle key flips this.");
+                "Crafting, building and smelting use materials from nearby chests. The toggle key flips this.");
             ToggleKey = config.Bind("1. General", "Toggle key", new KeyboardShortcut(KeyCode.Home),
                 "Turns \"use nearby storage\" on and off.");
             Range = config.Bind("1. General", "Range", 30f,
@@ -56,15 +52,11 @@ namespace Storage
             Building = config.Bind("2. Features", "Building", true, "Building pieces use nearby storage.");
             Smelting = config.Bind("2. Features", "Smelting", true,
                 "Smelters, furnaces, kilns, windmills, spinning wheels and eitr refineries take materials and fuel from nearby storage.");
-            EpicLoot = config.Bind("2. Features", "Epic Loot", true,
-                "Epic Loot's enchanting table uses materials from nearby storage (needs Epic Loot).");
 
             CartsAndShips = config.Bind("3. Chests", "Carts and ships", false,
                 "Carts and ships nearby count as storage.");
             ExcludedContainers = config.Bind("3. Chests", "Excluded containers", "",
                 "Container prefab names that never count as storage, comma separated (e.g. piece_chest_private).");
-            UseCoins = config.Bind("3. Chests", "Use coins", false,
-                "Coins in chests can be spent (crafting, Epic Loot merchants). Off keeps the vault safe.");
 
             SmeltBlocklist = config.Bind("4. Smelting", "Blocklist", "FineWood,RoundLog,YggdrasilWood",
                 "Item prefab names that are never put into a smelter automatically, from your inventory or storage, comma separated. " +
@@ -74,14 +66,10 @@ namespace Storage
             SmeltSelections = config.Bind("4. Smelting", "Selected materials", "",
                 "Managed by the mod: which material each kind of smelter takes (changed in game with Shift + use).");
 
-            ChestTrophies = config.Bind("5. Epic Loot", "Include chest trophies", true,
-                "Epic Loot's Sacrifice tab lists trophies from nearby chests. Same as the checkbox in that tab.");
-
-            Borrow = config.Bind("6. Diagnostics", "Borrow chests", true,
-                "Ask other players for ownership of nearby chests before they're needed, so crafting, building and Epic Loot " +
-                "can take from them instantly. Off: those chests are only reached by fetching items into your inventory " +
-                "(and Epic Loot only uses chests you already own).");
-            LogActions = config.Bind("6. Diagnostics", "Log actions", true,
+            Borrow = config.Bind("5. Diagnostics", "Borrow chests", true,
+                "Ask other players for ownership of nearby chests before they're needed, so crafting and building can take " +
+                "from them instantly. Off: those chests are only reached by fetching items into your inventory.");
+            LogActions = config.Bind("5. Diagnostics", "Log actions", true,
                 "Writes every item the mod takes from or fetches out of a chest to BepInEx/StorageOps.log.");
 
             Parse();

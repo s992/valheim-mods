@@ -35,11 +35,6 @@ namespace Storage
             inventory.HaveItem(name, matchWorldLevel) ||
             (IsLocalPlayers(inventory) && Active(Settings.Building.Value) && StorageNetwork.Count(name, -1, matchWorldLevel, false) > 0);
 
-        // Epic Loot removes synchronously, so its screens only count chests we own
-        public static int CountForEpicLoot(Inventory inventory, string name, int quality, bool matchWorldLevel) =>
-            inventory.CountItems(name, quality, matchWorldLevel) +
-            (IsLocalPlayers(inventory) && Active(Settings.EpicLoot.Value) ? StorageNetwork.Count(name, quality, matchWorldLevel, true) : 0);
-
         // One-ingredient recipes need an item to name the ingredient; when only storage has it, use one from storage
         public static ItemDrop.ItemData GetItemForCrafting(Inventory inventory, string name, int quality, bool isPrefabName)
         {
@@ -55,7 +50,7 @@ namespace Storage
         /// </summary>
         public static void RemoveWithStorage(Inventory inventory, string name, int amount, int itemQuality, bool worldLevelBased)
         {
-            bool feature = BuildingNow() ? Settings.Building.Value : Settings.Crafting.Value || Settings.EpicLoot.Value;
+            bool feature = BuildingNow() ? Settings.Building.Value : Settings.Crafting.Value;
             if (!IsLocalPlayers(inventory) || !Active(feature))
             {
                 inventory.RemoveItem(name, amount, itemQuality, worldLevelBased);
