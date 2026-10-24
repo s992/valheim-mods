@@ -91,6 +91,12 @@ namespace Storage
         /// <returns>False to skip vanilla OnAddOre (we handled it or refused).</returns>
         public static bool BeforeAddOre(Smelter smelter, Humanoid user, ref ItemDrop.ItemData item, ref bool result)
         {
+            if (user == Player.m_localPlayer && Settings.Smelting.Value && SmelterInFlight.Queue(smelter) >= smelter.m_maxOre)
+            {
+                user.Message(MessageHud.MessageType.Center, "$msg_itsfull");
+                result = false;
+                return false;
+            }
             if (item != null || user != Player.m_localPlayer || !Hooks.Active(Settings.Smelting.Value)) return true;
             List<Material> materials = Materials(smelter);
             if (materials.Count == 0) return true;
@@ -107,12 +113,6 @@ namespace Storage
                 user.Message(MessageHud.MessageType.Center, $"Storage: {Localization.instance.Localize(selected.Name)} is blocklisted");
                 return false;
             }
-            if (smelter.GetQueueSize() >= smelter.m_maxOre)
-            {
-                user.Message(MessageHud.MessageType.Center, "$msg_itsfull");
-                return false;
-            }
-
             ItemDrop.ItemData fromInventory = user.GetInventory().GetItem(selected.Name);
             if (fromInventory != null)
             {
@@ -128,16 +128,23 @@ namespace Storage
                 item.m_stack = 2;
                 return true;
             }
-            return FetchBatch(smelter, user, selected.Name, smelter.m_maxOre - smelter.GetQueueSize());
+            return FetchBatch(smelter, user, selected.Name, smelter.m_maxOre - SmelterInFlight.Queue(smelter));
         }
 
         /// <returns>False to skip vanilla OnAddFuel.</returns>
         public static bool BeforeAddFuel(Smelter smelter, Humanoid user, ItemDrop.ItemData item, ref bool result)
         {
+            if (user == Player.m_localPlayer && Settings.Smelting.Value && smelter.m_fuelItem &&
+                SmelterInFlight.Fuel(smelter) > smelter.m_maxFuel - 1)
+            {
+                user.Message(MessageHud.MessageType.Center, "$msg_itsfull");
+                result = false;
+                return false;
+            }
             if (item != null || user != Player.m_localPlayer || !Hooks.Active(Settings.Smelting.Value) || !smelter.m_fuelItem) return true;
             string fuel = smelter.m_fuelItem.m_itemData.m_shared.m_name;
             // Vanilla handles fuel you carry, a full smelter and (for blocklisted fuel) everything else
-            if (user.GetInventory().HaveItem(fuel) || smelter.GetFuel() > smelter.m_maxFuel - 1 ||
+            if (user.GetInventory().HaveItem(fuel) ||
                 Blocklisted(smelter.m_fuelItem.gameObject.name) || InStorage(fuel) == 0) return true;
 
             result = false;
@@ -148,7 +155,7 @@ namespace Storage
                 result = true;
                 return false;
             }
-            return FetchBatch(smelter, user, fuel, smelter.m_maxFuel - Mathf.CeilToInt(smelter.GetFuel()));
+            return FetchBatch(smelter, user, fuel, smelter.m_maxFuel - Mathf.CeilToInt(SmelterInFlight.Fuel(smelter)));
         }
 
         // Pull a few into the inventory; the next press (or hold-to-repeat) inserts them from there
@@ -210,7 +217,17 @@ namespace Storage
     {
         private static void Postfix(Smelter __instance, ref string __result)
         {
-            if (Player.m_localPlayer && Hooks.Active(Settings.Smelting.Value)) __result += SmeltFlow.HoverLines(__instance);
+            if (!Player.m_localPlayer || !Settings.Smelting.Value) return;
+            int queued = __instance.GetQueueSize(), effective = SmelterInFlight.Queue(__instance);
+            if (effective != queued)
+                __result = ReplaceFirst(__result, $"({queued}/{__instance.m_maxOre})", $"({effective}/{__instance.m_maxOre})");
+            if (Hooks.Active(Settings.Smelting.Value)) __result += SmeltFlow.HoverLines(__instance);
+        }
+
+        public static string ReplaceFirst(string text, string old, string replacement)
+        {
+            int at = text.IndexOf(old, System.StringComparison.Ordinal);
+            return at < 0 ? text : text.Substring(0, at) + replacement + text.Substring(at + old.Length);
         }
     }
 
@@ -219,7 +236,11 @@ namespace Storage
     {
         private static void Postfix(Smelter __instance, ref string __result)
         {
-            if (!Player.m_localPlayer || !__instance.m_fuelItem || !Hooks.Active(Settings.Smelting.Value)) return;
+            if (!Player.m_localPlayer || !__instance.m_fuelItem || !Settings.Smelting.Value) return;
+            float shown = Mathf.Ceil(__instance.GetFuel()), effective = Mathf.Ceil(SmelterInFlight.Fuel(__instance));
+            if (effective != shown)
+                __result = SmelterHoverOrePatch.ReplaceFirst(__result, $" {shown}/{__instance.m_maxFuel})", $" {effective}/{__instance.m_maxFuel})");
+            if (!Hooks.Active(Settings.Smelting.Value)) return;
             string fuel = __instance.m_fuelItem.m_itemData.m_shared.m_name;
             if (SmeltFlow.InInventory(fuel) + StorageNetwork.Count(fuel, -1, true, true) == 0) ChestAccess.BorrowFor(fuel);
             __result += Localization.instance.Localize($"\n{SmeltFlow.InStorage(fuel)} {fuel} in storage");
@@ -231,6 +252,11 @@ namespace Storage
     {
         private static bool Prefix(Smelter __instance, Humanoid user, ref ItemDrop.ItemData item, ref bool __result) =>
             SmeltFlow.BeforeAddOre(__instance, user, ref item, ref __result);
+
+        private static void Postfix(Smelter __instance, Humanoid user, bool __result)
+        {
+            if (__result && user == Player.m_localPlayer) SmelterInFlight.OreSent(__instance);
+        }
     }
 
     [HarmonyPatch(typeof(Smelter), nameof(Smelter.OnAddFuel))]
@@ -238,6 +264,11 @@ namespace Storage
     {
         private static bool Prefix(Smelter __instance, Humanoid user, ItemDrop.ItemData item, ref bool __result) =>
             SmeltFlow.BeforeAddFuel(__instance, user, item, ref __result);
+
+        private static void Postfix(Smelter __instance, Humanoid user, bool __result)
+        {
+            if (__result && user == Player.m_localPlayer) SmelterInFlight.FuelSent(__instance);
+        }
     }
 
     // Shift + use on a smelter's input changes the material (vanilla passes the alt flag to switches and ignores it)
