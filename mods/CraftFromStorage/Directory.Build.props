@@ -22,11 +22,10 @@
     <ValheimManagedDir Condition="'$(ValheimManagedDir)' == ''">$(ValheimDir)\valheim_server_Data\Managed</ValheimManagedDir>
 
     <!--
-      Where builds are copied for local testing. Deliberately NOT the Default profile: this mod moves
-      items between chests and conflicts with CraftFromChests, so it's only tested in a separate r2modman
-      profile ("testing storage": the usual mods minus CraftFromChests and Digi's add-on).
+      Where builds are copied for local testing: the Default r2modman profile (approved 2026-10-23, after
+      testing in a separate profile). CraftFromChests must not be installed there; this mod won't load next to it.
     -->
-    <PluginsDir Condition="'$(PluginsDir)' == ''">$(APPDATA)\r2modmanPlus-local\Valheim\profiles\testing storage\BepInEx\plugins</PluginsDir>
+    <PluginsDir Condition="'$(PluginsDir)' == ''">$(APPDATA)\r2modmanPlus-local\Valheim\profiles\Default\BepInEx\plugins</PluginsDir>
   </PropertyGroup>
 
 </Project>
