@@ -322,28 +322,11 @@ when the materials sit in a chest someone else has open, or one that couldn't be
 
 ## 8. Epic Loot
 
-- **Provider.** Register a provider through the official API, by reflection, optional.
-  - **Players never think about ownership (decision 2).** Opening the enchanting table borrows every
-    eligible nearby chest. The borrows are refreshed while the table stays open, so the provider's
-    synchronous `remove` works on what is by then our own chests.
-  - Count and remove cover the same set (owned chests), so the UI never promises materials it can't take.
-  - A chest someone else has open drops out of the counts until they close it, then gets borrowed on the
-    next refresh. The status line shows `1 chest in use`.
-  - Gear is never listed. `getItems`/`removeExact` only ever expose **trophies** from owned chests, and
-    only while the Sacrifice tab's "Include chest trophies" checkbox is ticked (decision 7).
-- **Sacrifice-tab checkbox.**
-  - In a `SacrificeUI.OnEnable` postfix, clone Epic Loot's own "Select All" toggle under it, labelled
-    "Include chest trophies".
-  - Its state is stored in a config entry (default on, as Digi's is today). Ticking it refreshes the list
-    (`RefreshAvailableItems`).
-  - `removeExact` removes from owned chests only, and Epic Loot only grants products for what was actually
-    removed. A chest lost at the wrong moment therefore just skips that trophy.
-  - This is Epic Loot UI internals, not its official API, so it sits behind its own availability flag. If
-    the toggle can't be found, the checkbox is missing, chest trophies are off, and one warning is logged.
-  - Coins are always excluded (decision 6), so merchants and treasure maps never spend from chests.
-- **Digi's storage module.** If its provider is registered, unregister it at startup and log that we did.
-  Also tell the user to turn it off.
-- **Direct counts.** Patch the counts in `RequirementElement` and `TemperPanel`.
+**Dropped on 2026-10-23.** Epic Loot 0.15.0 gave the enchanting table its own material storage, and
+tempering now costs a bounty token instead of materials, so the provider, the Temper counts, the
+Sacrifice-tab checkbox and the Digi handling were removed. The mod still asks Epic Loot's API which items
+are enchanted, so crafting never uses up enchanted gear. That's the only remaining Epic Loot dependency,
+and it's optional.
 
 ## 9. Safety, testing and phases
 
@@ -382,12 +365,12 @@ Each phase ends with a commit, a checklist and the user's go-ahead. Phase 1 deli
 |---|---|---|
 | 0 | Ranges beyond 64 m in multiplayer | Accept: ownerless chests are skipped and shown in the status line. Single player claims them (section 2). A server-side take for ownerless chests is not planned. |
 | 1 | Building from chests you don't own | Borrow ownership; when that fails, click again (4.1, 6) |
-| 2 | Epic Loot from chests you don't own | Must work without players thinking about ownership: borrow when the table opens (8) |
+| 2 | Epic Loot from chests you don't own | Dropped: Epic Loot 0.15.0 has its own table storage (8) |
 | 3 | Carts and ships as storage | Off |
 | 4 | Toggle key | `Home`, configurable |
 | 5 | Smelter selection | Per player, local |
-| 6 | Coins from chests | No |
-| 7 | Chest trophies in the Sacrifice tab | Yes, behind an "Include chest trophies" checkbox in the tab (8) |
+| 6 | Coins from chests | Moot with the Epic Loot integration gone; coins are treated like any item |
+| 7 | Chest trophies in the Sacrifice tab | Dropped with the Epic Loot integration (8) |
 | 8 | Default range | 30 m |
 | 9 | Name | Storage (working title) |
 

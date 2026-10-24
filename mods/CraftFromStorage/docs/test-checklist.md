@@ -8,7 +8,7 @@ Riskiest first. "Two players" means two clients on a server where both run the p
 
 ## 0. Startup (solo is fine)
 1. **`BepInEx/LogOutput.log` after loading in.**
-   - Expect `MultiUserChest 0.6.2 found and healthy` and `Epic Loot's enchanting table now uses nearby storage`.
+   - Expect `MultiUserChest 0.6.2 found and healthy`.
    - *Failure:* `...patches are missing...` means non-owned chests won't be used (see `MucHealth.cs`).
    - No line may contain `[Storage] ... expected 1 call(s)`. That line means a game update moved something,
      and counting won't work at that spot.
@@ -63,15 +63,9 @@ Riskiest first. "Two players" means two clients on a server where both run the p
 5. **Windmill and spinning wheel.** Barley and flax from chests work. These have no fuel input.
 
 ## 4. Epic Loot
-1. **Enchanting from chests.** Put dust or essence in chests and none in your inventory.
-   - The enchant cost shows as available, and enchanting takes it from a chest.
-2. **Sacrifice tab.**
-   - An "Include chest trophies" checkbox appears above "Select All".
-   - Ticked: trophies from chests are listed and can be sacrificed.
-   - Unticked: they disappear.
-3. **Temper screen.** Counts include materials in chests you own.
-4. **Merchant.** Coins in chests are **not** spent.
-5. **Magic gear.** An enchanted weapon in a chest is never consumed as a crafting material.
+1. **Enchanted gear is safe.** An enchanted weapon in a chest is never used up as a crafting material, even
+   when a recipe asks for that item.
+2. **The table's own storage works.** This mod no longer touches the enchanting table.
 
 ## 5. Quick Stack Store Sort Trash Restock
 Quick stack, restock, sort and store/take all on chests another player has open all still work.
