@@ -55,18 +55,24 @@ namespace Storage
             return channels;
         }
 
-        public static int Queue(Smelter smelter) => Mathf.RoundToInt(For(smelter).Ore.Effective(smelter.GetQueueSize()));
-        public static float Fuel(Smelter smelter) => For(smelter).Fuel.Effective(smelter.GetFuel());
+        public static int Queue(Smelter smelter) =>
+            Settings.SmelterOverfillFix.Value ? Mathf.RoundToInt(For(smelter).Ore.Effective(smelter.GetQueueSize())) : smelter.GetQueueSize();
+
+        public static float Fuel(Smelter smelter) =>
+            Settings.SmelterOverfillFix.Value ? For(smelter).Fuel.Effective(smelter.GetFuel()) : smelter.GetFuel();
+
+        // A smelter someone else owns, or one we own while simulating that lag
+        private static bool Remote(Smelter smelter) => !smelter.m_nview.IsOwner() || Settings.SimulatedSmelterLag.Value > 0;
 
         // When we own the smelter the RPC is handled on the spot, so the count already includes the insert
         public static void OreSent(Smelter smelter)
         {
-            if (!smelter.m_nview.IsOwner()) For(smelter).Ore.Sent(smelter.GetQueueSize());
+            if (Remote(smelter)) For(smelter).Ore.Sent(smelter.GetQueueSize());
         }
 
         public static void FuelSent(Smelter smelter)
         {
-            if (!smelter.m_nview.IsOwner()) For(smelter).Fuel.Sent(smelter.GetFuel());
+            if (Remote(smelter)) For(smelter).Fuel.Sent(smelter.GetFuel());
         }
 
         public static void Prune()

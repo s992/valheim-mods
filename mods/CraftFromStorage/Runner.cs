@@ -24,6 +24,10 @@ namespace Storage
     // Per-frame work: pull/borrow bookkeeping, hotkeys, borrowing ahead of need, and the status line
     internal sealed class Runner : MonoBehaviour
     {
+        public static Runner Instance { get; private set; }
+
+        private void Awake() => Instance = this;
+
         private const float BorrowAheadInterval = 1f;
         private float m_nextBorrowAhead;
         private GUIStyle m_style;

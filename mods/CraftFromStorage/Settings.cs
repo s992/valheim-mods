@@ -26,6 +26,8 @@ namespace Storage
 
         public static ConfigEntry<bool> Borrow;
         public static ConfigEntry<bool> LogActions;
+        public static ConfigEntry<int> SimulatedSmelterLag;
+        public static ConfigEntry<bool> SmelterOverfillFix;
 
         /// <summary>Bumped whenever a setting changes, so cached results can tell they're stale.</summary>
         public static int Version { get; private set; }
@@ -69,6 +71,13 @@ namespace Storage
             Borrow = config.Bind("5. Diagnostics", "Borrow chests", true,
                 "Ask other players for ownership of nearby chests before they're needed, so crafting and building can take " +
                 "from them instantly. Off: those chests are only reached by fetching items into your inventory.");
+            SimulatedSmelterLag = config.Bind("5. Diagnostics", "Simulated smelter lag (ms)", 0,
+                new ConfigDescription(
+                    "Testing only. Smelters you own apply inserts this many milliseconds late, the way a smelter another player " +
+                    "owns does, so the overfill fix can be tried alone. 0 = off. Leave at 0 for normal play.",
+                    new AcceptableValueRange<int>(0, 2000)));
+            SmelterOverfillFix = config.Bind("5. Diagnostics", "Smelter overfill fix", true,
+                "Testing only. Off reproduces the old bug (holding E overfills a smelter whose count lags behind). Leave on.");
             LogActions = config.Bind("5. Diagnostics", "Log actions", true,
                 "Writes every item the mod takes from or fetches out of a chest to BepInEx/StorageOps.log.");
 
