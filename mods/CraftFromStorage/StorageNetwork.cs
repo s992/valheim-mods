@@ -139,14 +139,7 @@ namespace Storage
                 return;
             }
 
-            if (s_all.RemoveAll(c => !c) > 0)
-            {
-                s_inventories.Clear();
-                foreach (Container c in s_all) s_inventories.Add(c.GetInventory());
-                var dead = new List<Container>();
-                foreach (Container c in s_staticOk.Keys) if (!c) dead.Add(c);
-                foreach (Container c in dead) s_staticOk.Remove(c);
-            }
+            Prune();
 
             // Chests are only guaranteed to be loaded this far from the player (64 m per "near" zone ring)
             float cap = Mathf.Max(1, ZNet.instance.GetSyncedSimulationDistance().NearSimulationDistance) * ZoneSystem.c_ZoneSize;
@@ -205,6 +198,20 @@ namespace Storage
                 s_setSignature = signature;
                 s_contentVersion++;
             }
+        }
+
+        /// <summary>
+        /// Drops destroyed containers. Every container that loads is registered (dungeon chests, crates, ...), so this
+        /// also runs on a timer, not only when storage is queried, or the lists would grow all session.
+        /// </summary>
+        public static void Prune()
+        {
+            if (s_all.RemoveAll(c => !c) == 0) return;
+            s_inventories.Clear();
+            foreach (Container c in s_all) s_inventories.Add(c.GetInventory());
+            var dead = new List<Container>();
+            foreach (Container c in s_staticOk.Keys) if (!c) dead.Add(c);
+            foreach (Container c in dead) s_staticOk.Remove(c);
         }
 
         private static bool IsStaticallyOk(Container chest)

@@ -49,6 +49,7 @@ namespace Storage
                 m_nextBorrowAhead = Time.time + BorrowAheadInterval;
                 BorrowAhead(player);
                 SmeltFlow.Prune();
+                StorageNetwork.Prune();
             }
         }
 

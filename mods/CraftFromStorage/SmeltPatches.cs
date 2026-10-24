@@ -62,7 +62,9 @@ namespace Storage
             List<Material> materials = Materials(smelter);
             Material selected = Selected(smelter, materials);
             if (selected == null) return "";
-            ChestAccess.BorrowFor(selected.Name);
+            // Only ask for chests when the inventory and chests we own have none left to insert
+            if (InInventory(selected.Name) + StorageNetwork.Count(selected.Name, -1, true, true) == 0)
+                ChestAccess.BorrowFor(selected.Name);
             List<Material> options = materials.Where(m => Available(m) > 0 || m == selected).ToList();
             string state = Blocklisted(selected.Prefab)
                 ? $" <color=orange>blocklisted</color> ({Settings.BlocklistKey.Value} to allow)"
@@ -206,7 +208,7 @@ namespace Storage
         {
             if (!Player.m_localPlayer || !__instance.m_fuelItem || !Hooks.Active(Settings.Smelting.Value)) return;
             string fuel = __instance.m_fuelItem.m_itemData.m_shared.m_name;
-            ChestAccess.BorrowFor(fuel);
+            if (SmeltFlow.InInventory(fuel) + StorageNetwork.Count(fuel, -1, true, true) == 0) ChestAccess.BorrowFor(fuel);
             __result += Localization.instance.Localize($"\n{SmeltFlow.InStorage(fuel)} {fuel} in storage");
         }
     }

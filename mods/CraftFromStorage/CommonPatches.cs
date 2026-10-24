@@ -34,7 +34,12 @@ namespace Storage
                 {
                     string sub = args.Args.Length > 1 ? args.Args[1].ToLowerInvariant() : "status";
                     if (sub == "audit") Audit(args.Context);
-                    else args.Context?.AddString(Status.Line());
+                    else
+                    {
+                        args.Context?.AddString(Status.Line());
+                        args.Context?.AddString($"Borrowing this session: asked {ChestAccess.BorrowsSent}, granted {ChestAccess.BorrowsGranted}, " +
+                                                $"handed to others {ChestAccess.HandedAway}");
+                    }
                 },
                 optionsFetcher: () => new List<string> { "status", "audit" });
         }

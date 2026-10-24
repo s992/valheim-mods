@@ -84,6 +84,18 @@ namespace Storage
         private static readonly Dictionary<ZDOID, float> s_awaitingOwnership = new Dictionary<ZDOID, float>();
         private static readonly Dictionary<ZDOID, float> s_borrowCooldown = new Dictionary<ZDOID, float>();
         private static readonly Dictionary<string, float> s_nextBorrowFor = new Dictionary<string, float>();
+        // Chests we borrowed recently: we don't hand these straight back, so two players crafting at the same base
+        // can't pass chests back and forth (each hand-over resends the whole chest to everyone nearby)
+        private static readonly Dictionary<ZDOID, float> s_borrowedAt = new Dictionary<ZDOID, float>();
+        private const float KeepBorrowed = 30f;
+        // Global budget across all callers: every hand-over is network traffic for everyone near the chest
+        private const int MaxBorrowsInFlight = 3;
+        private const float MinSecondsBetweenBorrows = 0.3f;
+        private static float s_nextBorrowAllowed;
+
+        public static int BorrowsSent { get; private set; }
+        public static int BorrowsGranted { get; private set; }
+        public static int HandedAway { get; private set; }
 
         public static void RegisterRpcs()
         {
@@ -94,14 +106,14 @@ namespace Storage
         /// <summary>Asks the owners of nearby chests holding matching items to hand them over (rate limited per key).</summary>
         public static void BorrowFor(string key, Func<ItemDrop.ItemData, bool> match)
         {
-            if (!Settings.Enabled.Value || ZRoutedRpc.instance == null) return;
+            if (!Settings.Enabled.Value || !Settings.Borrow.Value || ZRoutedRpc.instance == null) return;
             if (s_nextBorrowFor.TryGetValue(key, out float next) && Time.time < next) return;
             s_nextBorrowFor[key] = Time.time + BorrowForInterval;
 
             int started = 0;
             foreach (Container chest in StorageNetwork.Candidates)
             {
-                if (started >= MaxBorrowsPerCall) break;
+                if (started >= MaxBorrowsPerCall || !BudgetAllows()) break;
                 ZNetView nview = chest.m_nview;
                 if (!nview || !nview.IsValid() || nview.IsOwner()) continue;
                 ZDO zdo = nview.GetZDO();
@@ -114,10 +126,15 @@ namespace Storage
                 if (!chest.GetInventory().m_inventory.Any(item => StorageNetwork.IsUsableItem(item) && match(item))) continue;
 
                 s_borrowPending[id] = Time.time + BorrowTimeout;
+                s_nextBorrowAllowed = Time.time + MinSecondsBetweenBorrows;
                 ZRoutedRpc.instance.InvokeRoutedRPC(owner, BorrowRpc, id);
+                BorrowsSent++;
                 started++;
             }
         }
+
+        private static bool BudgetAllows() =>
+            Time.time >= s_nextBorrowAllowed && s_borrowPending.Count + s_awaitingOwnership.Count < MaxBorrowsInFlight;
 
         public static void BorrowFor(string itemName) =>
             BorrowFor(itemName, item => item.m_shared.m_name == itemName);
@@ -129,13 +146,15 @@ namespace Storage
             ZDO zdo = ZDOMan.instance.GetZDO(id);
             ZNetView nview = zdo != null ? ZNetScene.instance.FindInstance(zdo) : null;
             Container chest = nview ? nview.GetComponentInChildren<Container>() : null;
-            if (chest && nview.IsOwner() && sender != ZDOMan.GetSessionID() &&
+            bool keptForNow = s_borrowedAt.TryGetValue(id, out float borrowedAt) && Time.time - borrowedAt < KeepBorrowed;
+            if (chest && nview.IsOwner() && sender != ZDOMan.GetSessionID() && !keptForNow &&
                 !chest.IsInUse() && !(chest.m_wagon && chest.m_wagon.InUse()) &&
                 !(InventoryGui.instance && InventoryGui.instance.m_currentContainer == chest))
             {
                 ZDOMan.instance.ForceSendZDO(sender, zdo.m_uid);
                 zdo.SetOwner(sender);
                 granted = true;
+                HandedAway++;
                 StorageLog.Action($"handed {Describe(chest)} to player {sender}");
             }
             ZRoutedRpc.instance.InvokeRoutedRPC(sender, BorrowReplyRpc, id, granted);
@@ -146,7 +165,10 @@ namespace Storage
             s_borrowPending.Remove(id);
             // Either way, leave it alone for a while so two players crafting at once don't pass chests back and forth
             s_borrowCooldown[id] = Time.time + BorrowCooldown;
-            if (granted) s_awaitingOwnership[id] = Time.time + BorrowTimeout;
+            if (!granted) return;
+            s_awaitingOwnership[id] = Time.time + BorrowTimeout;
+            s_borrowedAt[id] = Time.time;
+            BorrowsGranted++;
         }
 
         // ------------------------------------------------------------------ pulls
@@ -291,6 +313,7 @@ namespace Storage
             float now = Time.time;
             ExpireAll(s_borrowPending, now, id => StorageNetwork.MarkUnresponsive(FindChest(id)));
             ExpireAll(s_borrowCooldown, now, null);
+            ExpireAll(s_borrowedAt, now - KeepBorrowed, null);
 
             if (s_awaitingOwnership.Count > 0)
             {
@@ -336,10 +359,16 @@ namespace Storage
             if (s_pending.RemoveAll(p => p.Finished) > 0) StorageNetwork.Invalidate();
         }
 
+        private static readonly List<ZDOID> s_expired = new List<ZDOID>();
+
+        // Runs every frame: no allocations unless something actually expired
         private static void ExpireAll(Dictionary<ZDOID, float> deadlines, float now, Action<ZDOID> onExpired)
         {
             if (deadlines.Count == 0) return;
-            foreach (ZDOID id in deadlines.Where(kv => now > kv.Value).Select(kv => kv.Key).ToList())
+            s_expired.Clear();
+            foreach (KeyValuePair<ZDOID, float> pair in deadlines)
+                if (now > pair.Value) s_expired.Add(pair.Key);
+            foreach (ZDOID id in s_expired)
             {
                 deadlines.Remove(id);
                 onExpired?.Invoke(id);

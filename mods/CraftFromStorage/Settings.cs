@@ -28,6 +28,7 @@ namespace Storage
 
         public static ConfigEntry<bool> ChestTrophies;
 
+        public static ConfigEntry<bool> Borrow;
         public static ConfigEntry<bool> LogActions;
 
         /// <summary>Bumped whenever a setting changes, so cached results can tell they're stale.</summary>
@@ -76,6 +77,10 @@ namespace Storage
             ChestTrophies = config.Bind("5. Epic Loot", "Include chest trophies", true,
                 "Epic Loot's Sacrifice tab lists trophies from nearby chests. Same as the checkbox in that tab.");
 
+            Borrow = config.Bind("6. Diagnostics", "Borrow chests", true,
+                "Ask other players for ownership of nearby chests before they're needed, so crafting, building and Epic Loot " +
+                "can take from them instantly. Off: those chests are only reached by fetching items into your inventory " +
+                "(and Epic Loot only uses chests you already own).");
             LogActions = config.Bind("6. Diagnostics", "Log actions", true,
                 "Writes every item the mod takes from or fetches out of a chest to BepInEx/StorageOps.log.");
 
