@@ -20,10 +20,23 @@ namespace Storage
 
         public static string SmelterPrefab(Smelter smelter) => StorageNetwork.PrefabName(smelter.gameObject);
 
-        public static List<Material> Materials(Smelter smelter) =>
-            smelter.m_conversion.Where(c => c.m_from != null)
-                .Select(c => new Material { Prefab = c.m_from.gameObject.name, Name = c.m_from.m_itemData.m_shared.m_name, Drop = c.m_from })
+        // One entry per input item. A smelter can list the same input more than once (vanilla only ever uses the first
+        // match); duplicates made Shift+E cycling jump back, since a selection is stored by prefab name.
+        public static List<Material> Materials(Smelter smelter)
+        {
+            var groups = smelter.m_conversion.Where(c => c.m_from != null).GroupBy(c => c.m_from.gameObject.name).ToList();
+            if (groups.Count != smelter.m_conversion.Count(c => c.m_from != null) && s_reportedDuplicates.Add(SmelterPrefab(smelter)))
+                StorageLog.Info($"{SmelterPrefab(smelter)} lists the same input more than once: " +
+                                string.Join(", ", groups.Where(g => g.Count() > 1).Select(g => $"{g.Key} x{g.Count()}")));
+            return groups
+                .Select(g => new Material { Prefab = g.Key, Name = g.First().m_from.m_itemData.m_shared.m_name, Drop = g.First().m_from })
                 .ToList();
+        }
+
+        private static readonly HashSet<string> s_reportedDuplicates = new HashSet<string>();
+
+        private static int PositionOf(List<Material> options, Material material) =>
+            material == null ? -1 : options.FindIndex(m => m.Prefab == material.Prefab);
 
         public static int InInventory(string name) => Player.m_localPlayer.GetInventory().CountItems(name);
         public static int InStorage(string name) => StorageNetwork.Count(name, -1, true, false);
@@ -51,7 +64,7 @@ namespace Storage
                 user.Message(MessageHud.MessageType.Center, "$msg_noprocessableitems");
                 return;
             }
-            Material next = options[(options.IndexOf(current) + 1) % options.Count];
+            Material next = options[(PositionOf(options, current) + 1) % options.Count];
             Settings.SetSelection(SmelterPrefab(smelter), next.Prefab);
             user.Message(MessageHud.MessageType.TopLeft,
                 $"{smelter.m_name}: {next.Name}{(Blocklisted(next.Prefab) ? " (blocklisted)" : "")}");
@@ -70,8 +83,8 @@ namespace Storage
                 ? $" <color=orange>blocklisted</color> ({Settings.BlocklistKey.Value} to allow)"
                 : $" — {InInventory(selected.Name)} in inventory, {InStorage(selected.Name)} in storage";
             string text = $"\nNext: {selected.Name}{state}";
-            if (options.Count > 1 || !options.Contains(selected))
-                text += $"\n[<color=yellow><b>$KEY_AltPlace + $KEY_Use</b></color>] change ({options.IndexOf(selected) + 1}/{options.Count})";
+            if (options.Count > 1)
+                text += $"\n[<color=yellow><b>$KEY_AltPlace + $KEY_Use</b></color>] change ({PositionOf(options, selected) + 1}/{options.Count})";
             return Localization.instance.Localize(text);
         }
 
