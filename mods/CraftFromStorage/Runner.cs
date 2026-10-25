@@ -45,6 +45,8 @@ namespace CraftFromStorage
                 StorageNetwork.Invalidate();
                 player.Message(MessageHud.MessageType.TopLeft, $"Use nearby storage: {(Settings.Enabled.Value ? "on" : "off")}");
             }
+            if (!SmeltFlow.UsesAltUse && Hotkeys.Pressed(Settings.ChangeMaterialKey) && Hooks.Active(Settings.Smelting.Value))
+                SmeltFlow.CycleOnHover(player);
             if (Hotkeys.Pressed(Settings.BlocklistKey) && Hooks.Active(Settings.Smelting.Value))
                 SmeltFlow.ToggleBlocklistOnHover(player);
 

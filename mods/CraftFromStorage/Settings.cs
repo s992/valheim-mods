@@ -22,6 +22,7 @@ namespace CraftFromStorage
 
         public static ConfigEntry<string> SmeltBlocklist;
         public static ConfigEntry<KeyboardShortcut> BlocklistKey;
+        public static ConfigEntry<KeyboardShortcut> ChangeMaterialKey;
         public static ConfigEntry<string> SmeltSelections;
 
         public static ConfigEntry<bool> Borrow;
@@ -63,8 +64,11 @@ namespace CraftFromStorage
                 "Using an item from your hotbar on a smelter still works. The blocklist key toggles the material shown when hovering a smelter.");
             BlocklistKey = config.Bind("4. Smelting", "Blocklist key", new KeyboardShortcut(KeyCode.End),
                 "While hovering a smelter's input, adds or removes its selected material from the blocklist.");
+            ChangeMaterialKey = config.Bind("4. Smelting", "Change material key", KeyboardShortcut.Empty,
+                "While hovering a smelter's input, switches which material goes in next. Empty: the game's Alt Place + Use " +
+                "(Shift+E by default; also works on a gamepad). Don't pick your Use key itself.");
             SmeltSelections = config.Bind("4. Smelting", "Selected materials", "",
-                "Managed by the mod: which material each kind of smelter takes (changed in game with Shift + use).");
+                "Managed by the mod: which material each kind of smelter takes (changed in game with the change material key).");
 
             Borrow = config.Bind("5. Diagnostics", "Borrow chests", true,
                 "Ask other players for ownership of nearby chests before they're needed, so crafting and building can take " +

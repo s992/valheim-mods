@@ -84,7 +84,7 @@ namespace CraftFromStorage
                 : $" — {InInventory(selected.Name)} in inventory, {InStorage(selected.Name)} in storage";
             string text = $"\nNext: {selected.Name}{state}";
             if (options.Count > 1)
-                text += $"\n[<color=yellow><b>$KEY_AltPlace + $KEY_Use</b></color>] change ({PositionOf(options, selected) + 1}/{options.Count})";
+                text += $"\n[<color=yellow><b>{ChangeKeyLabel()}</b></color>] change ({PositionOf(options, selected) + 1}/{options.Count})";
             return Localization.instance.Localize(text);
         }
 
@@ -187,6 +187,17 @@ namespace CraftFromStorage
             return false;
         }
 
+        /// <summary>True when the default Alt Place + Use cycles materials (no dedicated key set).</summary>
+        public static bool UsesAltUse => Settings.ChangeMaterialKey.Value.MainKey == KeyCode.None;
+
+        private static string ChangeKeyLabel() => UsesAltUse ? "$KEY_AltPlace + $KEY_Use" : Settings.ChangeMaterialKey.Value.ToString();
+
+        public static void CycleOnHover(Player player)
+        {
+            Smelter smelter = HoveredOreSwitchSmelter(player);
+            if (smelter) Cycle(smelter, player);
+        }
+
         public static void ToggleBlocklistOnHover(Player player)
         {
             Smelter smelter = HoveredOreSwitchSmelter(player);
@@ -271,13 +282,14 @@ namespace CraftFromStorage
         }
     }
 
-    // Shift + use on a smelter's input changes the material (vanilla passes the alt flag to switches and ignores it)
+    // Alt Place + Use (Shift+E) on a smelter's input changes the material, unless a dedicated key is set (vanilla passes
+    // the alt flag to switches and ignores it)
     [HarmonyPatch(typeof(Switch), nameof(Switch.Interact))]
     internal static class SwitchInteractPatch
     {
         private static bool Prefix(Switch __instance, Humanoid character, bool hold, bool alt, ref bool __result)
         {
-            if (!alt || character != Player.m_localPlayer || !Hooks.Active(Settings.Smelting.Value)) return true;
+            if (!alt || !SmeltFlow.UsesAltUse || character != Player.m_localPlayer || !Hooks.Active(Settings.Smelting.Value)) return true;
             Smelter smelter = __instance.GetComponentInParent<Smelter>();
             if (!smelter || smelter.m_addOreSwitch != __instance) return true;
             __result = false;
