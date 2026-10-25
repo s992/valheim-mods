@@ -68,9 +68,9 @@ namespace Storage
             int items = totals.Values.Sum();
             string summary = $"Storage audit: {chests.Count} chests in reach + your inventory: {items} items, {totals.Count} kinds";
             terminal?.AddString(summary + " (full list in BepInEx/StorageOps.log)");
-            StorageLog.Action("AUDIT " + summary);
+            StorageLog.Write("AUDIT " + summary);
             foreach (var pair in totals)
-                StorageLog.Action($"AUDIT   {Localization.instance.Localize(pair.Key)} ({pair.Key}): {pair.Value}");
+                StorageLog.Write($"AUDIT   {Localization.instance.Localize(pair.Key)} ({pair.Key}): {pair.Value}");
         }
     }
 }

@@ -62,14 +62,9 @@ Riskiest first. "Two players" means two clients on a server where both run the p
 4. **Fuel.** Coal for the smelter comes from a chest when you carry none.
 5. **Windmill and spinning wheel.** Barley and flax from chests work. These have no fuel input.
 
-## 3b. Smelter overfill, alone (simulated lag)
-Settings are under **5. Diagnostics** in the config manager (F1).
-1. **Reproduce the old bug.** Set "Simulated smelter lag (ms)" to 500 and turn "Smelter overfill fix" off.
-   Hold E on a smelter's coal input with coal in storage. Expect it to go past 20, e.g. `22/20`.
-2. **Confirm the fix.** Turn "Smelter overfill fix" back on, empty or burn down the smelter, and hold E again.
-   Expect it to stop at `20/20` with "It's full". The hover count should keep pace with "in storage".
-3. **Ore too.** Same as above with ore on the ore input (the hover shows `(N/max)`).
-4. **Afterwards:** set the lag back to 0 and leave the fix on.
+## 3b. Smelter overfill (two players)
+Holding E on a smelter the other player owns stops at its limit (`20/20`, "It's full"), and the hover count keeps
+pace with "in storage".
 
 ## 4. Epic Loot
 1. **Enchanted gear is safe.** An enchanted weapon in a chest is never used up as a crafting material, even

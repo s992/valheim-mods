@@ -22,7 +22,13 @@ namespace Storage
 
         public static void Action(string message)
         {
-            if (!Settings.LogActions.Value || s_path == null) return;
+            if (Settings.LogActions.Value) Write(message);
+        }
+
+        /// <summary>Always written (e.g. `storage audit`, which the player asked for explicitly).</summary>
+        public static void Write(string message)
+        {
+            if (s_path == null) return;
             try
             {
                 File.AppendAllText(s_path, $"{DateTime.Now:yyyy-MM-dd HH:mm:ss.fff} {message}{Environment.NewLine}");

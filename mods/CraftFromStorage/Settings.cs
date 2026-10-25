@@ -10,7 +10,7 @@ namespace Storage
     {
         public static ConfigEntry<bool> Enabled;
         public static ConfigEntry<KeyboardShortcut> ToggleKey;
-        public static ConfigEntry<float> Range;
+        public static ConfigEntry<int> Range;
         public static ConfigEntry<bool> ShowStatus;
 
         public static ConfigEntry<bool> Crafting;
@@ -26,8 +26,6 @@ namespace Storage
 
         public static ConfigEntry<bool> Borrow;
         public static ConfigEntry<bool> LogActions;
-        public static ConfigEntry<int> SimulatedSmelterLag;
-        public static ConfigEntry<bool> SmelterOverfillFix;
 
         /// <summary>Bumped whenever a setting changes, so cached results can tell they're stale.</summary>
         public static int Version { get; private set; }
@@ -41,11 +39,11 @@ namespace Storage
                 "Crafting, building and smelting use materials from nearby chests. The toggle key flips this.");
             ToggleKey = config.Bind("1. General", "Toggle key", new KeyboardShortcut(KeyCode.Home),
                 "Turns \"use nearby storage\" on and off.");
-            Range = config.Bind("1. General", "Range", 30f,
+            Range = config.Bind("1. General", "Range", 30,
                 new ConfigDescription(
                     "Chests within this many metres of you are used. It's capped at the distance the game guarantees chests are " +
                     "loaded (128 m on the default simulation distance); the status line says when the cap applies.",
-                    new AcceptableValueRange<float>(5f, 250f)));
+                    new AcceptableValueRange<int>(5, 250)));
             ShowStatus = config.Bind("1. General", "Show status line", true,
                 "Shows a line at the top of the screen while crafting, building or hovering a smelter: how many chests are used, " +
                 "how many were skipped and why.");
@@ -71,15 +69,9 @@ namespace Storage
             Borrow = config.Bind("5. Diagnostics", "Borrow chests", true,
                 "Ask other players for ownership of nearby chests before they're needed, so crafting and building can take " +
                 "from them instantly. Off: those chests are only reached by fetching items into your inventory.");
-            SimulatedSmelterLag = config.Bind("5. Diagnostics", "Simulated smelter lag (ms)", 0,
-                new ConfigDescription(
-                    "Testing only. Smelters you own apply inserts this many milliseconds late, the way a smelter another player " +
-                    "owns does, so the overfill fix can be tried alone. 0 = off. Leave at 0 for normal play.",
-                    new AcceptableValueRange<int>(0, 2000)));
-            SmelterOverfillFix = config.Bind("5. Diagnostics", "Smelter overfill fix", true,
-                "Testing only. Off reproduces the old bug (holding E overfills a smelter whose count lags behind). Leave on.");
-            LogActions = config.Bind("5. Diagnostics", "Log actions", true,
-                "Writes every item the mod takes from or fetches out of a chest to BepInEx/StorageOps.log.");
+            LogActions = config.Bind("5. Diagnostics", "Log actions", false,
+                "Writes every item the mod takes from or fetches out of a chest to BepInEx/StorageOps.log. Handy when " +
+                "something looks wrong; the file is never trimmed, so leave it off otherwise. `storage audit` writes there either way.");
 
             Parse();
             config.SettingChanged += (_, __) => Parse();
