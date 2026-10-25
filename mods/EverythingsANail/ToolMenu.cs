@@ -88,6 +88,42 @@ namespace EverythingsANail
             return element;
         }
 
+        // Vanilla's main menu has no icon of its own: draw a small radial (a ring of dots around a
+        // centre dot) in white, like vanilla's group icons, which get tinted when selected
+        public static Sprite MainMenuIcon
+        {
+            get
+            {
+                if (s_mainMenuIcon) return s_mainMenuIcon;
+                const int size = 128;
+                var dots = new List<(Vector2 centre, float radius)> { (new Vector2(size / 2f, size / 2f), 13f) };
+                for (int i = 0; i < 6; i++)
+                {
+                    float angle = Mathf.PI / 2f + i * Mathf.PI / 3f;
+                    dots.Add((new Vector2(size / 2f + Mathf.Cos(angle) * 42f, size / 2f + Mathf.Sin(angle) * 42f), 11f));
+                }
+                var texture = new Texture2D(size, size, TextureFormat.RGBA32, false) { name = "EverythingsANail_MainMenu" };
+                var pixels = new Color32[size * size];
+                for (int y = 0; y < size; y++)
+                {
+                    for (int x = 0; x < size; x++)
+                    {
+                        var point = new Vector2(x + 0.5f, y + 0.5f);
+                        // Coverage from the distance to the nearest dot edge, for smooth edges
+                        float alpha = dots.Max(dot => Mathf.Clamp01(dot.radius + 0.5f - Vector2.Distance(point, dot.centre)));
+                        pixels[y * size + x] = new Color32(255, 255, 255, (byte)(alpha * 255));
+                    }
+                }
+                texture.SetPixels32(pixels);
+                texture.Apply();
+                s_mainMenuIcon = Sprite.Create(texture, new Rect(0, 0, size, size), new Vector2(0.5f, 0.5f), 100f);
+                s_mainMenuIcon.name = texture.name;
+                return s_mainMenuIcon;
+            }
+        }
+
+        private static Sprite s_mainMenuIcon;
+
         public static ToolInfo CurrentTool() =>
             Impersonation.CurrentTool(ToolSwitcher.EquippedHammer(Player.m_localPlayer));
     }
@@ -135,6 +171,8 @@ namespace EverythingsANail
             GroupElement main = Object.Instantiate(RadialData.SO.GroupElement);
             main.Init(RadialData.SO.MainGroupConfig, this, radial);
             main.Name = "Main menu";
+            main.Icon.sprite = ToolMenu.MainMenuIcon;
+            main.Icon.gameObject.SetActive(true);
             elements.Add(main);
 
             radial.ConstructRadial(elements);
