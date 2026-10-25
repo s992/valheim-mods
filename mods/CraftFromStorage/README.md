@@ -18,13 +18,20 @@ when building in the build menu and crafting at workbenches (workbench, forge, e
 
 ### smelting
 
-smelter-style stations (e.g. kiln, furnace, blast furnace, windmill, eitr refinery, etc.) are supported and behave similarly to crafting and building. when hovering over the station input, text is displayed indicating what will be inserted next, how many are in your inventory, and how many are available in storage. for station inputs that accept multiple types of material such as a kiln or a furnace, you may press `Shift+E (Change material key)` to rotate between the available options.
+the `Change material key` referenced below is `Alt Place + Use` by default. on pc, this defaults to `Shift+E`. that's a mouthful to type so i'm just referring to it as `Change material key` from here on out. though at this point i've typed more than i would have if i typed this twice for the two remaining usages of `Change material key` in this readme.
 
-smelter-style stations also support a blocklist. fine wood, core wood, and yggdrasil wood wood are blocklisted by default because there's better trees to get your coal from. an item may be added to the blocklist by following these steps:
+smelter-style stations (e.g. kiln, furnace, blast furnace, windmill, eitr refinery, etc.) are supported and behave similarly to crafting and building. when hovering over the station input, text is displayed indicating what will be inserted next, how many are in your inventory, and how many are available in storage. for station inputs that accept multiple types of material such as a kiln or a furnace, you may press the `Change material key` to cycle through the available options.
 
-1. on the station type you want to configure, aim at the relevant input
-2. if applicable, press `Shift+E (Change material key)` to cycle through materials until you locate the one you want to blocklist
+smelter-style stations also support a blocklist. fine wood, core wood, and yggdrasil wood are blocklisted by default because there's better trees to get your coal from. an item may be added to the blocklist by following these steps:
+
+1. on a station that accepts the material you want to blocklist, aim at the relevant input
+2. if applicable, press `Change material key` to cycle through materials until you locate the one you want to blocklist
 3. press `End (Blocklist key)`
+
+important blocklist notes:
+
+- the blocklist is global
+- you can only do the above if you have the material available (in inventory or in-range storage). you may also edit the config directly (see settings below).
 
 ### miscellaneous
 
@@ -34,7 +41,15 @@ there is a status line that appears at the top of the screen when crafting, buil
 
 ## multiplayer
 
-in multiplayer, [MultiUserChest](https://thunderstore.io/c/valheim/p/MSchmoecker/MultiUserChest/) is required on all clients and the server.
+this mod and [MultiUserChest](https://thunderstore.io/c/valheim/p/MSchmoecker/MultiUserChest/) are required on the server and all clients.
+
+### multiplayer limitations
+
+valheim's chests are complicated. the tldr is that chests within ~64m of you have an "owner" (either you, another player, or - rarely - the server). the owner of the chest is the only one that is allowed to modify the contents of that chest, so in multiplayer we usually have to ask the owner for the materials before we can consume them. this has a few ramifications:
+
+- you must have enough inventory space to hold the materials you're attempting to consume. weight is not considered.
+- sometimes there's a short delay between when we ask for the materials and when we receive them. because of this, you may be prompted to attempt your build/craft again.
+- chests beyond 64m can have no owner, which means there's no one to ask about materials. it's also somewhat complicated to claim ownership of a chest (vs. having ownership assigned to you by the server like normal), so i'm not dealing with it right now. if it becomes annoying in practice i may take another look.
 
 ## settings
 
@@ -43,7 +58,7 @@ settings are configurable via editing the settings file directly (`BepInEx/confi
 these are the default settings:
 
 ```
-## Settings file was created by plugin CraftFromStorage v0.1.0
+## Settings file was created by plugin CraftFromStorage v1.0.0
 ## Plugin GUID: s992.CraftFromStorage
 
 [1. General]
