@@ -66,7 +66,7 @@ namespace CraftFromStorage
                 "While hovering a smelter's input, adds or removes its selected material from the blocklist.");
             ChangeMaterialKey = config.Bind("4. Smelting", "Change material key", KeyboardShortcut.Empty,
                 "While hovering a smelter's input, switches which material goes in next. Empty: the game's Alt Place + Use " +
-                "(Shift+E by default; also works on a gamepad). Don't pick your Use key itself.");
+                "(Shift+E by default; also works on a gamepad). Your Use key is refused (it would also insert).");
             SmeltSelections = config.Bind("4. Smelting", "Selected materials", "",
                 "Managed by the mod: which material each kind of smelter takes (changed in game with the change material key).");
 

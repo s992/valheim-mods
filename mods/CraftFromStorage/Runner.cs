@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using BepInEx.Configuration;
 using UnityEngine;
 
 namespace CraftFromStorage
@@ -26,7 +27,26 @@ namespace CraftFromStorage
     {
         public static Runner Instance { get; private set; }
 
-        private void Awake() => Instance = this;
+        private bool m_checkChangeKey = true;
+
+        private void Awake()
+        {
+            Instance = this;
+            Settings.ChangeMaterialKey.SettingChanged += (_, __) => m_checkChangeKey = true;
+        }
+
+        // The change-material key must not be the Use key: Use also inserts, so pressing it would do both. Checked once
+        // the game's input exists, whenever the setting changes, and on every press (Use can be remapped in game).
+        private static bool RejectIfUseKey()
+        {
+            KeyCode key = Settings.ChangeMaterialKey.Value.MainKey;
+            if (!Hotkeys.IsBoundToUse(key)) return false;
+            Settings.ChangeMaterialKey.Value = KeyboardShortcut.Empty;
+            string message = $"Change material key can't be your Use key ({key}); it's back to Alt Place + Use";
+            StorageLog.Warning(message);
+            if (Player.m_localPlayer) Player.m_localPlayer.Message(MessageHud.MessageType.TopLeft, message);
+            return true;
+        }
 
         private const float BorrowAheadInterval = 1f;
         private float m_nextBorrowAhead;
@@ -35,6 +55,11 @@ namespace CraftFromStorage
 
         private void Update()
         {
+            if (m_checkChangeKey && ZInput.instance != null)
+            {
+                m_checkChangeKey = false;
+                RejectIfUseKey();
+            }
             ChestAccess.Tick();
             Player player = Player.m_localPlayer;
             if (!player || Hotkeys.IsTyping()) return;
@@ -45,7 +70,8 @@ namespace CraftFromStorage
                 StorageNetwork.Invalidate();
                 player.Message(MessageHud.MessageType.TopLeft, $"Use nearby storage: {(Settings.Enabled.Value ? "on" : "off")}");
             }
-            if (!SmeltFlow.UsesAltUse && Hotkeys.Pressed(Settings.ChangeMaterialKey) && Hooks.Active(Settings.Smelting.Value))
+            if (!SmeltFlow.UsesAltUse && Hotkeys.Pressed(Settings.ChangeMaterialKey) && Hooks.Active(Settings.Smelting.Value) &&
+                !RejectIfUseKey())
                 SmeltFlow.CycleOnHover(player);
             if (Hotkeys.Pressed(Settings.BlocklistKey) && Hooks.Active(Settings.Smelting.Value))
                 SmeltFlow.ToggleBlocklistOnHover(player);

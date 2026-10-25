@@ -38,6 +38,8 @@
     <!-- Status line (OnGUI) -->
     <Reference Include="UnityEngine.IMGUIModule" HintPath="$(ValheimManagedDir)\UnityEngine.IMGUIModule.dll" Private="false" />
     <Reference Include="UnityEngine.TextRenderingModule" HintPath="$(ValheimManagedDir)\UnityEngine.TextRenderingModule.dll" Private="false" />
+    <!-- Checking a key against the game's Use binding -->
+    <Reference Include="Unity.InputSystem" HintPath="$(ValheimManagedDir)\Unity.InputSystem.dll" Private="false" />
     <!-- Requirement text ("have/need"); TMP_Text derives from a UnityEngine.UI type -->
     <Reference Include="Unity.TextMeshPro" HintPath="$(ValheimManagedDir)\Unity.TextMeshPro.dll" Private="false" />
     <Reference Include="UnityEngine.UI" HintPath="$(ValheimManagedDir)\UnityEngine.UI.dll" Private="false" />
