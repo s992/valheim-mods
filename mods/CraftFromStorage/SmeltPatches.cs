@@ -82,7 +82,7 @@ namespace CraftFromStorage
             string state = Blocklisted(selected.Prefab)
                 ? $" <color=orange>blocklisted</color> ({Settings.BlocklistKey.Value} to allow)"
                 : $" — {InInventory(selected.Name)} in inventory, {InStorage(selected.Name)} in storage";
-            string text = $"\nNext: {selected.Name}{state}";
+            string text = $"\nAdding: {selected.Name}{state}";
             if (options.Count > 1)
                 text += $"\n[<color=yellow><b>{ChangeKeyLabel()}</b></color>] change ({PositionOf(options, selected) + 1}/{options.Count})";
             return Localization.instance.Localize(text);
