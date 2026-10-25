@@ -2,14 +2,14 @@
 
   <PropertyGroup>
     <TargetFramework>netstandard2.1</TargetFramework>
-    <AssemblyName>Storage</AssemblyName>
-    <RootNamespace>Storage</RootNamespace>
+    <AssemblyName>CraftFromStorage</AssemblyName>
+    <RootNamespace>CraftFromStorage</RootNamespace>
     <Version>0.1.0</Version>
-    <Description>Craft, build, smelt and enchant from nearby chests. Works with Multi User Chest, Quick Stack Store Sort Trash Restock and Epic Loot.</Description>
+    <Description>Craft, build and smelt with materials from nearby chests. Built on Multi User Chest for multiplayer; works with Quick Stack Store Sort Trash Restock and Epic Loot.</Description>
 
     <!-- Generates MyPluginInfo (GUID/name/version) via BepInEx.PluginInfoProps -->
-    <BepInExPluginGuid>s992.Storage</BepInExPluginGuid>
-    <BepInExPluginName>Storage</BepInExPluginName>
+    <BepInExPluginGuid>s992.CraftFromStorage</BepInExPluginGuid>
+    <BepInExPluginName>CraftFromStorage</BepInExPluginName>
 
     <!-- Needed by the publicizer so private game members can be used directly -->
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>

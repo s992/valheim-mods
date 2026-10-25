@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 
-namespace Storage
+namespace CraftFromStorage
 {
     // The only code that changes chest contents. Rules:
     // - Chests we own are edited directly (synchronous), and only once our local copy is up to date.
@@ -11,8 +11,8 @@ namespace Storage
     //   same call QSS restock uses, or the chest is *borrowed* (ownership handed over the way vanilla does on open).
     internal static class ChestAccess
     {
-        private const string BorrowRpc = "s992.Storage.Borrow";
-        private const string BorrowReplyRpc = "s992.Storage.BorrowReply";
+        private const string BorrowRpc = "s992.CraftFromStorage.Borrow";
+        private const string BorrowReplyRpc = "s992.CraftFromStorage.BorrowReply";
         private const float BorrowTimeout = 5f;
         private const float BorrowCooldown = 15f;
         private const float BorrowForInterval = 3f;
@@ -326,7 +326,14 @@ namespace Storage
                 if (arrived)
                 {
                     pull.Finished = true;
-                    StorageLog.Action($"fetch of {pull.Amount} {pull.Name} from {Describe(pull.Chest)} answered");
+                    // MUC also unblocks the slot when the owner answers "failed" (e.g. they portalled away and no longer
+                    // have the chest loaded). Leave such a chest out for a while instead of promising its items again.
+                    if (inventory.CountItems(pull.Name, -1, false) <= pull.StartCount)
+                    {
+                        if (pull.Chest) StorageNetwork.MarkUnresponsive(pull.Chest);
+                        StorageLog.Action($"fetch of {pull.Amount} {pull.Name} from {Describe(pull.Chest)} came back empty");
+                    }
+                    else StorageLog.Action($"fetch of {pull.Amount} {pull.Name} from {Describe(pull.Chest)} answered");
                 }
                 else if (now > pull.Deadline)
                 {

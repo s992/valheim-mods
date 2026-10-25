@@ -2,7 +2,7 @@ using System.Linq;
 using BepInEx.Configuration;
 using UnityEngine;
 
-namespace Storage
+namespace CraftFromStorage
 {
     internal static class Hotkeys
     {

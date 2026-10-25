@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace Storage
+namespace CraftFromStorage
 {
     // Which chests count as storage right now, and how many of an item they hold.
     // Read-only: nothing here changes an inventory (ChestAccess does that).

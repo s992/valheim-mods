@@ -3,7 +3,7 @@ using System.Linq;
 using HarmonyLib;
 using UnityEngine;
 
-namespace Storage
+namespace CraftFromStorage
 {
     // Smelters (also furnace, kiln, windmill, spinning wheel, eitr refinery) take the selected material from the
     // inventory first, then chests we own, then fetch a small batch from chests other players own.

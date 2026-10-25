@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 
-namespace Storage
+namespace CraftFromStorage
 {
     // What an action is about to consume, mirroring vanilla's own rules (ConsumeResources / DoCrafting)
     internal readonly struct Need

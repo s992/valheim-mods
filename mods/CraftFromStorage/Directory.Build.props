@@ -22,8 +22,8 @@
     <ValheimManagedDir Condition="'$(ValheimManagedDir)' == ''">$(ValheimDir)\valheim_server_Data\Managed</ValheimManagedDir>
 
     <!--
-      Where builds are copied for local testing: the Default r2modman profile (approved 2026-10-23, after
-      testing in a separate profile). CraftFromChests must not be installed there; this mod won't load next to it.
+      Where builds are copied for local testing (r2modman profile). CraftFromChests must not be installed there:
+      this mod refuses to load next to it.
     -->
     <PluginsDir Condition="'$(PluginsDir)' == ''">$(APPDATA)\r2modmanPlus-local\Valheim\profiles\Default\BepInEx\plugins</PluginsDir>
   </PropertyGroup>

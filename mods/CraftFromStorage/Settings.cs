@@ -4,7 +4,7 @@ using System.Linq;
 using BepInEx.Configuration;
 using UnityEngine;
 
-namespace Storage
+namespace CraftFromStorage
 {
     internal static class Settings
     {
@@ -70,7 +70,7 @@ namespace Storage
                 "Ask other players for ownership of nearby chests before they're needed, so crafting and building can take " +
                 "from them instantly. Off: those chests are only reached by fetching items into your inventory.");
             LogActions = config.Bind("5. Diagnostics", "Log actions", false,
-                "Writes every item the mod takes from or fetches out of a chest to BepInEx/StorageOps.log. Handy when " +
+                "Writes every item the mod takes from or fetches out of a chest to BepInEx/CraftFromStorage.log. Handy when " +
                 "something looks wrong; the file is never trimmed, so leave it off otherwise. `storage audit` writes there either way.");
 
             Parse();

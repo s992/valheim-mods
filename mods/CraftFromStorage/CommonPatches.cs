@@ -2,7 +2,7 @@ using System.Collections.Generic;
 using System.Linq;
 using HarmonyLib;
 
-namespace Storage
+namespace CraftFromStorage
 {
     [HarmonyPatch(typeof(Container), nameof(Container.Awake))]
     internal static class ContainerAwakePatch
@@ -67,7 +67,7 @@ namespace Storage
 
             int items = totals.Values.Sum();
             string summary = $"Storage audit: {chests.Count} chests in reach + your inventory: {items} items, {totals.Count} kinds";
-            terminal?.AddString(summary + " (full list in BepInEx/StorageOps.log)");
+            terminal?.AddString(summary + " (full list in BepInEx/CraftFromStorage.log)");
             StorageLog.Write("AUDIT " + summary);
             foreach (var pair in totals)
                 StorageLog.Write($"AUDIT   {Localization.instance.Localize(pair.Key)} ({pair.Key}): {pair.Value}");

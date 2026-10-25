@@ -72,6 +72,6 @@ jobs:
 
       - uses: actions/upload-artifact@v7
         with:
-          name: Storage
-          path: src/Storage/bin/Release/netstandard2.1/Storage.dll
+          name: CraftFromStorage
+          path: src/CraftFromStorage/bin/Release/netstandard2.1/CraftFromStorage.dll
           if-no-files-found: error

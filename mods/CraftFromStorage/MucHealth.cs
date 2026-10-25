@@ -6,7 +6,7 @@ using BepInEx.Bootstrap;
 using BepInEx.Logging;
 using HarmonyLib;
 
-namespace Storage
+namespace CraftFromStorage
 {
     public enum MucState
     {

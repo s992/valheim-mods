@@ -3,11 +3,11 @@ schemaVersion = "0.0.1"
 
 [package]
 namespace = "s992"
-name = "Storage"
-# Placeholder: release builds pass --package-version from <Version> in Storage.csproj
+name = "CraftFromStorage"
+# Placeholder: release builds pass --package-version from <Version> in CraftFromStorage.csproj
 versionNumber = "0.0.0"
-description = "Craft, build, smelt and enchant from nearby chests. Works with Multi User Chest, Quick Stack Store Sort Trash Restock and Epic Loot."
-websiteUrl = "https://github.com/s992/ValheimStorage"
+description = "Craft, build and smelt with materials from nearby chests. Built on Multi User Chest for multiplayer; works with Quick Stack Store Sort Trash Restock and Epic Loot."
+websiteUrl = "https://github.com/s992/ValheimCraftFromStorage"
 containsNsfwContent = false
 
 [package.dependencies]
@@ -19,8 +19,8 @@ readme = "./README.md"
 outdir = "./build"
 
 [[build.copy]]
-source = "./src/Storage/bin/Release/netstandard2.1/Storage.dll"
-target = "plugins/Storage.dll"
+source = "./src/CraftFromStorage/bin/Release/netstandard2.1/CraftFromStorage.dll"
+target = "plugins/CraftFromStorage.dll"
 
 [publish]
 repository = "https://thunderstore.io"

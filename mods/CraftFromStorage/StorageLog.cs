@@ -3,7 +3,7 @@ using System.IO;
 using BepInEx;
 using BepInEx.Logging;
 
-namespace Storage
+namespace CraftFromStorage
 {
     // Action journal: every item taken from or fetched out of a chest, so a test session can be audited afterwards
     internal static class StorageLog
@@ -14,7 +14,7 @@ namespace Storage
         public static void Init(ManualLogSource log)
         {
             s_log = log;
-            s_path = Path.Combine(Paths.BepInExRootPath, "StorageOps.log");
+            s_path = Path.Combine(Paths.BepInExRootPath, "CraftFromStorage.log");
         }
 
         public static void Info(string message) => s_log?.LogInfo(message);

@@ -3,7 +3,7 @@ using System.Reflection;
 using BepInEx.Logging;
 using HarmonyLib;
 
-namespace Storage
+namespace CraftFromStorage
 {
     // MUC internals (not an API): its per-inventory slot block. A pull blocks its target slot until MUC's reply arrives,
     // and while any slot is blocked MUC refuses all auto-pickup. MUC never releases a slot whose reply was lost, so we

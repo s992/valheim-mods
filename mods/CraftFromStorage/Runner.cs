@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace Storage
+namespace CraftFromStorage
 {
     internal static class Status
     {

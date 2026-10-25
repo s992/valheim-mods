@@ -3,7 +3,7 @@ using System.Linq;
 using HarmonyLib;
 using UnityEngine;
 
-namespace Storage
+namespace CraftFromStorage
 {
     // Counting: requirement checks see inventory + storage
     [HarmonyPatch(typeof(Player), nameof(Player.HaveRequirementItems))]

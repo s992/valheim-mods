@@ -2,7 +2,7 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 
-namespace Storage
+namespace CraftFromStorage
 {
     // A smelter's ore queue and fuel live in its ZDO, written by its owner (often another player). Each insert is an RPC
     // to that owner, and our copy of the count only catches up when the owner's next update arrives. Holding E repeats

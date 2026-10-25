@@ -1,7 +1,7 @@
 using BepInEx;
 using HarmonyLib;
 
-namespace Storage
+namespace CraftFromStorage
 {
     [BepInPlugin(MyPluginInfo.PLUGIN_GUID, MyPluginInfo.PLUGIN_NAME, MyPluginInfo.PLUGIN_VERSION)]
     // Load after MUC (its patches must exist when we check them) and Epic Loot (its magic-item check)

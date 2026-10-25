@@ -4,7 +4,7 @@ using System.Reflection.Emit;
 using HarmonyLib;
 using UnityEngine;
 
-namespace Storage
+namespace CraftFromStorage
 {
     // Replacements for single vanilla calls (Inventory.CountItems/HaveItem/GetItem/RemoveItem) inside the requirement
     // checks. Each takes the same arguments as the call it replaces, with the inventory first, and only adds storage when
@@ -81,7 +81,7 @@ namespace Storage
                 else yield return instruction;
             }
             if (replaced != expected)
-                Debug.LogWarning($"[Storage] {where}: expected {expected} call(s) to {target?.Name ?? "a missing method"}, replaced {replaced}. " +
+                Debug.LogWarning($"[CraftFromStorage] {where}: expected {expected} call(s) to {target?.Name ?? "a missing method"}, replaced {replaced}. " +
                                  "Nearby storage may not be counted there.");
         }
 

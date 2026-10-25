@@ -1,6 +1,6 @@
 name: Release
 
-# Push a tag matching <Version> in Storage.csproj (e.g. v1.2.0) to release.
+# Push a tag matching <Version> in CraftFromStorage.csproj (e.g. v1.2.0) to release.
 # Running it manually builds the Thunderstore package as an artifact without releasing anything.
 on:
   push:
@@ -32,13 +32,13 @@ jobs:
       - name: Read version
         id: version
         run: |
-          version=$(grep -oP '(?<=<Version>)[^<]+' src/Storage/Storage.csproj)
+          version=$(grep -oP '(?<=<Version>)[^<]+' src/CraftFromStorage/CraftFromStorage.csproj)
           if [[ ! "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-            echo "::error::<Version> '$version' in Storage.csproj is not Major.Minor.Patch"
+            echo "::error::<Version> '$version' in CraftFromStorage.csproj is not Major.Minor.Patch"
             exit 1
           fi
           if [[ "$GITHUB_REF_TYPE" == "tag" && "$GITHUB_REF_NAME" != "v$version" ]]; then
-            echo "::error::Tag $GITHUB_REF_NAME does not match <Version> $version in Storage.csproj"
+            echo "::error::Tag $GITHUB_REF_NAME does not match <Version> $version in CraftFromStorage.csproj"
             exit 1
           fi
           echo "version=$version" >> "$GITHUB_OUTPUT"
@@ -52,8 +52,8 @@ jobs:
 
       - uses: actions/download-artifact@v8
         with:
-          name: Storage
-          path: src/Storage/bin/Release/netstandard2.1
+          name: CraftFromStorage
+          path: src/CraftFromStorage/bin/Release/netstandard2.1
 
       - uses: actions/setup-dotnet@v6
         with:
@@ -64,7 +64,7 @@ jobs:
         run: |
           dotnet tool install -g tcli --version "$TCLI_VERSION"
           tcli build --package-version "${{ steps.version.outputs.version }}"
-          echo "file=s992-Storage-${{ steps.version.outputs.version }}.zip" >> "$GITHUB_OUTPUT"
+          echo "file=s992-CraftFromStorage-${{ steps.version.outputs.version }}.zip" >> "$GITHUB_OUTPUT"
 
       - uses: actions/upload-artifact@v7
         with:

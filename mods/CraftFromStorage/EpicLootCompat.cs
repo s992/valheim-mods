@@ -4,7 +4,7 @@ using BepInEx.Bootstrap;
 using BepInEx.Logging;
 using HarmonyLib;
 
-namespace Storage
+namespace CraftFromStorage
 {
     // Optional: tells enchanted Epic Loot gear apart, through its official API (EpicLoot.API) found at runtime, so
     // crafting never uses up an enchanted item that happens to share a name with a material
