@@ -140,8 +140,7 @@ namespace Storage
 
             Prune();
 
-            // Chests are only guaranteed to be loaded this far from the player (64 m per "near" zone ring)
-            float cap = Mathf.Max(1, ZNet.instance.GetSyncedSimulationDistance().NearSimulationDistance) * ZoneSystem.c_ZoneSize;
+            float cap = GuaranteedLoadedRadius(ZNet.instance.GetSyncedSimulationDistance());
             RangeCapped = Settings.Range.Value > cap;
             EffectiveRange = Mathf.Min(Settings.Range.Value, cap);
 
@@ -197,6 +196,38 @@ namespace Storage
                 s_setSignature = signature;
                 s_contentVersion++;
             }
+        }
+
+        private static SimulationDistance s_radiusFor;
+        private static float s_radius;
+
+        /// <summary>
+        /// How far from the player chests are certain to be loaded, wherever the player stands in their 64 m zone.
+        /// Mirrors ZDOMan.FindSectorObjects: zones up to N rings out are loaded, except that non-classic settings skip
+        /// zones whose centre is (N + 0.5) zones or more away (the corners). The answer is the distance from the
+        /// player's zone to the nearest zone that isn't loaded. Classic N gives N × 64 m; e.g. non-classic 2 gives ~90 m.
+        /// </summary>
+        public static float GuaranteedLoadedRadius(SimulationDistance distance)
+        {
+            if (distance.Equals(s_radiusFor) && s_radius > 0f) return s_radius;
+            int rings = Mathf.Max(0, distance.NearSimulationDistance);
+            float zone = ZoneSystem.c_ZoneSize;
+            float best = (rings + 1) * zone;
+            for (int x = -(rings + 1); x <= rings + 1; x++)
+            {
+                for (int y = -(rings + 1); y <= rings + 1; y++)
+                {
+                    bool outsideRings = Mathf.Abs(x) > rings || Mathf.Abs(y) > rings;
+                    bool cornerSkipped = !distance.IsClassic && new Vector2(x, y).magnitude * zone >= (rings + 0.5f) * zone;
+                    if (!outsideRings && !cornerSkipped) continue;
+                    // Gap between the player's zone and that zone
+                    float dx = Mathf.Max(0, Mathf.Abs(x) - 1) * zone, dy = Mathf.Max(0, Mathf.Abs(y) - 1) * zone;
+                    best = Mathf.Min(best, Mathf.Sqrt(dx * dx + dy * dy));
+                }
+            }
+            s_radiusFor = distance;
+            s_radius = Mathf.Max(zone, best);
+            return s_radius;
         }
 
         /// <summary>
