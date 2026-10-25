@@ -4,7 +4,7 @@
     <TargetFramework>netstandard2.1</TargetFramework>
     <AssemblyName>EverythingsANail</AssemblyName>
     <RootNamespace>EverythingsANail</RootNamespace>
-    <Version>0.1.0</Version>
+    <Version>1.0.0</Version>
     <Description>Your hammer does it all: switch it to any tool you've owned (hoe, cultivator, scythe, fishing rod, knife, axes, pickaxes, modded tools) from the radial menu. Server-locked config.</Description>
 
     <!-- Generates MyPluginInfo (GUID/name/version) via BepInEx.PluginInfoProps -->
