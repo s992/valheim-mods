@@ -1,3 +1,5 @@
+using System.Collections.Generic;
+using System.Linq;
 using HarmonyLib;
 using Valheim.UI;
 
@@ -58,6 +60,23 @@ namespace EverythingsANail
             if (Impersonation.IsDisguised(left))
             {
                 visEq.SetLeftItem(Impersonation.CurrentTool(left).Prefab.GetStableHashCode(), 0, left.m_quality);
+            }
+        }
+    }
+
+    // New build pieces are only discovered for the build menus of tools in your inventory (this is
+    // the only caller), so a hammer counts as carrying every build tool it can become
+    [HarmonyPatch(typeof(Inventory), nameof(Inventory.GetAllPieceTables))]
+    internal static class GetAllPieceTablesPatch
+    {
+        private static void Postfix(Inventory __instance, List<PieceTable> tables)
+        {
+            Player player = Player.m_localPlayer;
+            if (!player || __instance != player.GetInventory() || !__instance.GetAllItems().Any(Impersonation.IsHammer)) return;
+            foreach (ToolInfo tool in ToolCatalog.All)
+            {
+                PieceTable table = tool.Shared.m_buildPieces;
+                if (table && !tables.Contains(table) && ToolCatalog.IsAvailable(player, tool)) tables.Add(table);
             }
         }
     }
