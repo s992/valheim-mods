@@ -50,6 +50,14 @@ jobs:
             exit 1
           fi
 
+      - name: Check changelog
+        run: |
+          version="${{ steps.version.outputs.version }}"
+          if ! grep -qxF "## $version" CHANGELOG.md; then
+            echo "::error::CHANGELOG.md has no '## $version' heading for this release"
+            exit 1
+          fi
+
       - uses: actions/download-artifact@v8
         with:
           name: EverythingsANail
