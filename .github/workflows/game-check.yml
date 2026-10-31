@@ -1,0 +1,53 @@
+name: Game check
+
+# Nightly: rebuild and boot every mod against the current Valheim server build, alone and with the latest versions of
+# the mods they integrate with. Players get game and mod updates without any commit here, so this is what notices
+# when one breaks something. A failure opens (or comments on) a "game-check" issue.
+#
+# GitHub turns scheduled workflows off after 60 days without commits; re-enable it from the Actions tab.
+
+on:
+  schedule:
+    - cron: "17 6 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  alone:
+    uses: ./.github/workflows/build.yml
+
+  # CraftFromStorage: MultiUserChest, Epic Loot. MarkerCommand: Server Devcommands. LootFilter: My Build Camera.
+  with-integrations:
+    uses: ./.github/workflows/build.yml
+    with:
+      with-mods: MSchmoecker-MultiUserChest RandyKnapp-EpicLoot JereKuusela-Server_devcommands EndoCo-MyBuildCamera
+
+  report:
+    needs: [alone, with-integrations]
+    if: failure() && github.event_name == 'schedule'
+    runs-on: ubuntu-24.04
+    permissions:
+      issues: write
+    steps:
+      - name: Open or update the game-check issue
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          ALONE: ${{ needs.alone.result }}
+          WITH_INTEGRATIONS: ${{ needs.with-integrations.result }}
+        run: |
+          gh label create game-check -R "$GITHUB_REPOSITORY" --color B60205 \
+            --description "Nightly check against the current game and integrated mods failed" 2>/dev/null || true
+          body="Nightly game check failed: mods alone **$ALONE**, with integrated mods **$WITH_INTEGRATIONS**.
+          $RUN_URL
+
+          The Boot test step's log names what broke. If the mods alone failed, the game probably updated; if only the
+          run with integrated mods failed, one of those mods changed. *Opened by the game-check workflow.*"
+          existing=$(gh issue list -R "$GITHUB_REPOSITORY" --label game-check --state open --json number --jq '.[0].number')
+          if [[ -n "$existing" ]]; then
+            gh issue comment "$existing" -R "$GITHUB_REPOSITORY" --body "$body"
+          else
+            gh issue create -R "$GITHUB_REPOSITORY" --label game-check --title "Nightly game check failed" --body "$body"
+          fi

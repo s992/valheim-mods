@@ -177,7 +177,7 @@ def run_server(server: Path, timeout: float) -> str:
     return log_file.read_text(encoding="utf-8", errors="replace")
 
 
-def check(log: str, ours: dict[str, str]) -> list[str]:
+def check(log: str, ours: dict[str, str], with_others: bool) -> list[str]:
     problems = []
     if CHAINLOADER_DONE not in log:
         problems.append("BepInEx's chainloader didn't finish")
@@ -186,8 +186,13 @@ def check(log: str, ours: dict[str, str]) -> list[str]:
     for name, version in ours.items():
         if not re.search(rf"^\[Info\s*:\s*{name}\] {name} {re.escape(version)} loaded", log, re.M):
             problems.append(f"{name} {version} didn't log that it loaded")
+    # Our integrations report a broken hookup as a warning and carry on without it. With the other mods installed,
+    # that warning is the failure this run looks for.
+    our_warning = re.compile(rf"^\[Warning\s*:\s*({'|'.join(map(re.escape, ours))})\]")
     for line in log.splitlines():
         if FAILURE.match(line) and not any(p.search(line) for p in ALLOWED):
+            problems.append(f"log: {line.strip()}")
+        elif with_others and our_warning.match(line):
             problems.append(f"log: {line.strip()}")
     return problems
 
@@ -212,7 +217,7 @@ def main() -> None:
     ours = install_mods(server, args.mods.resolve())
 
     log = run_server(server, args.timeout)
-    problems = check(log, ours)
+    problems = check(log, ours, bool(others))
 
     print("\n--- BepInEx log, without the game's Info lines ---")
     for line in log.splitlines():

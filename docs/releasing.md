@@ -60,7 +60,7 @@ world, stops it once the world is up (~30 s), and reads `BepInEx/LogOutput.log`.
   server; that stays on the in-game test list.
 - `--with Namespace-Name ...` (the `with-mods` input of build.yml) also installs Thunderstore packages, latest
   versions with their dependencies, laid out like r2modman does. `game-check.yml` uses it nightly for the mods we
-  integrate with.
+  integrate with. Then warnings from our own mods fail too: the integrations report a broken hookup as a warning.
 - A new headless-only error from a game update shows up as a failure: check it also appears with no mods
   installed (it does if it's in the log before `Chainloader startup complete` or comes from vanilla code in the
   stack trace) before adding it to `ALLOWED`.
