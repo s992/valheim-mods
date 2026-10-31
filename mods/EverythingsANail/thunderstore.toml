@@ -1,0 +1,35 @@
+[config]
+schemaVersion = "0.0.1"
+
+[package]
+namespace = "s992"
+name = "EverythingsANail"
+# Placeholder: release builds pass --package-version from <Version> in EverythingsANail.csproj
+versionNumber = "0.0.0"
+description = "Your hammer does it all: switch it to any tool you've owned (hoe, cultivator, scythe, fishing rod, knife, axes, pickaxes, modded tools) from the radial menu. Server-locked config."
+websiteUrl = "https://github.com/s992/ValheimEverythingsANail"
+containsNsfwContent = false
+
+[package.dependencies]
+denikson-BepInExPack_Valheim = "5.4.2351"
+
+[build]
+icon = "./icon.png"
+readme = "./README.md"
+outdir = "./build"
+
+[[build.copy]]
+source = "./src/EverythingsANail/bin/Release/netstandard2.1/EverythingsANail.dll"
+target = "plugins/EverythingsANail.dll"
+
+# tcli has no changelog setting; Thunderstore shows a CHANGELOG.md from the package root
+[[build.copy]]
+source = "./CHANGELOG.md"
+target = "CHANGELOG.md"
+
+[publish]
+repository = "https://thunderstore.io"
+communities = ["valheim"]
+
+[publish.categories]
+valheim = ["ai-generated", "tools", "client-side", "server-side"]
