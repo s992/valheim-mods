@@ -41,6 +41,26 @@ namespace SearchEverything
             return field;
         }
 
+        /// <summary>
+        /// For boxes shorter than the build menu's 38: less padding around the text (its Text Area is inset 10 x 6.5)
+        /// and a fixed font size, so the text fills the box instead of sitting small in the middle.
+        /// </summary>
+        public static void Fit(GuiInputField field, float fontSize)
+        {
+            if (field.textViewport)
+            {
+                field.textViewport.offsetMin = new Vector2(10f, 2f);
+                field.textViewport.offsetMax = new Vector2(-10f, -2f);
+            }
+            foreach (TMP_Text text in new[] { field.textComponent, field.placeholder as TMP_Text })
+            {
+                if (!text) continue;
+                text.enableAutoSizing = false;
+                text.fontSize = fontSize;
+            }
+            field.pointSize = fontSize;
+        }
+
         public static void SetPlaceholder(GuiInputField field, string text)
         {
             if (field && field.placeholder is TMP_Text placeholder) placeholder.text = text;

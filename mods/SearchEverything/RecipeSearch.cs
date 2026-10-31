@@ -32,9 +32,11 @@ namespace SearchEverything
             {
                 s_field = SearchField.Create(gui.m_crafting, "SearchEverything_RecipeSearch", "Search recipes");
                 if (!s_field) return;
-                // Right of the Craft/Upgrade tabs, below the station level, above the line under the tabs
+                // Right of the Craft/Upgrade tabs (they end ~244 from the left), below the station level, above the
+                // line under the tabs
                 SearchField.Place((RectTransform)s_field.transform, new Vector2(1f, 1f), new Vector2(1f, 1f),
-                    new Vector2(-10f, -69f), new Vector2(230f, 31f));
+                    new Vector2(-10f, -69f), new Vector2(296f, 31f));
+                SearchField.Fit(s_field, 18f);
                 s_field.onValueChanged.AddListener(text =>
                 {
                     s_words = Matcher.Parse(text);
