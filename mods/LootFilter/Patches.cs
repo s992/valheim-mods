@@ -12,6 +12,9 @@ namespace LootFilter
     [HarmonyPatch(typeof(Player), nameof(Player.AutoPickup))]
     internal static class AutoPickupPatch
     {
+        // Runs every frame: contain our own errors (see PatchGuard)
+        private static Exception Finalizer(Exception __exception) => PatchGuard.Contain(__exception, "auto-pickup filtering");
+
         private static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
         {
             FieldInfo autoPickup = AccessTools.Field(typeof(ItemDrop), nameof(ItemDrop.m_autoPickup));
@@ -106,6 +109,9 @@ namespace LootFilter
         typeof(ItemDrop.ItemData), typeof(int), typeof(bool), typeof(float), typeof(int), typeof(bool))]
     internal static class TooltipPatch
     {
+        // Runs every frame: contain our own errors (see PatchGuard)
+        private static Exception Finalizer(Exception __exception) => PatchGuard.Contain(__exception, "the loot filter tooltip");
+
         private static void Postfix(ItemDrop.ItemData item, bool crafting, ref string __result)
         {
             if (crafting || !Settings.ShowInTooltip.Value) return;
