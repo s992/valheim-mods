@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Text;
 using BepInEx.Configuration;
@@ -239,11 +240,11 @@ namespace StabilityView
             var line = new StringBuilder();
             if (Settings.ShowMaterial.Value)
                 line.Append(wnt.m_materialType).Append(' ');
-            line.Append(support.ToString("0.#"));
+            line.Append(support.ToString("0.#", CultureInfo.CurrentCulture));
             if (Settings.ShowMaxSupport.Value)
-                line.Append('/').Append(material.Max.ToString("0"));
+                line.Append('/').Append(material.Max.ToString("0", CultureInfo.CurrentCulture));
             if (Settings.ShowBreakThreshold.Value)
-                line.Append(" (min ").Append(material.Min.ToString("0")).Append(')');
+                line.Append(" (min ").Append(material.Min.ToString("0", CultureInfo.CurrentCulture)).Append(')');
 
             string change = null;
             Color changeColor = Color.white;
@@ -254,7 +255,7 @@ namespace StabilityView
             }
             else if (delta.HasValue)
             {
-                change = (delta.Value > 0f ? "+" : "") + delta.Value.ToString("0.#");
+                change = (delta.Value > 0f ? "+" : "") + delta.Value.ToString("0.#", CultureInfo.CurrentCulture);
                 changeColor = delta.Value > 0f ? IncreaseColor : DecreaseColor;
             }
 
@@ -336,7 +337,7 @@ namespace StabilityView
             if (_hiddenByLimit > 0)
                 status.Append(" · ").Append(_hiddenByLimit).Append(" hidden by MaxPieces (").Append(Settings.MaxPieces.Value).Append(')');
             if (_hiddenByRadius > 0)
-                status.Append(" · ").Append(_hiddenByRadius).Append(" beyond ").Append(Settings.Radius.Value.ToString("0")).Append(" m");
+                status.Append(" · ").Append(_hiddenByRadius).Append(" beyond ").Append(Settings.Radius.Value.ToString("0", CultureInfo.CurrentCulture)).Append(" m");
             if (Snapshot.Active)
                 status.Append(Snapshot.IsManual
                     ? $" · changes since manual snapshot ({Settings.ClearSnapshot.Value} clears)"
