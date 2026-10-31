@@ -20,6 +20,10 @@ namespace SearchEverything
             return !ModifierKeys.Any(key => !modifiers.Contains(key) && ZInput.GetKey(key, false));
         }
 
+        /// <summary>One of our hotkeys went down this frame and will be acted on, so the game should ignore it.</summary>
+        public static bool OurKeyPressed() =>
+            (Settings.Finder.Value && Pressed(Settings.FinderKey)) || (Markers.Count > 0 && Pressed(Settings.DismissKey));
+
         // Our own boxes are checked directly as well: TextInput.IsVisible covers them only through a patch
         public static bool IsTyping() =>
             InputGuard.Active || global::Console.IsVisible() || TextInput.IsVisible() || Menu.IsVisible() || Minimap.InTextInput() ||

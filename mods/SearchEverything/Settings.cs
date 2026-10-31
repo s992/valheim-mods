@@ -38,8 +38,9 @@ namespace SearchEverything
 
             Finder = config.Bind("3. Nearby chests", "Nearby search", true,
                 "A search window for everything in nearby chests. Picking a result marks the chests that hold it.");
-            FinderKey = config.Bind("3. Nearby chests", "Open key", new KeyboardShortcut(KeyCode.K),
-                "Opens the nearby search, in the world or in the inventory. Escape closes it.");
+            FinderKey = config.Bind("3. Nearby chests", "Open key", new KeyboardShortcut(KeyCode.K, KeyCode.LeftControl),
+                "Opens the nearby search, in the world or in the inventory. Escape closes it. The game doesn't act on " +
+                "this key while it opens the search (e.g. debug mode's K, which kills nearby enemies).");
             InventoryButton = config.Bind("3. Nearby chests", "Inventory button", true,
                 "Shows a button above your inventory that opens the nearby search.");
             Range = config.Bind("3. Nearby chests", "Range", 64,
@@ -54,7 +55,7 @@ namespace SearchEverything
                 new ConfigDescription(
                     "Seconds a chest stays marked. A marker also goes away when you open its chest. 0: until opened or dismissed.",
                     new AcceptableValueRange<int>(0, 600)));
-            DismissKey = config.Bind("4. Markers", "Dismiss key", new KeyboardShortcut(KeyCode.K, KeyCode.LeftShift),
+            DismissKey = config.Bind("4. Markers", "Dismiss key", new KeyboardShortcut(KeyCode.K, KeyCode.LeftControl, KeyCode.LeftShift),
                 "Removes every marker.");
 
             LogLayout = config.Bind("5. Diagnostics", "Log UI layout", false,

@@ -40,6 +40,7 @@ namespace SearchEverything
                 // Where the chest's name is, between Take All and Stack All
                 SearchField.Place((RectTransform)s_field.transform, new Vector2(0.5f, 1f), new Vector2(0.5f, 0.5f),
                     new Vector2(0f, -19f), new Vector2(270f, 31f));
+                SearchField.Fit(s_field, 18f);
                 s_field.onValueChanged.AddListener(text => s_words = Matcher.Parse(text));
                 SearchField.LogLayout("Chest search box", (RectTransform)s_field.transform);
             }
