@@ -1,0 +1,77 @@
+name: Build
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+  workflow_dispatch:
+  # Reused by release.yml
+  workflow_call:
+
+permissions:
+  contents: read
+
+env:
+  DOTNET_NOLOGO: true
+  # Valheim Dedicated Server: anonymous download that ships the same managed assemblies as the client
+  VALHEIM_SERVER_APP_ID: "896660"
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: 8.0.x
+
+      - name: Look up Valheim server build
+        id: valheim
+        run: |
+          buildid=$(curl -fsSL "https://api.steamcmd.net/v1/info/${VALHEIM_SERVER_APP_ID}" \
+            | jq -r --arg app "$VALHEIM_SERVER_APP_ID" '.data[$app].depots.branches.public.buildid')
+          if [[ ! "$buildid" =~ ^[0-9]+$ ]]; then
+            echo "::error::Could not determine the Valheim server build id (got '$buildid')"
+            exit 1
+          fi
+          echo "Valheim server build: $buildid"
+          echo "buildid=$buildid" >> "$GITHUB_OUTPUT"
+
+      # Only the Managed folder is cached; it's refreshed whenever the game updates
+      - name: Cache game assemblies
+        id: cache
+        uses: actions/cache@v6
+        with:
+          path: valheim-managed
+          key: valheim-managed-${{ steps.valheim.outputs.buildid }}
+
+      - name: Download Valheim dedicated server
+        if: steps.cache.outputs.cache-hit != 'true'
+        run: |
+          sudo apt-get update -q
+          sudo apt-get install -yq lib32gcc-s1
+          mkdir -p steamcmd
+          curl -fsSL https://steamcdn-a.akamaihd.net/client/installer/steamcmd_linux.tar.gz | tar -xz -C steamcmd
+
+          # On a fresh steamcmd the first app_update usually fails with "Missing configuration"
+          # and the next one succeeds. Exit codes are unreliable too, so check for the files and retry.
+          managed="$PWD/valheim-server/valheim_server_Data/Managed"
+          for attempt in 1 2 3; do
+            ./steamcmd/steamcmd.sh +force_install_dir "$PWD/valheim-server" +login anonymous \
+              +app_update "$VALHEIM_SERVER_APP_ID" validate +quit || true
+            [[ -f "$managed/assembly_valheim.dll" ]] && break
+            echo "Attempt $attempt did not produce assembly_valheim.dll; retrying"
+          done
+          [[ -f "$managed/assembly_valheim.dll" ]] || { echo "::error::Valheim server download failed"; exit 1; }
+
+          cp -r "$managed" valheim-managed
+
+      - name: Build
+        run: dotnet build -c Release -p:ValheimManagedDir="$GITHUB_WORKSPACE/valheim-managed"
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: StabilityView
+          path: src/StabilityView/bin/Release/netstandard2.1/StabilityView.dll
+          if-no-files-found: error
