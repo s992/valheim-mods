@@ -70,6 +70,7 @@ both the build and `tools/decompile.py` read:
 | LootFilter | junk rules for auto-pickup and ground sparkles (items and groups, pause key). Its Epic Loot support was removed and is kept at tag `LootFilter/checkpoint/with-epic-loot` for a planned separate mod |
 | EverythingsANail | the hammer becomes any tool you own (radial menu), server-synced rules over its own RPC |
 | CraftFromStorage | craft, build and smelt from nearby chests on top of Multi User Chest (not a Thunderstore dependency); `mods/CraftFromStorage/docs/ownership.md` covers chest ownership and ZDO conflicts |
+| SearchEverything | search boxes for crafting recipes and open chests (non-matches fade), and a nearby-chest search window that marks chests on screen; read-only, needs no other mod |
 
 These are the best examples of finished code: read the closest one before building something similar.
 
