@@ -15,6 +15,8 @@
     <Reference Include="UnityEngine.UI" HintPath="$(ValheimManagedDir)\UnityEngine.UI.dll" Private="false" />
     <Reference Include="UnityEngine.UIModule" HintPath="$(ValheimManagedDir)\UnityEngine.UIModule.dll" Private="false" />
     <Reference Include="UnityEngine.TextRenderingModule" HintPath="$(ValheimManagedDir)\UnityEngine.TextRenderingModule.dll" Private="false" />
+    <!-- Reading our keys from every keyboard device, not only Keyboard.current -->
+    <Reference Include="Unity.InputSystem" HintPath="$(ValheimManagedDir)\Unity.InputSystem.dll" Private="false" />
   </ItemGroup>
 
 </Project>

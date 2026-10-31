@@ -24,7 +24,10 @@ namespace SearchEverything
 
         public static TMP_Text AddText(Transform parent, string name, float size, Color color, TextAlignmentOptions alignment)
         {
+            // Inactive until the game's font is set: an active TextMeshPro looks up TMP's default font (LiberationSans,
+            // not shipped with the game) as soon as it's added, and logs a warning
             var go = new GameObject(name, typeof(RectTransform));
+            go.SetActive(false);
             go.transform.SetParent(parent, false);
             var text = go.AddComponent<TextMeshProUGUI>();
             TMP_Text model = InventoryGui.instance ? InventoryGui.instance.m_containerName : null;
@@ -33,6 +36,7 @@ namespace SearchEverything
                 text.font = model.font;
                 text.fontSharedMaterial = model.fontSharedMaterial;
             }
+            go.SetActive(true);
             text.fontSize = size;
             text.color = color;
             text.alignment = alignment;
