@@ -1,8 +1,9 @@
+using System;
 using System.Collections.Generic;
 using System.Reflection;
 using System.Reflection.Emit;
 using HarmonyLib;
-using UnityEngine;
+using ValheimMods.Shared;
 
 namespace LootFilter
 {
@@ -34,8 +35,7 @@ namespace LootFilter
                 }
             }
 
-            if (replaced != 1)
-                Debug.LogWarning($"[LootFilter] Expected one m_autoPickup check in Player.AutoPickup, found {replaced}; auto-pickup filtering may not work");
+            SafePatching.ExpectReplaced(replaced, 1, "Player.AutoPickup: m_autoPickup checks");
         }
 
         private static bool CanAutoPickup(ItemDrop drop) =>
@@ -59,7 +59,15 @@ namespace LootFilter
                 log.LogWarning("My Build Camera's camera pickup method wasn't found (different version?); its pickups aren't filtered");
                 return;
             }
-            harmony.Patch(target, transpiler: new HarmonyMethod(typeof(BuildCameraPickupPatch), nameof(Transpiler)));
+            try
+            {
+                harmony.Patch(target, transpiler: new HarmonyMethod(typeof(BuildCameraPickupPatch), nameof(Transpiler)));
+            }
+            catch (Exception e)
+            {
+                // Optional: the rest of the filter keeps working without it
+                log.LogWarning($"My Build Camera's camera pickup changed (different version?); its pickups aren't filtered. {e.Message}");
+            }
         }
 
         private static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
@@ -86,8 +94,7 @@ namespace LootFilter
                 }
             }
 
-            if (replaced != 1)
-                Debug.LogWarning($"[LootFilter] Expected one CanAddItem check in My Build Camera's pickup, found {replaced}; its pickups may not be filtered");
+            SafePatching.ExpectReplaced(replaced, 1, "BuildCameraBase.ExecuteCameraAutoPickup: CanAddItem calls");
         }
 
         // Same stack shape as the instance call it replaces: (inventory, item, stack) -> bool

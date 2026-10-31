@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
+using ValheimMods.Shared;
 
 namespace LootFilter
 {
@@ -27,9 +28,11 @@ namespace LootFilter
         private int _seenVersion = -1;
         private bool _wasRevealing;
         private bool _effectSettingsChanged;
+        private FrameGuard _guard;
 
         private void Awake()
         {
+            _guard = new FrameGuard(this, "the filtered-drop effects");
             Settings.FilteredSparkles.SettingChanged += OnEffectSettingChanged;
             Settings.SparkleColor.SettingChanged += OnEffectSettingChanged;
         }
@@ -37,6 +40,12 @@ namespace LootFilter
         private void OnEffectSettingChanged(object sender, EventArgs e) => _effectSettingsChanged = true;
 
         private void Update()
+        {
+            try { Tick(); }
+            catch (Exception e) { _guard.Report(e); }
+        }
+
+        private void Tick()
         {
             bool revealing = Input.Held(Settings.Reveal);
             bool dirty = revealing != _wasRevealing || _seenVersion != Rules.Version || _effectSettingsChanged;
@@ -54,6 +63,9 @@ namespace LootFilter
             _nextScan = Time.time + ScanInterval;
             Scan(revealing);
         }
+
+        // Also runs when the guard switches this off, so no drop is left with a changed look
+        private void OnDisable() => RestoreAll();
 
         private void OnDestroy() => RestoreAll();
 

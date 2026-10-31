@@ -1,6 +1,7 @@
 using BepInEx;
 using BepInEx.Bootstrap;
 using HarmonyLib;
+using ValheimMods.Shared;
 
 namespace LootFilter
 {
@@ -14,7 +15,7 @@ namespace LootFilter
             Rules.Init();
 
             var harmony = new Harmony(MyPluginInfo.PLUGIN_GUID);
-            harmony.PatchAll();
+            if (!SafePatching.PatchAll(harmony, Logger)) return;
             if (Chainloader.PluginInfos.ContainsKey(BuildCameraPickupPatch.Guid))
                 BuildCameraPickupPatch.Apply(harmony, Logger);
 

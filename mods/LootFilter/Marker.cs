@@ -1,11 +1,23 @@
+using System;
 using UnityEngine;
+using ValheimMods.Shared;
 
 namespace LootFilter
 {
     // Toggles rules for whatever item is under the cursor (inventory/chest) or crosshair (ground)
     internal sealed class Marker : MonoBehaviour
     {
+        private FrameGuard _guard;
+
+        private void Awake() => _guard = new FrameGuard(this, "the loot filter hotkeys");
+
         private void Update()
+        {
+            try { Tick(); }
+            catch (Exception e) { _guard.Report(e); }
+        }
+
+        private static void Tick()
         {
             if (!Player.m_localPlayer || Input.IsTyping()) return;
 
@@ -64,7 +76,9 @@ namespace LootFilter
             return grid.GetInventory()?.GetItemAt(pos.x, pos.y);
         }
 
-        private static void Message(string text) =>
-            Player.m_localPlayer?.Message(MessageHud.MessageType.TopLeft, text);
+        private static void Message(string text)
+        {
+            if (Player.m_localPlayer) Player.m_localPlayer.Message(MessageHud.MessageType.TopLeft, text);
+        }
     }
 }
