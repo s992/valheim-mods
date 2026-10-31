@@ -83,7 +83,8 @@ namespace EverythingsANail
             disguise.m_value = real.m_value;
             disguise.m_variants = real.m_variants;
             Sprite hammerIcon = real.m_icons != null && real.m_icons.Length > 0 ? real.m_icons[0] : null;
-            disguise.m_icons = new[] { IconBadge.Compose(tool.Icon, hammerIcon) ?? hammerIcon };
+            Sprite badged = IconBadge.Compose(tool.Icon, hammerIcon);
+            disguise.m_icons = new[] { badged ? badged : hammerIcon };
 
             s_disguises[tool.Prefab] = disguise;
             s_toolOf[disguise] = tool;

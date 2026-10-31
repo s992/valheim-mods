@@ -3,6 +3,7 @@ using BepInEx;
 using BepInEx.Logging;
 using HarmonyLib;
 using UnityEngine;
+using ValheimMods.Shared;
 
 namespace EverythingsANail
 {
@@ -22,7 +23,7 @@ namespace EverythingsANail
             Settings.Bind(Config);
             ConfigSync.Init(Logger);
             Settings.RulesChanged += ToolSwitcher.Revalidate;
-            new Harmony(MyPluginInfo.PLUGIN_GUID).PatchAll();
+            if (!SafePatching.PatchAll(new Harmony(MyPluginInfo.PLUGIN_GUID), Logger)) return;
             WatchConfigFile();
             Logger.LogInfo($"{MyPluginInfo.PLUGIN_NAME} {MyPluginInfo.PLUGIN_VERSION} loaded");
         }
