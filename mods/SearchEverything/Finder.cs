@@ -112,7 +112,7 @@ namespace SearchEverything
                 Close();
                 return;
             }
-            if (ZInput.GetKeyDown(KeyCode.Escape, false))
+            if (Hotkeys.KeyDown(KeyCode.Escape))
             {
                 Close();
                 return;
@@ -123,13 +123,13 @@ namespace SearchEverything
                 m_field.ActivateInputField();
             }
 
-            if (ZInput.GetKeyDown(KeyCode.DownArrow, false)) MoveSelection(1);
-            if (ZInput.GetKeyDown(KeyCode.UpArrow, false)) MoveSelection(-1);
-            if (ZInput.GetKeyDown(KeyCode.PageDown, false)) MoveSelection(VisibleRows);
-            if (ZInput.GetKeyDown(KeyCode.PageUp, false)) MoveSelection(-VisibleRows);
-            if (ZInput.GetKeyDown(KeyCode.RightArrow, false)) SetExpanded(m_selected, true);
-            if (ZInput.GetKeyDown(KeyCode.LeftArrow, false)) SetExpanded(m_selected, false);
-            if (ZInput.GetKeyDown(KeyCode.Return, false) || ZInput.GetKeyDown(KeyCode.KeypadEnter, false))
+            if (Hotkeys.KeyDown(KeyCode.DownArrow)) MoveSelection(1);
+            if (Hotkeys.KeyDown(KeyCode.UpArrow)) MoveSelection(-1);
+            if (Hotkeys.KeyDown(KeyCode.PageDown)) MoveSelection(VisibleRows);
+            if (Hotkeys.KeyDown(KeyCode.PageUp)) MoveSelection(-VisibleRows);
+            if (Hotkeys.KeyDown(KeyCode.RightArrow)) SetExpanded(m_selected, true);
+            if (Hotkeys.KeyDown(KeyCode.LeftArrow)) SetExpanded(m_selected, false);
+            if (Hotkeys.KeyDown(KeyCode.Return) || Hotkeys.KeyDown(KeyCode.KeypadEnter))
             {
                 // Enter also ends editing in the box: with nothing to pick, put the caret back
                 if (m_flat.Count > 0)
