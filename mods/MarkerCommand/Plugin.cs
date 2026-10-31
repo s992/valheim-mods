@@ -2,6 +2,7 @@ using System;
 using BepInEx;
 using BepInEx.Bootstrap;
 using HarmonyLib;
+using ValheimMods.Shared;
 
 namespace MarkerCommand
 {
@@ -11,7 +12,7 @@ namespace MarkerCommand
     {
         private void Awake()
         {
-            new Harmony(MyPluginInfo.PLUGIN_GUID).PatchAll();
+            if (!SafePatching.PatchAll(new Harmony(MyPluginInfo.PLUGIN_GUID), Logger)) return;
 
             // Parameter hints only exist when Server Devcommands is installed
             if (Chainloader.PluginInfos.ContainsKey(Hints.ServerDevcommandsGuid))

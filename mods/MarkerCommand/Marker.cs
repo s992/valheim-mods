@@ -99,7 +99,7 @@ namespace MarkerCommand
         {
             if (!Minimap.instance)
             {
-                args.Context?.AddString("Map is not available (join a world first).");
+                if (args.Context) args.Context.AddString("Map is not available (join a world first).");
                 return;
             }
 
@@ -111,7 +111,7 @@ namespace MarkerCommand
             {
                 if (!Player.m_localPlayer)
                 {
-                    args.Context?.AddString("No local player.");
+                    if (args.Context) args.Context.AddString("No local player.");
                     return;
                 }
                 pos = Player.m_localPlayer.transform.position;
@@ -124,7 +124,7 @@ namespace MarkerCommand
             }
             else
             {
-                args.Context?.AddString("Usage: marker <x> <z> [name] [icon]  or  marker me [name] [icon]");
+                if (args.Context) args.Context.AddString("Usage: marker <x> <z> [name] [icon]  or  marker me [name] [icon]");
                 return;
             }
 
@@ -136,14 +136,14 @@ namespace MarkerCommand
                 rest.RemoveAt(rest.Count - 1);
                 if (!HasSprite(icon))
                 {
-                    args.Context?.AddString($"Icon '{IconName(icon)}' has no sprite. Available: {string.Join(", ", AvailableIcons.Select(IconName))}");
+                    if (args.Context) args.Context.AddString($"Icon '{IconName(icon)}' has no sprite. Available: {string.Join(", ", AvailableIcons.Select(IconName))}");
                     return;
                 }
             }
 
             string name = string.Join(" ", rest.Select(t => t.Text));
             Minimap.instance.AddPin(pos, icon, name, save: true, isChecked: false);
-            args.Context?.AddString($"Added {IconName(icon)} marker '{name}' at ({pos.x:F0}, {pos.z:F0})");
+            if (args.Context) args.Context.AddString($"Added {IconName(icon)} marker '{name}' at ({pos.x:F0}, {pos.z:F0})");
         }
     }
 }
