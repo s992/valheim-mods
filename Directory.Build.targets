@@ -1,7 +1,7 @@
 <Project>
 
-  <!-- Copy the build into the local mod profile for testing; skipped in CI -->
-  <Target Name="DeployToPlugins" AfterTargets="Build" Condition="'$(CI)' != 'true' and Exists('$(PluginsDir)')">
+  <!-- Copy the build into the local mod profile for testing; skipped in CI and for tests/ -->
+  <Target Name="DeployToPlugins" AfterTargets="Build" Condition="'$(CI)' != 'true' and '$(IsTestProject)' != 'true' and Exists('$(PluginsDir)')">
     <Copy SourceFiles="$(TargetPath)" DestinationFolder="$(PluginsDir)\$(AssemblyName)" />
     <Message Importance="high" Text="Deployed $(AssemblyName) to $(PluginsDir)\$(AssemblyName)" />
   </Target>

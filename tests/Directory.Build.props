@@ -1,0 +1,10 @@
+<Project>
+
+  <!-- Marks tests/ for the root props (which skip plugin-only settings for it), then imports them -->
+  <PropertyGroup>
+    <IsTestProject>true</IsTestProject>
+  </PropertyGroup>
+
+  <Import Project="$([MSBuild]::GetPathOfFileAbove('Directory.Build.props', '$(MSBuildThisFileDirectory)..'))" />
+
+</Project>

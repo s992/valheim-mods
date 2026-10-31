@@ -49,7 +49,7 @@ both the build and `tools/decompile.py` read:
   `thunderstore.toml`, `README.md`, `CHANGELOG.md`, `icon.png`, optional `scripts/make_icon.py` and `docs/`.
 - `Directory.Build.props`: everything shared: `netstandard2.1`, BepInEx packages, the common game references,
   plugin GUID `s992.<Name>` from the folder name, the paths above. `Directory.Build.targets`: deploy to the profile.
-- `ValheimMods.sln`: every mod.
+- `ValheimMods.sln`: every mod, and `tests/ValheimMods.Tests` (xUnit, .NET 8, sees each mod's internals).
 - `shared/`: source compiled into every mod: all-or-nothing patching, per-frame error guard, player notices
   (docs/patterns.md, "Failing safely").
 - `tools/`: `new_mod.py` (scaffold), `mod-template/`, `decompile.py` (read game/mod code), `icon_kit.py`,
@@ -75,6 +75,7 @@ These are the best examples of finished code: read the closest one before buildi
 ```bash
 dotnet build -c Release                                   # every mod; deploys to the profile. Warnings fail it
 dotnet build mods/<Name>/<Name>.csproj -c Release         # one mod
+dotnet test -c Release                                    # unit tests (tests/), after a build
 dotnet format ValheimMods.sln                             # fix style; CI runs it with --verify-no-changes
 python tools/new_mod.py <Name> --description "<one sentence, max 250 chars>" --categories tools,client-side
 python tools/decompile.py --type Player --type ItemDrop   # decompiled .cs paths for game classes
@@ -102,6 +103,12 @@ rather than silencing it; when a rule really is wrong for one spot, suppress it 
 - Integrate with other mods optionally (by reflection), never as a hard dependency unless the user asks.
 - Changes to game objects are reversible (the mod can be toggled off), and per-frame work stays cheap.
 - Console commands with parameters register Server Devcommands hints (see MarkerCommand's `Hints.cs`).
+- Logic that can run without the game (parsing, rules, wire formats, planning) gets unit tests in
+  `tests/ValheimMods.Tests/<Mod>Tests.cs`; keep it in methods that take plain values or game data classes rather
+  than reading `Player.m_localPlayer` or settings inside. A fix to such logic comes with a test that failed before
+  it. Tests run on .NET 8 against the real game assemblies: data classes (`ItemDrop.ItemData`, `ZPackage`, enums)
+  work, anything that calls into Unity's engine doesn't. The game's global `Settings` class hides a mod's
+  `Settings` in tests: qualify it (`LootFilter.Settings`).
 
 Things that cost time before:
 - Valheim uses Unity's new input system: `KeyboardShortcut.IsDown()` may miss presses. Read keys through `ZInput`.

@@ -1,0 +1,45 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    Unit tests for mod logic that doesn't need a running game. They run on .NET 8 against the real game assemblies
+    (copied to the output, publicized), so they only touch plain C# game types: item data, enums, ZPackage.
+    Anything that calls into Unity's engine fails here; that's what the boot test and in-game testing are for.
+  -->
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <IsPackable>false</IsPackable>
+    <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
+    <GameReferencesCopyLocal>true</GameReferencesCopyLocal>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.14.1" />
+    <PackageReference Include="xunit" Version="2.9.3" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="3.1.5" PrivateAssets="all" />
+  </ItemGroup>
+
+  <!-- BepInEx.Core's package keeps BepInEx out of build output (a plugin must never ship it); tests need it to run -->
+  <Target Name="CopyBepInExForTests" AfterTargets="SkipBepinRefs">
+    <ItemGroup>
+      <ReferenceCopyLocalPaths Include="@(ReferencePath)" Condition="'%(ReferencePath.NuGetPackageId)' == 'BepInEx.BaseLib'" />
+    </ItemGroup>
+  </Target>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\mods\CraftFromStorage\CraftFromStorage.csproj" />
+    <ProjectReference Include="..\..\mods\EverythingsANail\EverythingsANail.csproj" />
+    <ProjectReference Include="..\..\mods\LootFilter\LootFilter.csproj" />
+    <ProjectReference Include="..\..\mods\MarkerCommand\MarkerCommand.csproj" />
+    <ProjectReference Include="..\..\mods\StabilityView\StabilityView.csproj" />
+  </ItemGroup>
+
+  <!--
+    Other game assemblies the mods reference, for loading at test time (not Unity's System.* copies).
+    assembly_valheim comes from the reference in the root props, publicized like the mods were compiled against.
+  -->
+  <ItemGroup>
+    <None Include="$(ValheimManagedDir)\assembly_*.dll;$(ValheimManagedDir)\gui_framework.dll;$(ValheimManagedDir)\Unity*.dll"
+          Exclude="$(ValheimManagedDir)\assembly_valheim.dll" CopyToOutputDirectory="PreserveNewest" Visible="false" />
+  </ItemGroup>
+
+</Project>

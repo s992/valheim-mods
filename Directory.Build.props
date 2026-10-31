@@ -33,8 +33,10 @@
   <!--
     Every project under mods/ is a BepInEx plugin named after its folder: mods/<Name>/<Name>.csproj builds
     <Name>.dll with GUID s992.<Name>. A mod's csproj only sets <Version>, <Description> and any extra references.
+    tests/ (IsTestProject, set in tests/Directory.Build.props) shares the settings and game references, minus the
+    plugin-only parts.
   -->
-  <PropertyGroup>
+  <PropertyGroup Condition="'$(IsTestProject)' != 'true'">
     <TargetFramework>netstandard2.1</TargetFramework>
     <AssemblyName>$(MSBuildProjectName)</AssemblyName>
     <RootNamespace>$(MSBuildProjectName)</RootNamespace>
@@ -43,38 +45,43 @@
     <BepInExPluginGuid>s992.$(MSBuildProjectName)</BepInExPluginGuid>
     <BepInExPluginName>$(MSBuildProjectName)</BepInExPluginName>
 
+    <CopyLocalLockFileAssemblies>false</CopyLocalLockFileAssemblies>
+    <!-- The game, Unity and BepInEx are all in the player's install; a mod ships only its own DLL -->
+    <GameReferencesCopyLocal>false</GameReferencesCopyLocal>
+  </PropertyGroup>
+
+  <PropertyGroup>
     <!-- Needed by the publicizer so private game members can be used directly -->
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-
-    <CopyLocalLockFileAssemblies>false</CopyLocalLockFileAssemblies>
     <GenerateDocumentationFile>false</GenerateDocumentationFile>
   </PropertyGroup>
 
+  <ItemGroup Condition="'$(IsTestProject)' != 'true'">
+    <PackageReference Include="BepInEx.PluginInfoProps" Version="2.1.0" PrivateAssets="all" />
+    <InternalsVisibleTo Include="ValheimMods.Tests" />
+    <!--
+      Shared source (shared/), compiled into every mod as internal types. Source rather than a shared DLL, so mods
+      released at different times never fight over one assembly's version.
+    -->
+    <Compile Include="$(MSBuildThisFileDirectory)shared\*.cs" Link="Shared\%(Filename)%(Extension)" />
+  </ItemGroup>
+
   <ItemGroup>
     <PackageReference Include="BepInEx.Core" Version="5.4.21" PrivateAssets="all" />
-    <PackageReference Include="BepInEx.PluginInfoProps" Version="2.1.0" PrivateAssets="all" />
     <PackageReference Include="BepInEx.Analyzers" Version="1.0.8" PrivateAssets="all" />
     <PackageReference Include="BepInEx.AssemblyPublicizer.MSBuild" Version="0.4.3" PrivateAssets="all" />
     <!-- Unity-specific checks (e.g. ?. and ?? on Unity objects skip Unity's destroyed-object check) -->
     <PackageReference Include="Microsoft.Unity.Analyzers" Version="1.28.0" PrivateAssets="all" />
   </ItemGroup>
 
-  <!--
-    Shared source (shared/), compiled into every mod as internal types. Source rather than a shared DLL, so mods
-    released at different times never fight over one assembly's version.
-  -->
-  <ItemGroup>
-    <Compile Include="$(MSBuildThisFileDirectory)shared\*.cs" Link="Shared\%(Filename)%(Extension)" />
-  </ItemGroup>
-
   <!-- Game assemblies are referenced from a local install and never committed -->
   <ItemGroup>
     <!-- Publicized, so private game members can be used directly (no reflection) -->
-    <Reference Include="assembly_valheim" HintPath="$(ValheimManagedDir)\assembly_valheim.dll" Private="false" Publicize="true" />
-    <Reference Include="assembly_utils" HintPath="$(ValheimManagedDir)\assembly_utils.dll" Private="false" />
-    <Reference Include="Splatform" HintPath="$(ValheimManagedDir)\Splatform.dll" Private="false" />
-    <Reference Include="UnityEngine" HintPath="$(ValheimManagedDir)\UnityEngine.dll" Private="false" />
-    <Reference Include="UnityEngine.CoreModule" HintPath="$(ValheimManagedDir)\UnityEngine.CoreModule.dll" Private="false" />
+    <Reference Include="assembly_valheim" HintPath="$(ValheimManagedDir)\assembly_valheim.dll" Private="$(GameReferencesCopyLocal)" Publicize="true" />
+    <Reference Include="assembly_utils" HintPath="$(ValheimManagedDir)\assembly_utils.dll" Private="$(GameReferencesCopyLocal)" />
+    <Reference Include="Splatform" HintPath="$(ValheimManagedDir)\Splatform.dll" Private="$(GameReferencesCopyLocal)" />
+    <Reference Include="UnityEngine" HintPath="$(ValheimManagedDir)\UnityEngine.dll" Private="$(GameReferencesCopyLocal)" />
+    <Reference Include="UnityEngine.CoreModule" HintPath="$(ValheimManagedDir)\UnityEngine.CoreModule.dll" Private="$(GameReferencesCopyLocal)" />
     <!--
       Add others in the mod's csproj as needed (CS0012 errors name the missing assembly):
       assembly_guiutils                 Localization (player-facing item/biome names)

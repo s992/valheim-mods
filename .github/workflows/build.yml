@@ -91,6 +91,10 @@ jobs:
       - name: Build
         run: dotnet build ValheimMods.sln -c Release -p:ValheimManagedDir="$GITHUB_WORKSPACE/valheim-server/valheim_server_Data/Managed"
 
+      # tests/: logic that doesn't need a running game, against this game build's assemblies
+      - name: Unit tests
+        run: dotnet test ValheimMods.sln -c Release --no-build
+
       # Code style and analyzer rules from .editorconfig; fix locally with `dotnet format ValheimMods.sln`.
       # dotnet format takes no -p, so the game path goes in as an environment variable
       - name: Check formatting

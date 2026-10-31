@@ -13,6 +13,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EverythingsANail", "mods\Ev
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CraftFromStorage", "mods\CraftFromStorage\CraftFromStorage.csproj", "{60A4491B-965E-4288-8C51-5BE405058789}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{55ABE3EC-A781-45AA-B476-583942F26D63}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ValheimMods.Tests", "tests\ValheimMods.Tests\ValheimMods.Tests.csproj", "{2AD8C0DA-BDB7-40B5-93CD-10DEC7ACAF69}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -42,5 +46,12 @@ Global
 		{60A4491B-965E-4288-8C51-5BE405058789}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{60A4491B-965E-4288-8C51-5BE405058789}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{60A4491B-965E-4288-8C51-5BE405058789}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2AD8C0DA-BDB7-40B5-93CD-10DEC7ACAF69}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2AD8C0DA-BDB7-40B5-93CD-10DEC7ACAF69}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2AD8C0DA-BDB7-40B5-93CD-10DEC7ACAF69}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2AD8C0DA-BDB7-40B5-93CD-10DEC7ACAF69}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{2AD8C0DA-BDB7-40B5-93CD-10DEC7ACAF69} = {55ABE3EC-A781-45AA-B476-583942F26D63}
 	EndGlobalSection
 EndGlobal

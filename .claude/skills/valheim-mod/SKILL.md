@@ -63,8 +63,11 @@ before" in AGENTS.md apply. Also:
 
 ## 5. Build, deploy, commit, report
 
-- Build the mod (or everything, after changing a root file); warnings fail the build. Run `dotnet format
-  ValheimMods.sln` before committing. The build deploys to the profile.
+- Build the mod (or everything, after changing a root file); warnings fail the build. Run `dotnet test -c Release`
+  and `dotnet format ValheimMods.sln` before committing. The build deploys to the profile.
+- Changed logic that can run without the game (see AGENTS.md, Conventions): add or update its tests.
+- CI also boots a server with every mod (docs/releasing.md, "Boot test"); a patch that fails there turns the mod
+  off, so after pushing, check the Build run before calling the change done.
 - Commit with a message explaining why, ending with the attribution line from the system reminder.
 - Before a risky rework or when the user asks for a fallback point, make a checkpoint: commit, or if the tree is
   clean, tag the last good commit (`git tag -a <Name>/checkpoint/<what> -m ...`). Some machines have
