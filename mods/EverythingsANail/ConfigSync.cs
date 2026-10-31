@@ -1,3 +1,5 @@
+using System;
+using System.IO;
 using BepInEx.Logging;
 
 namespace EverythingsANail
@@ -40,30 +42,56 @@ namespace EverythingsANail
         private static void SendTo(ZNetPeer peer)
         {
             if (peer?.m_rpc == null) return;
-            Rules rules = Settings.Local;
+            peer.m_rpc.Invoke(RpcName, Write(Settings.Local));
+        }
+
+        // The wire format. Change it only together with Format: clients reject any other format.
+        public static ZPackage Write(Rules rules)
+        {
             var pkg = new ZPackage();
             pkg.Write(Format);
             pkg.Write((int)rules.Categories);
             pkg.Write(Rules.FormatList(rules.OnlyAllow));
             pkg.Write(Rules.FormatList(rules.Exclude));
-            peer.m_rpc.Invoke(RpcName, pkg);
+            return pkg;
+        }
+
+        /// <returns>The rules, or null with a reason when the package is another format or cut short.</returns>
+        public static Rules TryRead(ZPackage pkg, out string problem)
+        {
+            problem = null;
+            try
+            {
+                int format = pkg.ReadInt();
+                if (format != Format)
+                {
+                    problem = $"Server sent tool rules in format {format}, expected {Format}; update the mod on both sides";
+                    return null;
+                }
+                return new Rules
+                {
+                    Categories = (ToolCategories)pkg.ReadInt(),
+                    OnlyAllow = Rules.ParseList(pkg.ReadString()),
+                    Exclude = Rules.ParseList(pkg.ReadString()),
+                };
+            }
+            catch (Exception e) when (e is EndOfStreamException || e is IOException)
+            {
+                problem = $"Server sent tool rules that couldn't be read ({e.Message})";
+                return null;
+            }
         }
 
         private static void OnReceive(ZRpc rpc, ZPackage pkg)
         {
             if (ZNet.instance == null || IsServer) return;
-            int format = pkg.ReadInt();
-            if (format != Format)
+            Rules rules = TryRead(pkg, out string problem);
+            if (rules == null)
             {
-                s_log.LogWarning($"Server sent tool rules in format {format}, expected {Format}; update the mod on both sides. Using local rules.");
+                s_log.LogWarning($"{problem}. Using local rules.");
                 return;
             }
-            s_remote = new Rules
-            {
-                Categories = (ToolCategories)pkg.ReadInt(),
-                OnlyAllow = Rules.ParseList(pkg.ReadString()),
-                Exclude = Rules.ParseList(pkg.ReadString()),
-            };
+            s_remote = rules;
             s_remoteNet = ZNet.instance;
             s_log.LogInfo($"Using the server's tool rules: categories {s_remote.Categories}, " +
                           $"only allow [{Rules.FormatList(s_remote.OnlyAllow)}], exclude [{Rules.FormatList(s_remote.Exclude)}]");

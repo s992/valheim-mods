@@ -46,10 +46,11 @@ namespace EverythingsANail
 
         public static ToolInfo Hammer => Get(HammerPrefab);
 
-        public static bool IsAllowed(ToolInfo tool)
+        public static bool IsAllowed(ToolInfo tool) => IsAllowed(tool, Settings.Active);
+
+        public static bool IsAllowed(ToolInfo tool, Rules rules)
         {
             if (tool.IsHammer) return true;
-            Rules rules = Settings.Active;
             if (rules.Exclude.Contains(tool.Prefab)) return false;
             if (rules.OnlyAllow.Count > 0) return rules.OnlyAllow.Contains(tool.Prefab);
             return (rules.Categories & tool.Category) != 0;
