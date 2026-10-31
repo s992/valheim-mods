@@ -1,5 +1,6 @@
 using BepInEx;
 using HarmonyLib;
+using ValheimMods.Shared;
 
 namespace StabilityView
 {
@@ -9,7 +10,7 @@ namespace StabilityView
         private void Awake()
         {
             Settings.Bind(Config);
-            new Harmony(MyPluginInfo.PLUGIN_GUID).PatchAll();
+            if (!SafePatching.PatchAll(new Harmony(MyPluginInfo.PLUGIN_GUID), Logger)) return;
             gameObject.AddComponent<Overlay>();
             Logger.LogInfo($"{MyPluginInfo.PLUGIN_NAME} {MyPluginInfo.PLUGIN_VERSION} loaded");
         }

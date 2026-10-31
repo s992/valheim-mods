@@ -6,6 +6,7 @@ using System.Text;
 using BepInEx.Configuration;
 using UnityEngine;
 using UnityEngine.Rendering;
+using ValheimMods.Shared;
 
 namespace StabilityView
 {
@@ -51,14 +52,28 @@ namespace StabilityView
         private Material _lineMaterial;
         private bool _lineMaterialFailed;
         private bool _analysisErrorLogged;
+        private FrameGuard _guard;
 
         public bool IsShowing { get; private set; }
 
-        private void Awake() => Instance = this;
+        private void Awake()
+        {
+            Instance = this;
+            _guard = new FrameGuard(this, "the stability overlay");
+        }
+
+        // Also runs when the guard switches this off, so the overlay doesn't stay on screen
+        private void OnDisable() => Hide();
 
         private void OnDestroy() => Hide();
 
         private void Update()
+        {
+            try { Tick(); }
+            catch (Exception e) { _guard.Report(e); }
+        }
+
+        private void Tick()
         {
             HandleKeys();
 
@@ -144,8 +159,10 @@ namespace StabilityView
             return !ModifierKeys.Any(key => !modifiers.Contains(key) && ZInput.GetKey(key, false));
         }
 
-        private static void Message(string text) =>
-            Player.m_localPlayer?.Message(MessageHud.MessageType.TopLeft, text);
+        private static void Message(string text)
+        {
+            if (Player.m_localPlayer) Player.m_localPlayer.Message(MessageHud.MessageType.TopLeft, text);
+        }
 
         // --- data ---
 
@@ -310,6 +327,12 @@ namespace StabilityView
         // --- drawing ---
 
         private void OnGUI()
+        {
+            try { Draw(); }
+            catch (Exception e) { _guard.Report(e); }
+        }
+
+        private void Draw()
         {
             if (!IsShowing || Event.current.type != EventType.Repaint) return;
             Camera camera = GameCamera.instance ? GameCamera.instance.m_camera : null;
