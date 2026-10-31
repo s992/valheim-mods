@@ -1,0 +1,27 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31903.59
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{C3376FAF-2A24-4FA5-A54A-C3EC323C7657}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CraftFromStorage", "src\CraftFromStorage\CraftFromStorage.csproj", "{2A72A59A-E464-43F1-B171-ADD4DC3C7FEB}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{2A72A59A-E464-43F1-B171-ADD4DC3C7FEB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2A72A59A-E464-43F1-B171-ADD4DC3C7FEB}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2A72A59A-E464-43F1-B171-ADD4DC3C7FEB}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2A72A59A-E464-43F1-B171-ADD4DC3C7FEB}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{2A72A59A-E464-43F1-B171-ADD4DC3C7FEB} = {C3376FAF-2A24-4FA5-A54A-C3EC323C7657}
+	EndGlobalSection
+EndGlobal
