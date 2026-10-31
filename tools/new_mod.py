@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Scaffold a new Valheim BepInEx mod in the valheim-mods monorepo.
 
-Creates mods/<Name>/ with the csproj, Plugin.cs, thunderstore.toml and CHANGELOG.md from tools/mod-template/,
+Creates mods/<Name>/ with the csproj, Plugin.cs, thunderstore.toml, CHANGELOG.md and TESTING.md from tools/mod-template/,
 and adds the project to ValheimMods.sln. Everything shared (build props, packages, game
 references, CI and release workflows) already lives at the repo root. Nothing is committed or pushed.
 
@@ -96,6 +96,7 @@ Done: {dest}
 Next:
   - add an icon.png (256x256) in mods/{name}/, drawn by mods/{name}/scripts/make_icon.py (see docs/icons.md)
   - dotnet build mods/{name}/{name}.csproj -c Release   (deploys to the r2modman profile unless CI=true)
+  - fill in mods/{name}/TESTING.md with the in-game checks, riskiest first
   - commit; push only when the user says so
   - before each release, add a '## <version>' entry to mods/{name}/CHANGELOG.md (neutral voice; release.yml checks it)
 """)

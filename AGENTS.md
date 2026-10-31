@@ -18,8 +18,9 @@ is what any agent needs to build, change or create a mod here; the `docs/` files
 - Don't change the user's global setup (git config, SSH, installed tools) to get around a problem; explain it.
 - Commit messages explain why, and the why must be true (no invented "players asked for..."). Keep each commit to
   one mod, unless it changes shared files at the root.
-- Nothing in game can be verified by an agent. Say what was checked (builds, logic against decompiled code) and
-  give the user an in-game test list, riskiest first.
+- Nothing in game can be verified by an agent. Say what was checked (builds, tests, the CI boot test, logic against
+  decompiled code) and give the user an in-game test list, riskiest first; add lasting checks to the mod's
+  `TESTING.md`.
 
 ## Setup
 
@@ -46,7 +47,8 @@ both the build and `tools/decompile.py` read:
 ## Layout
 
 - `mods/<Name>/`: one mod. `<Name>.csproj` (only `<Version>`, `<Description>` and extra game references), sources,
-  `thunderstore.toml`, `README.md`, `CHANGELOG.md`, `icon.png`, optional `scripts/make_icon.py` and `docs/`.
+  `thunderstore.toml`, `README.md`, `CHANGELOG.md`, `TESTING.md` (in-game checks before a release, agent-kept),
+  `icon.png`, optional `scripts/make_icon.py` and `docs/`.
 - `Directory.Build.props`: everything shared: `netstandard2.1`, BepInEx packages, the common game references,
   plugin GUID `s992.<Name>` from the folder name, the paths above. `Directory.Build.targets`: deploy to the profile.
 - `ValheimMods.sln`: every mod, and `tests/ValheimMods.Tests` (xUnit, .NET 8, sees each mod's internals).
@@ -126,4 +128,5 @@ Things that cost time before:
 - `docs/integrations.md`: other mods (Epic Loot, Server Devcommands, Configuration Manager, Multi User Chest...).
 - `docs/patterns.md`: config Configuration Manager renders well, hotkeys, optional integration, Harmony choices.
 - `docs/icons.md`: the shared icon style and how to draw one.
-- `docs/releasing.md`: CI, dry runs, releases, changelog rules, README review.
+- `docs/releasing.md`: CI, the boot test, dry runs, releases, changelog rules, README review.
+- `docs/quality.md`: the gates (what each catches and why), the October 2026 audit, what to do when one fails.

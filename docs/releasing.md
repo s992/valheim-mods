@@ -79,9 +79,10 @@ artifact, then (tags only) two separate jobs: create the GitHub release titled `
 ```bash
 gh workflow run release.yml -R s992/valheim-mods -f mod=<Name>
 ```
-Watch it; github-release and thunderstore jobs are skipped. Then `gh run download <id> -n thunderstore-package`
-and check the zip has `icon.png`, `README.md`, `CHANGELOG.md`, `manifest.json` and `plugins/<Name>.dll`, the
-manifest's namespace/name/version/dependency/website_url, and `release-notes.md`. The dry run needs the README and a
+Watch it; github-release and thunderstore jobs are skipped. The "Check Thunderstore package" step
+(`tools/check_package.py`) checks the zip's files, the manifest against the csproj and the mod's monorepo URL, the
+BepInExPack dependency, and that the DLL is the one just built (no other DLLs). Then
+`gh run download <id> -n thunderstore-package` and read `release-notes.md`. The dry run needs the README and a
 `## <version>` changelog entry, so write the entry first (see "Changelog").
 
 A new mod has no README until its author writes one. To dry-run before that, put a placeholder `README.md` on a throwaway
@@ -95,7 +96,9 @@ Publishing is public and a Thunderstore version can't be replaced, only supersed
 2. Add a `## <version>` entry at the top of `mods/<Name>/CHANGELOG.md` (below the note) from
    `git log <Name>/v<previous>..HEAD -- mods/<Name>`, describing what players notice. Changes at the repo root
    (shared props, workflows) matter only if players would notice them. Show the entry to the user before tagging.
-3. Commit, push, and wait for `main`'s Build run to be green.
+3. Commit, push, and wait for `main`'s Build run to be green (build, tests, format, boot test).
+   Before tagging, the maintainer runs `mods/<Name>/TESTING.md` in game against this build: agents ask for that and
+   wait for a yes, listing any checks the release's changes add.
 4. `git tag -a <Name>/v<version> -m "<Name> v<version>"` and `git push origin <Name>/v<version>`.
 5. Watch the Release run; all four jobs (build, package, github-release, thunderstore) should pass.
 6. Verify: `gh release view <Name>/v<version>` lists the zip,

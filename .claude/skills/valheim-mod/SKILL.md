@@ -100,6 +100,8 @@ Read `docs/releasing.md`. Pushing, pull requests, tags and publishes each need t
 maintainer tags and publishes; for anyone else, stop at a pushed branch, a pull request and (on a fork) a dry run.
 Every change reaches `main` through a pull request: fill in each section of `.github/pull_request_template.md`
 (the report above maps onto it: Checked, Not checked, In-game test list).
+Before tagging, ask the maintainer to run `mods/<Name>/TESTING.md` in game on this build (with any checks this
+release adds) and wait for a yes.
 Every release needs a `## <version>` entry in `mods/<Name>/CHANGELOG.md`: write it from
 `git log <Name>/v<previous>..HEAD -- mods/<Name>` and show it before tagging, since a published version can't be
 changed. After tagging, watch the run and verify the GitHub release and the Thunderstore API.

@@ -95,6 +95,12 @@ jobs:
           tcli build --package-version "$version"
           echo "file=s992-$mod-$version.zip" >> "$GITHUB_OUTPUT"
 
+      # Files, manifest against the csproj, and the DLL built above; a published version can't be replaced
+      - name: Check Thunderstore package
+        run: |
+          mod="${{ steps.version.outputs.mod }}"
+          python3 tools/check_package.py --mod "$mod" --version "${{ steps.version.outputs.version }}" --zip "mods/$mod/build/${{ steps.package.outputs.file }}"
+
       # Next to the package, so both sit at the root of the artifact
       - name: Extract release notes
         working-directory: mods/${{ steps.version.outputs.mod }}
