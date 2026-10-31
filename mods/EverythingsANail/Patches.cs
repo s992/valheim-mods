@@ -1,7 +1,9 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using HarmonyLib;
 using Valheim.UI;
+using ValheimMods.Shared;
 
 namespace EverythingsANail
 {
@@ -48,6 +50,9 @@ namespace EverythingsANail
     [HarmonyPatch(typeof(Humanoid), nameof(Humanoid.SetupVisEquipment))]
     internal static class SetupVisEquipmentPatch
     {
+        // Runs every frame: contain our own errors (see PatchGuard)
+        private static Exception Finalizer(Exception __exception) => PatchGuard.Contain(__exception, "the hammer's tool visuals");
+
         private static void Postfix(Humanoid __instance, VisEquipment visEq, bool isRagdoll)
         {
             if (isRagdoll || !visEq) return;
@@ -69,6 +74,9 @@ namespace EverythingsANail
     [HarmonyPatch(typeof(Inventory), nameof(Inventory.GetAllPieceTables))]
     internal static class GetAllPieceTablesPatch
     {
+        // Runs every frame: contain our own errors (see PatchGuard)
+        private static Exception Finalizer(Exception __exception) => PatchGuard.Contain(__exception, "the tools' build menus");
+
         private static void Postfix(Inventory __instance, List<PieceTable> tables)
         {
             Player player = Player.m_localPlayer;
@@ -95,6 +103,9 @@ namespace EverythingsANail
         typeof(ItemDrop.ItemData), typeof(int), typeof(bool), typeof(float), typeof(int), typeof(bool))]
     internal static class TooltipPatch
     {
+        // Runs every frame: contain our own errors (see PatchGuard)
+        private static Exception Finalizer(Exception __exception) => PatchGuard.Contain(__exception, "the hammer's tooltip");
+
         private static void Postfix(ItemDrop.ItemData item, ref string __result)
         {
             if (!Impersonation.IsDisguised(item)) return;
@@ -107,6 +118,9 @@ namespace EverythingsANail
     [HarmonyPatch(typeof(Player), nameof(Player.HandleRadialInput))]
     internal static class HandleRadialInputPatch
     {
+        // Runs every frame: contain our own errors (see PatchGuard)
+        private static Exception Finalizer(Exception __exception) => PatchGuard.Contain(__exception, "the tool menu");
+
         private static bool Prefix(Player __instance) => !ToolMenu.TryOpen(__instance);
     }
 
@@ -114,6 +128,9 @@ namespace EverythingsANail
     [HarmonyPatch(typeof(RadialBase), nameof(RadialBase.InRadialBlockingPlaceMode), MethodType.Getter)]
     internal static class RadialBlockingPatch
     {
+        // Runs every frame: contain our own errors (see PatchGuard)
+        private static Exception Finalizer(Exception __exception) => PatchGuard.Contain(__exception, "the tool menu");
+
         private static bool Prefix(ref bool __result)
         {
             if (!ToolMenu.Opening) return true;
@@ -126,6 +143,9 @@ namespace EverythingsANail
     [HarmonyPatch(typeof(KeyHintsRadial), nameof(KeyHintsRadial.UpdateRadialHints))]
     internal static class RadialHintsPatch
     {
+        // Runs every frame: contain our own errors (see PatchGuard)
+        private static Exception Finalizer(Exception __exception) => PatchGuard.Contain(__exception, "the tool menu");
+
         private static void Postfix(KeyHintsRadial __instance, RadialBase radial)
         {
             if (!ToolMenu.IsOurs(radial.CurrentConfig)) return;
