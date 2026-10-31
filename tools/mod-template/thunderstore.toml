@@ -1,0 +1,35 @@
+[config]
+schemaVersion = "0.0.1"
+
+[package]
+namespace = "s992"
+name = "__MODNAME__"
+# Placeholder: release builds pass --package-version from <Version> in __MODNAME__.csproj
+versionNumber = "0.0.0"
+description = "__DESCRIPTION__"
+websiteUrl = "https://github.com/s992/valheim-mods/tree/main/mods/__MODNAME__"
+containsNsfwContent = false
+
+[package.dependencies]
+denikson-BepInExPack_Valheim = "5.4.2351"
+
+[build]
+icon = "./icon.png"
+readme = "./README.md"
+outdir = "./build"
+
+[[build.copy]]
+source = "./bin/Release/netstandard2.1/__MODNAME__.dll"
+target = "plugins/__MODNAME__.dll"
+
+# tcli has no changelog setting; Thunderstore shows a CHANGELOG.md from the package root
+[[build.copy]]
+source = "./CHANGELOG.md"
+target = "CHANGELOG.md"
+
+[publish]
+repository = "https://thunderstore.io"
+communities = ["valheim"]
+
+[publish.categories]
+valheim = [__CATEGORIES__]

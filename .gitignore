@@ -489,3 +489,6 @@ Directory.Build.user.props
 
 # Thunderstore package output (tcli build, in each mod folder)
 build/
+
+# Claude Code per-user settings
+.claude/settings.local.json

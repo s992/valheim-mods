@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Shared settings, packages and game references: Directory.Build.props at the repo root -->
+  <PropertyGroup>
+    <Version>0.1.0</Version>
+    <Description>__DESCRIPTION__</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Localization: any player-facing item/biome name goes through it -->
+    <Reference Include="assembly_guiutils" HintPath="$(ValheimManagedDir)\assembly_guiutils.dll" Private="false" />
+  </ItemGroup>
+
+</Project>

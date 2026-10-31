@@ -1,12 +1,14 @@
 """Draws icon.png: a bronze hammer striking a glowing hot nail, in the shared s992 icon style.
 
-Run with Pillow and the skill's icon_kit on the path:
-    python scripts/make_icon.py <path-to-icon_kit-folder> icon.png
+Run with Pillow from the repo root (writes this mod's icon.png unless given another path):
+    python mods/EverythingsANail/scripts/make_icon.py
 """
 import math
 import sys
+from pathlib import Path
 
-sys.path.insert(0, sys.argv[1])
+sys.path.insert(0, str(Path(__file__).resolve().parents[3] / "tools"))
+OUT = sys.argv[1] if len(sys.argv) > 1 else str(Path(__file__).resolve().parents[1] / "icon.png")
 from icon_kit import *  # noqa: E402,F403
 
 img = background(seed=11)
@@ -107,4 +109,4 @@ for angle, dist, r in ((-70, 170, 14), (-30, 200, 11), (200, 160, 12), (240, 190
     d.polygon([(sx, sy - r * 2.2), (sx + r * 0.5, sy), (sx, sy + r * 2.2), (sx - r * 0.5, sy)], fill=HOT_LIGHT + (255,))
     d.polygon([(sx - r * 2.2, sy), (sx, sy + r * 0.5), (sx + r * 2.2, sy), (sx, sy - r * 0.5)], fill=HOT_LIGHT + (255,))
 
-save_icon(img, sys.argv[2])
+save_icon(img, OUT)
