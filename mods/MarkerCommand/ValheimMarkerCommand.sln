@@ -1,0 +1,27 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31903.59
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{26C79539-D94F-4144-AE35-91EBCE5D6723}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MarkerCommand", "src\MarkerCommand\MarkerCommand.csproj", "{91667816-5DCD-42F8-BABF-B7573C50DB4F}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{91667816-5DCD-42F8-BABF-B7573C50DB4F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{91667816-5DCD-42F8-BABF-B7573C50DB4F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{91667816-5DCD-42F8-BABF-B7573C50DB4F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{91667816-5DCD-42F8-BABF-B7573C50DB4F}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{91667816-5DCD-42F8-BABF-B7573C50DB4F} = {26C79539-D94F-4144-AE35-91EBCE5D6723}
+	EndGlobalSection
+EndGlobal
