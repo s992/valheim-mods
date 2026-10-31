@@ -376,3 +376,10 @@ dotnet_diagnostic.CA1720.severity = none
 dotnet_diagnostic.CA1001.severity = none
 # Constant arrays here are passed once, when settings are bound
 dotnet_diagnostic.CA1861.severity = suggestion
+
+# Unity objects compare equal to null once destroyed, but ?., ??, ??= and "is null" skip that check and act on a
+# destroyed object. These are informational by default; here they fail the build.
+dotnet_diagnostic.UNT0007.severity = warning
+dotnet_diagnostic.UNT0008.severity = warning
+dotnet_diagnostic.UNT0023.severity = warning
+dotnet_diagnostic.UNT0029.severity = warning
