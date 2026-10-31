@@ -9,6 +9,7 @@ Adapt them rather than pasting blindly; the folders under `mods/` have full vers
 - Hotkeys
 - Optional integration with another mod
 - Harmony: prefix, postfix, transpiler
+- Failing safely (shared/)
 - Changing game objects reversibly
 - Keeping per-frame work cheap
 - Feedback to the player
@@ -28,7 +29,8 @@ public class Plugin : BaseUnityPlugin
     {
         Settings.Bind(Config);
         EpicLootCompat.Init(Logger);
-        new Harmony(MyPluginInfo.PLUGIN_GUID).PatchAll();
+        // All or nothing (see "Failing safely"); nothing else starts when it fails
+        if (!SafePatching.PatchAll(new Harmony(MyPluginInfo.PLUGIN_GUID), Logger)) return;
         gameObject.AddComponent<Overlay>();   // MonoBehaviours live on the plugin's GameObject
         Logger.LogInfo($"{MyPluginInfo.PLUGIN_NAME} {MyPluginInfo.PLUGIN_VERSION} loaded");
     }
@@ -119,8 +121,9 @@ public static void Init(ManualLogSource log)
 
 - **Postfix** to add behaviour after a method (register commands after `Terminal.InitTerminal`, append tooltip text).
 - **Prefix** to act just before (snapshot state before `Player.PlacePiece`). Return `void` unless you mean to skip the original.
-- **Transpiler** to change one condition inside a long method without copying it. Count replacements and log a
-  warning if the count isn't what you expect, so a game update degrades gracefully instead of silently:
+- **Transpiler** to change one condition inside a long method without copying it. Count replacements and fail
+  the patch if the count isn't what the game code had, so a game update turns the mod off with a clear message
+  instead of applying half a change:
 
 ```csharp
 [HarmonyPatch(typeof(Player), nameof(Player.AutoPickup))]
@@ -141,7 +144,7 @@ internal static class AutoPickupPatch
             }
             else yield return instruction;
         }
-        if (replaced != 1) Debug.LogWarning($"[Mod] expected one m_autoPickup check, found {replaced}");
+        SafePatching.ExpectReplaced(replaced, 1, "Player.AutoPickup: m_autoPickup checks");
     }
 
     private static bool CanAutoPickup(ItemDrop drop) => drop.m_autoPickup && !Rules.IsFiltered(drop.m_itemData);
@@ -149,6 +152,38 @@ internal static class AutoPickupPatch
 ```
 
 With the publicized assembly, `nameof(Player.AutoPickup)` works on private members.
+
+## Failing safely (shared/)
+
+`shared/*.cs` is compiled into every mod (namespace `ValheimMods.Shared`, internal types), so it needs no
+dependency and mods released at different times can't conflict.
+
+- **`SafePatching.PatchAll(harmony, Logger)`** instead of `harmony.PatchAll()`. Harmony's version stops at the
+  first patch class that throws (a game method that moved in an update) and keeps the ones before it, so a mod
+  could count materials in chests but not take them. This tries every class; if any fails, it removes all of the
+  mod's patches, logs why and tells the player the mod is off. `Plugin.Awake` returns early when it returns false.
+- **Patches for optional mods** (`harmony.Patch(...)` from `Awake`, only when the other mod is loaded) go after
+  `SafePatching.PatchAll`, in their own try/catch with a warning: a changed optional mod switches off only that
+  feature (LootFilter's `BuildCameraPickupPatch`).
+- **`SafePatching.ExpectReplaced(replaced, expected, what)`** at the end of every transpiler.
+- **`FrameGuard`** for `Update`/`OnGUI` on MonoBehaviours. Unity logs an exception and calls the method again next
+  frame, so one bug can fill the log. Move the body into a `Tick()` and catch around it; after repeated errors
+  the guard disables the component and tells the player. Undo the component's changes in `OnDisable` (it runs
+  then), not only in `OnDestroy`.
+
+```csharp
+private FrameGuard _guard;
+private void Awake() => _guard = new FrameGuard(this, "the stability overlay"); // the player's name for it
+private void Update()
+{
+    try { Tick(); }
+    catch (Exception e) { _guard.Report(e); }
+}
+private void OnDisable() => Hide();
+```
+
+- **`PlayerNotice.Show(message)`** shows a message once the player is in game (top left and the console), for
+  problems that would otherwise be only in the log.
 
 ## Changing game objects reversibly
 

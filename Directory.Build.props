@@ -59,6 +59,14 @@
     <PackageReference Include="Microsoft.Unity.Analyzers" Version="1.28.0" PrivateAssets="all" />
   </ItemGroup>
 
+  <!--
+    Shared source (shared/), compiled into every mod as internal types. Source rather than a shared DLL, so mods
+    released at different times never fight over one assembly's version.
+  -->
+  <ItemGroup>
+    <Compile Include="$(MSBuildThisFileDirectory)shared\*.cs" Link="Shared\%(Filename)%(Extension)" />
+  </ItemGroup>
+
   <!-- Game assemblies are referenced from a local install and never committed -->
   <ItemGroup>
     <!-- Publicized, so private game members can be used directly (no reflection) -->

@@ -50,6 +50,8 @@ both the build and `tools/decompile.py` read:
 - `Directory.Build.props`: everything shared: `netstandard2.1`, BepInEx packages, the common game references,
   plugin GUID `s992.<Name>` from the folder name, the paths above. `Directory.Build.targets`: deploy to the profile.
 - `ValheimMods.sln`: every mod.
+- `shared/`: source compiled into every mod: all-or-nothing patching, per-frame error guard, player notices
+  (docs/patterns.md, "Failing safely").
 - `tools/`: `new_mod.py` (scaffold), `mod-template/`, `decompile.py` (read game/mod code), `icon_kit.py`.
 - `docs/`: `game-api.md`, `integrations.md`, `patterns.md`, `icons.md`, `releasing.md` (see below).
 - `.github/workflows/`: `build.yml` (every push; builds against the Valheim dedicated server, checks formatting),
