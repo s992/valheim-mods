@@ -29,13 +29,18 @@ each mod has its own `mods/<Name>/thunderstore.toml`.
 
 ## Pushing a new mod
 
-The repo is public: pushing `main` publishes the mod's source, so agents ask first. A mod that isn't ready to show
-stays on a local branch (`git switch -c <Name>/wip`) until its author says so. Contributors push a branch to their
-fork and open a pull request; the maintainer merges.
-1. `git pull`, then push `main`.
-2. Watch the Build run (`gh run list --branch main --limit 1`, then `gh run watch`). It builds every mod; with the
-   server cached it takes ~30 s, ~2 min when the game updated.
-3. Do the release dry run below.
+The repo is public: pushing any branch publishes the mod's source, so agents ask first. A mod that isn't ready to
+show stays on a local branch (`git switch -c <Name>/wip`) until its author says so. Contributors push a branch to
+their fork and open a pull request; the maintainer merges.
+1. Push the branch and open a pull request against `main` (the template asks for risk, checks and the in-game list).
+2. Watch its Build run (`gh pr checks --watch`). It builds every mod; with the server cached it takes a few minutes,
+   longer when the game updated.
+3. Merge once Build passes, then do the release dry run below.
+
+`main` is protected: changes arrive by pull request, the `build` check must pass on a branch that's up to date with
+`main`, no approval is required (agents push as the maintainer, who can't approve their own pull request), and force
+pushes and deletion are blocked. Admins can bypass it; that's for emergencies, not routine work. The settings live in
+GitHub (Settings, Branches), not in the repo: check them with `gh api repos/s992/valheim-mods/branches/main/protection`.
 
 ## How CI builds without the game
 
