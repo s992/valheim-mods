@@ -2,7 +2,7 @@ using System.Collections.Generic;
 using System.Reflection;
 using System.Reflection.Emit;
 using HarmonyLib;
-using UnityEngine;
+using ValheimMods.Shared;
 
 namespace CraftFromStorage
 {
@@ -66,7 +66,11 @@ namespace CraftFromStorage
                 StorageLog.Warning($"{missing} {name} couldn't be taken from storage; that part of the cost was free");
         }
 
-        /// <summary>Replaces every call to <paramref name="target"/> with <paramref name="replacement"/>; warns when the count is off.</summary>
+        /// <summary>
+        /// Replaces every call to <paramref name="target"/> with <paramref name="replacement"/>. A count other than
+        /// <paramref name="expected"/> fails the patch, which turns the mod off: counting storage in one place but not
+        /// taking from it in another would make things free or charge twice.
+        /// </summary>
         public static IEnumerable<CodeInstruction> ReplaceCalls(IEnumerable<CodeInstruction> instructions, MethodInfo target,
             MethodInfo replacement, int expected, string where)
         {
@@ -80,9 +84,7 @@ namespace CraftFromStorage
                 }
                 else yield return instruction;
             }
-            if (replaced != expected)
-                Debug.LogWarning($"[CraftFromStorage] {where}: expected {expected} call(s) to {target?.Name ?? "a missing method"}, replaced {replaced}. " +
-                                 "Nearby storage may not be counted there.");
+            SafePatching.ExpectReplaced(replaced, expected, $"{where}: calls to {target?.Name ?? "a missing method"}");
         }
 
         public static readonly MethodInfo CountItems =

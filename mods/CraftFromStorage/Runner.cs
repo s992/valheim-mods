@@ -1,6 +1,8 @@
+using System;
 using System.Collections.Generic;
 using BepInEx.Configuration;
 using UnityEngine;
+using ValheimMods.Shared;
 
 namespace CraftFromStorage
 {
@@ -28,10 +30,12 @@ namespace CraftFromStorage
         public static Runner Instance { get; private set; }
 
         private bool m_checkChangeKey = true;
+        private FrameGuard m_guard;
 
         private void Awake()
         {
             Instance = this;
+            m_guard = new FrameGuard(this, "nearby storage");
             Settings.ChangeMaterialKey.SettingChanged += (_, __) => m_checkChangeKey = true;
         }
 
@@ -54,6 +58,12 @@ namespace CraftFromStorage
         private GUIStyle m_shadow;
 
         private void Update()
+        {
+            try { Tick(); }
+            catch (Exception e) { m_guard.Report(e); }
+        }
+
+        private void Tick()
         {
             if (m_checkChangeKey && ZInput.instance != null)
             {
@@ -114,6 +124,12 @@ namespace CraftFromStorage
             SmeltFlow.HoveredOreSwitchSmelter(player);
 
         private void OnGUI()
+        {
+            try { DrawStatus(); }
+            catch (Exception e) { m_guard.Report(e); }
+        }
+
+        private void DrawStatus()
         {
             if (Event.current.type != EventType.Repaint || !Settings.ShowStatus.Value) return;
             Player player = Player.m_localPlayer;

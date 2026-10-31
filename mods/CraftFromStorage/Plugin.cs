@@ -1,5 +1,6 @@
 using BepInEx;
 using HarmonyLib;
+using ValheimMods.Shared;
 
 namespace CraftFromStorage
 {
@@ -12,6 +13,7 @@ namespace CraftFromStorage
     public class Plugin : BaseUnityPlugin
     {
         private Harmony m_harmony;
+        private bool m_patched;
 
         private void Awake()
         {
@@ -19,7 +21,8 @@ namespace CraftFromStorage
             StorageLog.Init(Logger);
             EpicLootCompat.Init(Logger);
             m_harmony = new Harmony(MyPluginInfo.PLUGIN_GUID);
-            m_harmony.PatchAll();
+            m_patched = SafePatching.PatchAll(m_harmony, Logger);
+            if (!m_patched) return;
             gameObject.AddComponent<Runner>();
             Logger.LogInfo($"{MyPluginInfo.PLUGIN_NAME} {MyPluginInfo.PLUGIN_VERSION} loaded");
         }
@@ -27,6 +30,7 @@ namespace CraftFromStorage
         // Start runs after every plugin's Awake, which is where MUC applies its patches
         private void Start()
         {
+            if (!m_patched) return;
             MucHealth.Check(Logger);
             MucInternals.Init(Logger);
         }

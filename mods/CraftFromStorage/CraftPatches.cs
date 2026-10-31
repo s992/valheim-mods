@@ -50,7 +50,8 @@ namespace CraftFromStorage
             if (!__result || req?.m_resItem == null || player != Player.m_localPlayer) return;
             bool feature = craft ? Settings.Crafting.Value : Settings.Building.Value;
             if (!Hooks.Active(feature)) return;
-            var amountText = elementRoot.transform.Find("res_amount")?.GetComponent<TMPro.TMP_Text>();
+            Transform amount = elementRoot.transform.Find("res_amount");
+            var amountText = amount ? amount.GetComponent<TMPro.TMP_Text>() : null;
             if (!amountText) return;
 
             string name = req.m_resItem.m_itemData.m_shared.m_name;

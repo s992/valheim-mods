@@ -36,9 +36,10 @@ namespace CraftFromStorage
                     if (sub == "audit") Audit(args.Context);
                     else
                     {
-                        args.Context?.AddString(Status.Line());
-                        args.Context?.AddString($"Borrowing this session: asked {ChestAccess.BorrowsSent}, granted {ChestAccess.BorrowsGranted}, " +
-                                                $"handed to others {ChestAccess.HandedAway}");
+                        if (!args.Context) return;
+                        args.Context.AddString(Status.Line());
+                        args.Context.AddString($"Borrowing this session: asked {ChestAccess.BorrowsSent}, granted {ChestAccess.BorrowsGranted}, " +
+                                               $"handed to others {ChestAccess.HandedAway}");
                     }
                 },
                 optionsFetcher: () => new List<string> { "status", "audit" });
@@ -49,7 +50,7 @@ namespace CraftFromStorage
             Player player = Player.m_localPlayer;
             if (!player)
             {
-                terminal?.AddString("Storage audit needs a player in the world");
+                if (terminal) terminal.AddString("Storage audit needs a player in the world");
                 return;
             }
             var totals = new SortedDictionary<string, int>();
@@ -67,7 +68,7 @@ namespace CraftFromStorage
 
             int items = totals.Values.Sum();
             string summary = $"Storage audit: {chests.Count} chests in reach + your inventory: {items} items, {totals.Count} kinds";
-            terminal?.AddString(summary + " (full list in BepInEx/CraftFromStorage.log)");
+            if (terminal) terminal.AddString(summary + " (full list in BepInEx/CraftFromStorage.log)");
             StorageLog.Write("AUDIT " + summary);
             foreach (var pair in totals)
                 StorageLog.Write($"AUDIT   {Localization.instance.Localize(pair.Key)} ({pair.Key}): {pair.Value}");
