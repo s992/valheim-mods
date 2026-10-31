@@ -1,0 +1,30 @@
+[config]
+schemaVersion = "0.0.1"
+
+[package]
+namespace = "s992"
+name = "LootFilter"
+# Placeholder: release builds pass --package-version from <Version> in LootFilter.csproj
+versionNumber = "0.0.0"
+description = "Loot filter: mark items or item groups as junk so they are not auto-picked up and lose their sparkles. Mark items while hovering them."
+websiteUrl = "https://github.com/s992/ValheimLootFilter"
+containsNsfwContent = false
+
+[package.dependencies]
+denikson-BepInExPack_Valheim = "5.4.2351"
+
+[build]
+icon = "./icon.png"
+readme = "./README.md"
+outdir = "./build"
+
+[[build.copy]]
+source = "./src/LootFilter/bin/Release/netstandard2.1/LootFilter.dll"
+target = "plugins/LootFilter.dll"
+
+[publish]
+repository = "https://thunderstore.io"
+communities = ["valheim"]
+
+[publish.categories]
+valheim = ["ai-generated", "tools", "client-side"]
