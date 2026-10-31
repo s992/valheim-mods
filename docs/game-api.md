@@ -214,4 +214,9 @@ To find an unknown type: `ilspycmd -l c <dll>` on each candidate in `valheim_Dat
 - Vanilla keyboard defaults (ZInput): W A S D, Space, LeftCtrl crouch, LeftShift run, E use, Q autorun, R hide,
   F guardian power, G radial, T emote, X sit, C walk, V autopickup, M map, Tab inventory, 1-8 hotbar, F5 console.
   (from the `AddButton("...", KeyToPath(Key.X))` defaults in `ZInput`; K has no default binding).
+- Debug mode (`debugmode` with cheats on) reads raw `GetKeyDown` for Z (fly), B (no build cost), K (kill nearby
+  enemies) and L (remove drops) in `Player.Update`, inside `if (TakeInput())`, ignoring modifiers: Ctrl+K is still K
+  there. A mod hotkey on one of those letters should make `Player.TakeInput` false on the frame it fires.
+- Camera zoom (`GameCamera.UpdateCamera`) reads `ZInput.GetMouseScrollWheel()` unless the inventory, map, chat, menu
+  or build menu is open; it doesn't check `TextInput`. SearchEverything transpiles those calls while its window is open.
 
