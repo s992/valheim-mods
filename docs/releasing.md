@@ -9,6 +9,7 @@ each mod has its own `mods/<Name>/thunderstore.toml`.
 - Tools
 - Pushing a new mod
 - How CI builds without the game
+- Boot test
 - Release dry run
 - Releasing a version
 - Reviewing the README
@@ -39,11 +40,32 @@ fork and open a pull request; the maintainer merges.
 ## How CI builds without the game
 
 `build.yml` downloads the **Valheim Dedicated Server** (Steam app 896660, anonymous login) with SteamCMD and builds
-`ValheimMods.sln` against its `valheim_server_Data/Managed` assemblies (same game code as the client). Only the
-`Managed` folder is cached, keyed by the server's Steam build id from `api.steamcmd.net`, so it re-downloads only when
-the game updates. `Directory.Build.props` falls back to `valheim_server_Data` automatically; CI passes
+`ValheimMods.sln` against its `valheim_server_Data/Managed` assemblies (same game code as the client). The whole
+server (~2 GB, the boot test runs it) is cached, keyed by the server's Steam build id from `api.steamcmd.net`, so it
+re-downloads only when the game updates; the cache is saved right after the download, before the boot test adds
+BepInEx to it. `Directory.Build.props` falls back to `valheim_server_Data` automatically; CI passes
 `-p:ValheimManagedDir=...`. The `plugins` artifact holds every mod's DLL at `<Name>/bin/Release/netstandard2.1/`.
 Game DLLs are never committed (copyright). The stale `ValheimGameLibs` NuGet package (0.221.x) is pre-1.0; don't use it.
+
+## Boot test
+
+After building, `build.yml` runs `tools/boot_test.py`: it installs BepInExPack_Valheim (version pinned in
+`build.yml`'s `BEPINEX_PACK_VERSION`) and every built mod into the cached server, starts it headless with a fresh
+world, stops it once the world is up (~30 s), and reads `BepInEx/LogOutput.log`. It fails when a mod doesn't log
+`<Name> <Version> loaded`, or on any `[Error]`/`[Fatal]` line except the game's own headless noise listed in
+`ALLOWED` (matched only on Unity's log source, so a mod's errors can't hide there).
+
+- It catches: patches whose target moved (SafePatching turns the mod off and logs why), transpiler counts that
+  changed, exceptions in `Awake`/`Start`, missing references. Client-only code (local player, UI) never runs on a
+  server; that stays on the in-game test list.
+- `--with Namespace-Name ...` (the `with-mods` input of build.yml) also installs Thunderstore packages, latest
+  versions with their dependencies, laid out like r2modman does. `game-check.yml` uses it nightly for the mods we
+  integrate with.
+- A new headless-only error from a game update shows up as a failure: check it also appears with no mods
+  installed (it does if it's in the log before `Chainloader startup complete` or comes from vanilla code in the
+  stack trace) before adding it to `ALLOWED`.
+- Running it locally needs a Linux dedicated server install; on Windows, push a branch and read the Build run's
+  "Boot test" step instead.
 
 `release.yml` (on `<Name>/v*` tags, or run by hand with a mod name for a dry run): reuses build.yml, takes the mod
 from the tag (or the `mod` input), checks the tag matches `<Version>` in `mods/<Name>/<Name>.csproj`, checks

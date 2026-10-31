@@ -52,9 +52,11 @@ both the build and `tools/decompile.py` read:
 - `ValheimMods.sln`: every mod.
 - `shared/`: source compiled into every mod: all-or-nothing patching, per-frame error guard, player notices
   (docs/patterns.md, "Failing safely").
-- `tools/`: `new_mod.py` (scaffold), `mod-template/`, `decompile.py` (read game/mod code), `icon_kit.py`.
+- `tools/`: `new_mod.py` (scaffold), `mod-template/`, `decompile.py` (read game/mod code), `icon_kit.py`,
+  `boot_test.py` (CI's boot test).
 - `docs/`: `game-api.md`, `integrations.md`, `patterns.md`, `icons.md`, `releasing.md` (see below).
-- `.github/workflows/`: `build.yml` (every push; builds against the Valheim dedicated server, checks formatting),
+- `.github/workflows/`: `build.yml` (every push; builds against the Valheim dedicated server, checks formatting,
+  boots the server with every mod: docs/releasing.md, "Boot test"),
   `release.yml`. `.github/`: `CODEOWNERS` (READMEs and build/release files need the maintainer's review),
   `dependabot.yml`, `pull_request_template.md`.
 

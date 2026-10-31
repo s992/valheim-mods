@@ -5,8 +5,18 @@ on:
     branches: ["**"]
   pull_request:
   workflow_dispatch:
-  # Reused by release.yml
+    inputs:
+      with-mods:
+        description: "Thunderstore packages (Namespace-Name, space-separated) to boot alongside, latest versions"
+        required: false
+        default: ""
+  # Reused by release.yml and game-check.yml
   workflow_call:
+    inputs:
+      with-mods:
+        type: string
+        required: false
+        default: ""
 
 permissions:
   contents: read
@@ -15,12 +25,16 @@ env:
   DOTNET_NOLOGO: true
   # Valheim Dedicated Server: anonymous download that ships the same managed assemblies as the client
   VALHEIM_SERVER_APP_ID: "896660"
+  # The boot test's BepInEx; bump it when players' mod managers move to a new pack
+  BEPINEX_PACK_VERSION: "5.4.2360"
 
 jobs:
   build:
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
 
       - uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
         with:
@@ -38,13 +52,14 @@ jobs:
           echo "Valheim server build: $buildid"
           echo "buildid=$buildid" >> "$GITHUB_OUTPUT"
 
-      # Only the Managed folder is cached; it's refreshed whenever the game updates
-      - name: Cache game assemblies
+      # The whole server (~2 GB) is cached, since the boot test runs it; refreshed whenever the game updates.
+      # Saved right after the download, before the boot test adds BepInEx to it.
+      - name: Restore Valheim server
         id: cache
-        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
-          path: valheim-managed
-          key: valheim-managed-${{ steps.valheim.outputs.buildid }}
+          path: valheim-server
+          key: valheim-server-${{ steps.valheim.outputs.buildid }}
 
       - name: Download Valheim dedicated server
         if: steps.cache.outputs.cache-hit != 'true'
@@ -65,18 +80,32 @@ jobs:
           done
           [[ -f "$managed/assembly_valheim.dll" ]] || { echo "::error::Valheim server download failed"; exit 1; }
 
-          cp -r "$managed" valheim-managed
+      - name: Save Valheim server
+        if: steps.cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: valheim-server
+          key: valheim-server-${{ steps.valheim.outputs.buildid }}
 
       # Builds every mod in ValheimMods.sln. Warnings fail the build (Directory.Build.props)
       - name: Build
-        run: dotnet build ValheimMods.sln -c Release -p:ValheimManagedDir="$GITHUB_WORKSPACE/valheim-managed"
+        run: dotnet build ValheimMods.sln -c Release -p:ValheimManagedDir="$GITHUB_WORKSPACE/valheim-server/valheim_server_Data/Managed"
 
       # Code style and analyzer rules from .editorconfig; fix locally with `dotnet format ValheimMods.sln`.
       # dotnet format takes no -p, so the game path goes in as an environment variable
       - name: Check formatting
         env:
-          ValheimManagedDir: ${{ github.workspace }}/valheim-managed
+          ValheimManagedDir: ${{ github.workspace }}/valheim-server/valheim_server_Data/Managed
         run: dotnet format ValheimMods.sln --verify-no-changes --no-restore
+
+      # Starts the server with BepInEx and every mod: patches must apply and nothing may log an error
+      - name: Boot test
+        env:
+          WITH_MODS: ${{ inputs.with-mods }}
+        run: |
+          # shellcheck disable=SC2086 # WITH_MODS is a space-separated list
+          python3 tools/boot_test.py --server valheim-server --mods mods --bepinex "$BEPINEX_PACK_VERSION" \
+            ${WITH_MODS:+--with $WITH_MODS}
 
       # Stored relative to mods/, so downloading into mods/ restores each <Name>/bin/... path
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
