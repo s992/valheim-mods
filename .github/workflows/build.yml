@@ -20,9 +20,9 @@ jobs:
   build:
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
-      - uses: actions/setup-dotnet@v6
+      - uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
         with:
           dotnet-version: 8.0.x
 
@@ -41,7 +41,7 @@ jobs:
       # Only the Managed folder is cached; it's refreshed whenever the game updates
       - name: Cache game assemblies
         id: cache
-        uses: actions/cache@v6
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: valheim-managed
           key: valheim-managed-${{ steps.valheim.outputs.buildid }}
@@ -67,12 +67,19 @@ jobs:
 
           cp -r "$managed" valheim-managed
 
-      # Builds every mod in ValheimMods.sln
+      # Builds every mod in ValheimMods.sln. Warnings fail the build (Directory.Build.props)
       - name: Build
         run: dotnet build ValheimMods.sln -c Release -p:ValheimManagedDir="$GITHUB_WORKSPACE/valheim-managed"
 
+      # Code style and analyzer rules from .editorconfig; fix locally with `dotnet format ValheimMods.sln`.
+      # dotnet format takes no -p, so the game path goes in as an environment variable
+      - name: Check formatting
+        env:
+          ValheimManagedDir: ${{ github.workspace }}/valheim-managed
+        run: dotnet format ValheimMods.sln --verify-no-changes --no-restore
+
       # Stored relative to mods/, so downloading into mods/ restores each <Name>/bin/... path
-      - uses: actions/upload-artifact@v7
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: plugins
           path: mods/*/bin/Release/netstandard2.1/*.dll

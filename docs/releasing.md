@@ -105,8 +105,10 @@ change the code instead.
 - GitHub Actions caches are per branch (branches can read `main`'s, not each other's): the first run on a new branch
   may download the server again.
 - Runners are pinned to `ubuntu-24.04` because SteamCMD needs 32-bit libraries (`lib32gcc-s1`) that an OS bump could break.
-- Action majors as of Oct 2026: checkout v7, setup-dotnet v6, cache v6, upload-artifact v7, download-artifact v8.
-  Check `git ls-remote --tags https://github.com/actions/<name>.git` before bumping.
+- Actions are pinned to commit SHAs with the version in a comment (`uses: actions/checkout@<sha> # v7.0.1`), since
+  a moved tag could otherwise run new code next to the Thunderstore token. Dependabot proposes bumps monthly; to
+  bump by hand, take the SHA from `git ls-remote --tags https://github.com/actions/<name>.git` and update every use.
+  As of Oct 2026: checkout v7.0.1, setup-dotnet v6.0.0, cache v6.1.0, upload-artifact v7.0.2, download-artifact v8.0.2.
 - `thunderstore.toml` categories and `websiteUrl` are sent with every publish and overwrite edits made on the website.
   Keep the toml in sync with any site edits. Category slugs: `https://thunderstore.io/api/experimental/community/valheim/category/`.
 - Mods published before the monorepo (Oct 2026) still show their old `s992/Valheim<Name>` link on Thunderstore until

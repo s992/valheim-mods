@@ -8,7 +8,8 @@ is what any agent needs to build, change or create a mod here; the `docs/` files
 
 - **Ask before anything public or irreversible**: pushing, opening pull requests, tags, Thunderstore publishes,
   GitHub settings. A go-ahead covers that one action, not later ones. The repo is public, so a push publishes code.
-- Only the maintainer releases (tags, Thunderstore). Contributors work on a branch and open a pull request.
+- Only the maintainer releases (tags, Thunderstore). Changes reach `main` through pull requests, agents' included:
+  work on a branch and fill in every section of `.github/pull_request_template.md`.
 - **Humans write READMEs** (`mods/<Name>/README.md`, including the AI-usage disclaimer). Don't create or rewrite
   one; review it against the code when asked (docs/releasing.md, "Reviewing the README").
 - **Agents write changelogs, visibly as AI**: `mods/<Name>/CHANGELOG.md` entries in neutral sentence-case prose
@@ -51,7 +52,9 @@ both the build and `tools/decompile.py` read:
 - `ValheimMods.sln`: every mod.
 - `tools/`: `new_mod.py` (scaffold), `mod-template/`, `decompile.py` (read game/mod code), `icon_kit.py`.
 - `docs/`: `game-api.md`, `integrations.md`, `patterns.md`, `icons.md`, `releasing.md` (see below).
-- `.github/workflows/`: `build.yml` (every push; builds against the Valheim dedicated server), `release.yml`.
+- `.github/workflows/`: `build.yml` (every push; builds against the Valheim dedicated server, checks formatting),
+  `release.yml`. `.github/`: `CODEOWNERS` (READMEs and build/release files need the maintainer's review),
+  `dependabot.yml`, `pull_request_template.md`.
 
 | Mod | What it does |
 |---|---|
@@ -66,8 +69,9 @@ These are the best examples of finished code: read the closest one before buildi
 ## Commands
 
 ```bash
-dotnet build -c Release                                   # every mod; deploys to the profile. 0 warnings expected
+dotnet build -c Release                                   # every mod; deploys to the profile. Warnings fail it
 dotnet build mods/<Name>/<Name>.csproj -c Release         # one mod
+dotnet format ValheimMods.sln                             # fix style; CI runs it with --verify-no-changes
 python tools/new_mod.py <Name> --description "<one sentence, max 250 chars>" --categories tools,client-side
 python tools/decompile.py --type Player --type ItemDrop   # decompiled .cs paths for game classes
 python tools/decompile.py --project                       # whole game as a .cs tree, to grep
@@ -76,7 +80,12 @@ gh workflow run release.yml -f mod=<Name>                 # release dry run (nee
 ```
 
 `decompile.py` installs `ilspycmd` as a dotnet tool on first use (ask the user first) and caches output per game
-build in the temp folder. MSB3277 is silenced on purpose (Unity's System.* versions); any other warning is a problem.
+build in the temp folder.
+
+Warnings are errors, locally and in CI. MSB3277 is silenced on purpose (Unity's System.* versions). Analyzer rules
+that clash with Harmony, Unity or Valheim are turned off in `.editorconfig`, each with its reason. Fix a warning
+rather than silencing it; when a rule really is wrong for one spot, suppress it there with a justification
+(`[SuppressMessage(..., Justification = "...")]`), and only turn a rule off repo-wide for a reason like those.
 
 ## Conventions
 

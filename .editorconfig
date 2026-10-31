@@ -17,15 +17,14 @@ indent_size = 2
 indent_size = 4
 tab_width = 4
 
-# New line preferences
-end_of_line = crlf
-insert_final_newline = false
+# New line preferences (line endings are left to .gitattributes)
+insert_final_newline = true
 
 #### .NET Coding Conventions ####
 [*.{cs,vb}]
 
 # Organize usings
-dotnet_separate_import_directive_groups = true
+dotnet_separate_import_directive_groups = false
 dotnet_sort_system_directives_first = true
 file_header_template = unset
 
@@ -130,8 +129,8 @@ csharp_using_directive_placement = outside_namespace:silent
 csharp_new_line_before_catch = true
 csharp_new_line_before_else = true
 csharp_new_line_before_finally = true
-csharp_new_line_before_members_in_anonymous_types = true
-csharp_new_line_before_members_in_object_initializers = true
+csharp_new_line_before_members_in_anonymous_types = false
+csharp_new_line_before_members_in_object_initializers = false
 csharp_new_line_before_open_brace = all
 csharp_new_line_between_query_expression_clauses = true
 
@@ -362,3 +361,18 @@ dotnet_naming_style.s_camelcase.required_suffix =
 dotnet_naming_style.s_camelcase.word_separator = 
 dotnet_naming_style.s_camelcase.capitalization = camel_case
 
+#### Analyzer severities ####
+# The build treats warnings as errors (Directory.Build.props). Rules turned off here clash with how
+# Harmony, Unity or Valheim work; turn a rule off only with a reason like these.
+[*.cs]
+
+# Harmony injects parameters by name: __instance, __result, ___field
+dotnet_diagnostic.CA1707.severity = none
+# Valheim's Terminal.ConsoleCommand registers itself in its constructor
+dotnet_diagnostic.CA1806.severity = none
+# Names like Guid match BepInEx's own (BepInDependency, PluginInfo)
+dotnet_diagnostic.CA1720.severity = none
+# MonoBehaviours release resources in OnDestroy; Unity never calls Dispose
+dotnet_diagnostic.CA1001.severity = none
+# Constant arrays here are passed once, when settings are bound
+dotnet_diagnostic.CA1861.severity = suggestion

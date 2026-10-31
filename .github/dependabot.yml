@@ -1,0 +1,24 @@
+# Workflow actions are pinned to commit SHAs (release.yml holds the Thunderstore token); Dependabot bumps the
+# SHA and the version comment together. NuGet covers the shared BepInEx and analyzer packages in
+# Directory.Build.props. Game assemblies aren't packages: the nightly game check covers those.
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: monthly
+    groups:
+      actions:
+        patterns: ["*"]
+
+  - package-ecosystem: nuget
+    directory: /
+    schedule:
+      interval: monthly
+    groups:
+      nuget:
+        patterns: ["*"]
+    ignore:
+      # BepInEx 5 is what BepInExPack_Valheim ships; a new major would break every mod
+      - dependency-name: "BepInEx.*"
+        update-types: ["version-update:semver-major"]

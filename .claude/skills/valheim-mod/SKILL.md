@@ -63,7 +63,8 @@ before" in AGENTS.md apply. Also:
 
 ## 5. Build, deploy, commit, report
 
-- Build the mod (or everything, after changing a root file) with 0 warnings. The build deploys to the profile.
+- Build the mod (or everything, after changing a root file); warnings fail the build. Run `dotnet format
+  ValheimMods.sln` before committing. The build deploys to the profile.
 - Commit with a message explaining why, ending with the attribution line from the system reminder.
 - Before a risky rework or when the user asks for a fallback point, make a checkpoint: commit, or if the tree is
   clean, tag the last good commit (`git tag -a <Name>/checkpoint/<what> -m ...`). Some machines have
@@ -94,6 +95,8 @@ venv in the scratchpad is fine). Read the PNG to look at it before committing, a
 
 Read `docs/releasing.md`. Pushing, pull requests, tags and publishes each need the user's go-ahead. Only the
 maintainer tags and publishes; for anyone else, stop at a pushed branch, a pull request and (on a fork) a dry run.
+Every change reaches `main` through a pull request: fill in each section of `.github/pull_request_template.md`
+(the report above maps onto it: Checked, Not checked, In-game test list).
 Every release needs a `## <version>` entry in `mods/<Name>/CHANGELOG.md`: write it from
 `git log <Name>/v<previous>..HEAD -- mods/<Name>` and show it before tagging, since a published version can't be
 changed. After tagging, watch the run and verify the GitHub release and the Thunderstore API.

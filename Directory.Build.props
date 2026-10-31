@@ -6,7 +6,12 @@
   <PropertyGroup>
     <LangVersion>latest</LangVersion>
     <Nullable>disable</Nullable>
-    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+    <!-- Every build is as strict as CI: a warning fails it. Rule severities live in .editorconfig -->
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <!-- Pinned (not "latest") so an SDK update can't add new warnings and break the build on its own -->
+    <AnalysisLevel>8.0</AnalysisLevel>
+    <AnalysisMode>Recommended</AnalysisMode>
+    <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
     <!-- Game assemblies target Unity's slightly newer System.* versions than netstandard2.1; harmless at runtime -->
     <MSBuildWarningsAsMessages>$(MSBuildWarningsAsMessages);MSB3277</MSBuildWarningsAsMessages>
   </PropertyGroup>
@@ -50,6 +55,8 @@
     <PackageReference Include="BepInEx.PluginInfoProps" Version="2.1.0" PrivateAssets="all" />
     <PackageReference Include="BepInEx.Analyzers" Version="1.0.8" PrivateAssets="all" />
     <PackageReference Include="BepInEx.AssemblyPublicizer.MSBuild" Version="0.4.3" PrivateAssets="all" />
+    <!-- Unity-specific checks (e.g. ?. and ?? on Unity objects skip Unity's destroyed-object check) -->
+    <PackageReference Include="Microsoft.Unity.Analyzers" Version="1.28.0" PrivateAssets="all" />
   </ItemGroup>
 
   <!-- Game assemblies are referenced from a local install and never committed -->

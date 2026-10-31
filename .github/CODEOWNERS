@@ -1,0 +1,8 @@
+# Everything here is written by agents except the READMEs, which the maintainer writes (AGENTS.md, "Ground rules").
+# With "Require review from Code Owners" on for main, a pull request touching any of these needs s992's approval.
+/mods/*/README.md @s992
+
+# Release pipeline and the settings every build inherits
+/.github/ @s992
+/Directory.Build.props @s992
+/Directory.Build.targets @s992
