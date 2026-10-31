@@ -1,7 +1,9 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using HarmonyLib;
 using UnityEngine;
+using ValheimMods.Shared;
 
 namespace CraftFromStorage
 {
@@ -9,6 +11,9 @@ namespace CraftFromStorage
     [HarmonyPatch(typeof(Player), nameof(Player.HaveRequirementItems))]
     internal static class HaveRequirementItemsPatch
     {
+        // Runs every frame: contain our own errors (see PatchGuard)
+        private static Exception Finalizer(Exception __exception) => PatchGuard.Contain(__exception, "counting materials in storage");
+
         private static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions) =>
             Hooks.ReplaceCalls(instructions, Hooks.CountItems, Hooks.Self(nameof(Hooks.CountForCrafting)), 1, "Player.HaveRequirementItems");
     }
@@ -16,6 +21,9 @@ namespace CraftFromStorage
     [HarmonyPatch(typeof(Player), nameof(Player.HaveRequirements), typeof(Piece), typeof(Player.RequirementMode))]
     internal static class HaveRequirementsPiecePatch
     {
+        // Runs every frame: contain our own errors (see PatchGuard)
+        private static Exception Finalizer(Exception __exception) => PatchGuard.Contain(__exception, "counting materials in storage");
+
         private static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
         {
             var counted = Hooks.ReplaceCalls(instructions, Hooks.CountItems, Hooks.Self(nameof(Hooks.CountForBuilding)), 1, "Player.HaveRequirements(Piece)");
@@ -26,6 +34,9 @@ namespace CraftFromStorage
     [HarmonyPatch(typeof(Player), nameof(Player.GetFirstRequiredItem))]
     internal static class GetFirstRequiredItemPatch
     {
+        // Runs every frame: contain our own errors (see PatchGuard)
+        private static Exception Finalizer(Exception __exception) => PatchGuard.Contain(__exception, "counting materials in storage");
+
         private static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
         {
             var counted = Hooks.ReplaceCalls(instructions, Hooks.CountItems, Hooks.Self(nameof(Hooks.CountForCrafting)), 1, "Player.GetFirstRequiredItem");
@@ -45,6 +56,9 @@ namespace CraftFromStorage
     [HarmonyPatch(typeof(InventoryGui), nameof(InventoryGui.SetupRequirement))]
     internal static class SetupRequirementPatch
     {
+        // Runs every frame: contain our own errors (see PatchGuard)
+        private static Exception Finalizer(Exception __exception) => PatchGuard.Contain(__exception, "the storage counts in the crafting menu");
+
         private static void Postfix(bool __result, Transform elementRoot, Piece.Requirement req, Player player, bool craft, int quality, int craftMultiplier)
         {
             if (!__result || req?.m_resItem == null || player != Player.m_localPlayer) return;
@@ -149,6 +163,9 @@ namespace CraftFromStorage
     [HarmonyPatch(typeof(InventoryGui), nameof(InventoryGui.UpdateRecipe))]
     internal static class UpdateRecipePatch
     {
+        // Runs every frame: contain our own errors (see PatchGuard)
+        private static Exception Finalizer(Exception __exception) => PatchGuard.Contain(__exception, "crafting from storage");
+
         private static void Postfix(InventoryGui __instance) => CraftFlow.AfterUpdateRecipe(__instance);
     }
 

@@ -1,7 +1,9 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using HarmonyLib;
 using UnityEngine;
+using ValheimMods.Shared;
 
 namespace CraftFromStorage
 {
@@ -226,6 +228,9 @@ namespace CraftFromStorage
     [HarmonyPatch(typeof(Smelter), nameof(Smelter.OnHoverAddOre))]
     internal static class SmelterHoverOrePatch
     {
+        // Runs every frame: contain our own errors (see PatchGuard)
+        private static Exception Finalizer(Exception __exception) => PatchGuard.Contain(__exception, "the smelter's storage hints");
+
         private static void Postfix(Smelter __instance, ref string __result)
         {
             if (!Player.m_localPlayer || !Settings.Smelting.Value) return;
@@ -245,6 +250,9 @@ namespace CraftFromStorage
     [HarmonyPatch(typeof(Smelter), nameof(Smelter.OnHoverAddFuel))]
     internal static class SmelterHoverFuelPatch
     {
+        // Runs every frame: contain our own errors (see PatchGuard)
+        private static Exception Finalizer(Exception __exception) => PatchGuard.Contain(__exception, "the smelter's storage hints");
+
         private static void Postfix(Smelter __instance, ref string __result)
         {
             if (!Player.m_localPlayer || !__instance.m_fuelItem || !Settings.Smelting.Value) return;
