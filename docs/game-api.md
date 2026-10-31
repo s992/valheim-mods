@@ -17,6 +17,8 @@ because the shared `Directory.Build.props` publicizes `assembly_valheim`.
 - Inventory UI hover
 - World progression (boss keys) and biomes
 - World layout
+- Radial menu (1.0) and tools
+- Inventory panels, search boxes and text input
 
 ## Which assembly a type lives in
 
@@ -180,3 +182,36 @@ To find an unknown type: `ilspycmd -l c <dll>` on each candidate in `valheim_Dat
 - Held model: `Humanoid.SetupVisEquipment` uses `m_dropPrefab.name`; the fishing line needs the rod model's `_RodTop`.
 - Mods that identify tools by `GetRightItem().m_shared.m_name` (`$item_cultivator`, `$item_hoe`, `$item_hammer`,
   `$item_blueprintrune`): PlantEasily, PlantEverything, OCDheim, PlanBuild (plus held-model hash for its plan hammer).
+
+## Inventory panels, search boxes and text input (learned building SearchEverything, Oct 2026)
+
+- **UI layout without the game running**: the UI prefabs are in Unity bundles under
+  `valheim_Data/StreamingAssets/SoftRef/Bundles/`; `SoftRef/manifest_extended` (text) maps asset paths to bundle
+  names (`_GameMain.prefab` was bundle `d59cfac`, the main scene `17245031`). UnityPy (pip, in a scratch venv) reads
+  GameObject trees with RectTransform anchors/positions/sizes; script class names don't resolve, but names and
+  typetrees (`m_text`, `m_Sprite`) do. Took minutes and replaced guessing where to put a widget.
+- Panels (canvas units, 1.0.17): `m_player` 570x287 at (40,-40) from the top-left; `m_container` 570x340, a child
+  of the player panel, 30 below it; its `container_name` centred at the top (y -19) between Take All (top-left) and
+  Stack All (top-right); grid from y -46. `m_crafting` 570x650 at (-40,-200) from the top-right; Craft/Upgrade tabs
+  at y -69..-101 on the left, a free strip right of them (x ~250-560), station level box top-right (y -3..-67),
+  `RecipeList` 196x545 at (10,-101), description panel on the right.
+- The game has a search box: `Hud.instance.m_buildUi.m_searchField` (`GUIFramework.GuiInputField`, a
+  `TMP_InputField`; build menu). Instantiate it for a vanilla-looking box; replace its UnityEvents, hide its
+  `SearchBarHint` child (shows the build menu's focus key) and destroy `Localize` components. Placeholder default
+  `$chat_entertext`, 20 pt.
+- Recipe list: `InventoryGui.UpdateCraftingPanel()` (private) refetches recipes and calls
+  `UpdateRecipeList(List<Recipe> recipes)`; removing entries from that list in a prefix filters both tabs.
+- `InventoryGrid.UpdateGui` (private) redraws every slot every frame (icon colour reset to white); change slot looks
+  in a postfix, e.g. a `CanvasGroup` alpha on the `InventoryElement`. `GetElement(x, y, width)` returns null when out
+  of range.
+- While text is typed, the game's checks are `TextInput.IsVisible()` (Player/PlayerController `TakeInput`, camera
+  cursor capture, the pause menu's Escape, chat's Enter, map keys) and `Hud.instance.m_buildUi.SearchFieldFocused`.
+  `InventoryGui.Update` checks neither: it closes on `Inventory`/`Use`/`JoyButtonB`/`JoyButtonY` buttons
+  (`ZInput.ResetButtonStatus(name)` swallows them) and on raw `KeyCode.Escape` (skip `Hide()` that frame).
+  Escape both unfocuses a TMP field and is read by those Updates in unknown order, so treat "focused this or last
+  frame" as typing. `TextInput.IsVisible` is tiny and could be inlined, so SearchEverything also guards the big
+  callers directly (`InputGuard.cs`).
+- Vanilla keyboard defaults (ZInput): W A S D, Space, LeftCtrl crouch, LeftShift run, E use, Q autorun, R hide,
+  F guardian power, G radial, T emote, X sit, C walk, V autopickup, M map, Tab inventory, 1-8 hotbar, F5 console.
+  (from the `AddButton("...", KeyToPath(Key.X))` defaults in `ZInput`; K has no default binding).
+
