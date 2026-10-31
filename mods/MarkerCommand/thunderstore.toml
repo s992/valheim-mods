@@ -7,7 +7,7 @@ name = "MarkerCommand"
 # Placeholder: release builds pass --package-version from <Version> in MarkerCommand.csproj
 versionNumber = "0.0.0"
 description = "Console command for adding map markers at coordinates or your current position, with optional names and icons."
-websiteUrl = "https://github.com/s992/ValheimMarkerCommand"
+websiteUrl = "https://github.com/s992/valheim-mods/tree/main/mods/MarkerCommand"
 containsNsfwContent = false
 
 [package.dependencies]
@@ -19,7 +19,7 @@ readme = "./README.md"
 outdir = "./build"
 
 [[build.copy]]
-source = "./src/MarkerCommand/bin/Release/netstandard2.1/MarkerCommand.dll"
+source = "./bin/Release/netstandard2.1/MarkerCommand.dll"
 target = "plugins/MarkerCommand.dll"
 
 [publish]

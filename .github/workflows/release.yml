@@ -1,0 +1,166 @@
+name: Release
+
+# Push a tag <Name>/v<Version> matching <Version> in mods/<Name>/<Name>.csproj (e.g. LootFilter/v1.1.0) to
+# release that mod. Running it manually with a mod name builds its Thunderstore package as an artifact
+# without releasing anything.
+on:
+  push:
+    tags: ["*/v*"]
+  workflow_dispatch:
+    inputs:
+      mod:
+        description: "Mod to package (folder name under mods/)"
+        required: true
+
+permissions:
+  contents: read
+
+env:
+  DOTNET_NOLOGO: true
+  # tcli targets net6/net7; let it run on the .NET 8 runtime
+  DOTNET_ROLL_FORWARD: Major
+  TCLI_VERSION: "0.2.4"
+
+jobs:
+  build:
+    uses: ./.github/workflows/build.yml
+
+  package:
+    needs: build
+    runs-on: ubuntu-24.04
+    outputs:
+      mod: ${{ steps.version.outputs.mod }}
+      version: ${{ steps.version.outputs.version }}
+      file: ${{ steps.package.outputs.file }}
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Read mod and version
+        id: version
+        env:
+          INPUT_MOD: ${{ inputs.mod }}
+        run: |
+          if [[ "$GITHUB_REF_TYPE" == "tag" ]]; then
+            mod="${GITHUB_REF_NAME%%/*}"
+          else
+            mod="$INPUT_MOD"
+          fi
+          if [[ ! "$mod" =~ ^[A-Za-z0-9]+$ || ! -f "mods/$mod/thunderstore.toml" ]]; then
+            echo "::error::'$mod' is not a mod folder under mods/"
+            exit 1
+          fi
+          version=$(grep -oP '(?<=<Version>)[^<]+' "mods/$mod/$mod.csproj")
+          if [[ ! "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "::error::<Version> '$version' in $mod.csproj is not Major.Minor.Patch"
+            exit 1
+          fi
+          if [[ "$GITHUB_REF_TYPE" == "tag" && "$GITHUB_REF_NAME" != "$mod/v$version" ]]; then
+            echo "::error::Tag $GITHUB_REF_NAME does not match <Version> $version in $mod.csproj"
+            exit 1
+          fi
+          echo "mod=$mod" >> "$GITHUB_OUTPUT"
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+
+      - name: Check README
+        run: |
+          if [[ ! -f "mods/${{ steps.version.outputs.mod }}/README.md" ]]; then
+            echo "::error::README.md is required for the Thunderstore package"
+            exit 1
+          fi
+
+      - name: Check changelog
+        run: |
+          version="${{ steps.version.outputs.version }}"
+          if ! grep -qxF "## $version" "mods/${{ steps.version.outputs.mod }}/CHANGELOG.md"; then
+            echo "::error::CHANGELOG.md has no '## $version' heading for this release"
+            exit 1
+          fi
+
+      - uses: actions/download-artifact@v8
+        with:
+          name: plugins
+          path: mods
+
+      - uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: 8.0.x
+
+      - name: Build Thunderstore package
+        id: package
+        working-directory: mods/${{ steps.version.outputs.mod }}
+        run: |
+          mod="${{ steps.version.outputs.mod }}"
+          version="${{ steps.version.outputs.version }}"
+          dotnet tool install -g tcli --version "$TCLI_VERSION"
+          tcli build --package-version "$version"
+          echo "file=s992-$mod-$version.zip" >> "$GITHUB_OUTPUT"
+
+      # Next to the package, so both sit at the root of the artifact
+      - name: Extract release notes
+        working-directory: mods/${{ steps.version.outputs.mod }}
+        run: |
+          # The version's CHANGELOG.md section, up to the next heading
+          awk -v v="## ${{ steps.version.outputs.version }}" \
+            '$0 == v { found = 1; next } found && /^## / { exit } found' CHANGELOG.md > build/release-notes.md
+          printf '\n*These notes are written by Claude, an AI assistant, from the project'"'"'s commit history.*\n' >> build/release-notes.md
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: thunderstore-package
+          path: |
+            mods/${{ steps.version.outputs.mod }}/build/${{ steps.package.outputs.file }}
+            mods/${{ steps.version.outputs.mod }}/build/release-notes.md
+          if-no-files-found: error
+
+  # Separate jobs so a failure in one can be re-run without repeating the other
+
+  github-release:
+    needs: package
+    if: github.ref_type == 'tag'
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v8
+        with:
+          name: thunderstore-package
+
+      - name: Create GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if gh release view "$GITHUB_REF_NAME" -R "$GITHUB_REPOSITORY" > /dev/null 2>&1; then
+            echo "Release $GITHUB_REF_NAME already exists"
+          else
+            gh release create "$GITHUB_REF_NAME" "${{ needs.package.outputs.file }}" \
+              -R "$GITHUB_REPOSITORY" --title "${{ needs.package.outputs.mod }} ${{ needs.package.outputs.version }}" \
+              --notes-file release-notes.md
+          fi
+
+  thunderstore:
+    needs: package
+    if: github.ref_type == 'tag'
+    runs-on: ubuntu-24.04
+    steps:
+      # tcli publish reads the mod's thunderstore.toml for the repository, community and categories
+      - uses: actions/checkout@v7
+
+      - uses: actions/download-artifact@v8
+        with:
+          name: thunderstore-package
+
+      - uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: 8.0.x
+
+      - name: Publish to Thunderstore
+        working-directory: mods/${{ needs.package.outputs.mod }}
+        env:
+          TCLI_AUTH_TOKEN: ${{ secrets.THUNDERSTORE_TOKEN }}
+        run: |
+          if [[ -z "$TCLI_AUTH_TOKEN" ]]; then
+            echo "::error::The THUNDERSTORE_TOKEN secret is not set"
+            exit 1
+          fi
+          dotnet tool install -g tcli --version "$TCLI_VERSION"
+          tcli publish --file "$GITHUB_WORKSPACE/${{ needs.package.outputs.file }}"

@@ -7,7 +7,7 @@ name = "CraftFromStorage"
 # Placeholder: release builds pass --package-version from <Version> in CraftFromStorage.csproj
 versionNumber = "0.0.0"
 description = "Craft, build and smelt with materials from nearby chests. Built on Multi User Chest for multiplayer; works with Quick Stack Store Sort Trash Restock and Epic Loot."
-websiteUrl = "https://github.com/s992/ValheimCraftFromStorage"
+websiteUrl = "https://github.com/s992/valheim-mods/tree/main/mods/CraftFromStorage"
 containsNsfwContent = false
 
 [package.dependencies]
@@ -19,7 +19,7 @@ readme = "./README.md"
 outdir = "./build"
 
 [[build.copy]]
-source = "./src/CraftFromStorage/bin/Release/netstandard2.1/CraftFromStorage.dll"
+source = "./bin/Release/netstandard2.1/CraftFromStorage.dll"
 target = "plugins/CraftFromStorage.dll"
 
 [publish]

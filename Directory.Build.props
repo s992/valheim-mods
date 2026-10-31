@@ -1,0 +1,76 @@
+<Project>
+
+  <!-- Machine-specific overrides (gitignored); see the properties below for what can be set -->
+  <Import Project="$(MSBuildThisFileDirectory)Directory.Build.user.props" Condition="Exists('$(MSBuildThisFileDirectory)Directory.Build.user.props')" />
+
+  <PropertyGroup>
+    <LangVersion>latest</LangVersion>
+    <Nullable>disable</Nullable>
+    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+    <!-- Game assemblies target Unity's slightly newer System.* versions than netstandard2.1; harmless at runtime -->
+    <MSBuildWarningsAsMessages>$(MSBuildWarningsAsMessages);MSB3277</MSBuildWarningsAsMessages>
+  </PropertyGroup>
+
+  <!--
+    Paths. Each can be overridden in Directory.Build.user.props, with an environment variable
+    of the same name, or on the command line (-p:ValheimDir=...).
+  -->
+  <PropertyGroup>
+    <!-- Game install (client or dedicated server); provides the game and Unity assemblies -->
+    <ValheimDir Condition="'$(ValheimDir)' == ''">C:\Program Files (x86)\Steam\steamapps\common\Valheim</ValheimDir>
+    <ValheimManagedDir Condition="'$(ValheimManagedDir)' == '' and Exists('$(ValheimDir)\valheim_Data\Managed')">$(ValheimDir)\valheim_Data\Managed</ValheimManagedDir>
+    <ValheimManagedDir Condition="'$(ValheimManagedDir)' == ''">$(ValheimDir)\valheim_server_Data\Managed</ValheimManagedDir>
+
+    <!-- Where builds are copied for local testing (r2modman profile by default) -->
+    <PluginsDir Condition="'$(PluginsDir)' == ''">$(APPDATA)\r2modmanPlus-local\Valheim\profiles\Default\BepInEx\plugins</PluginsDir>
+  </PropertyGroup>
+
+  <!--
+    Every project under mods/ is a BepInEx plugin named after its folder: mods/<Name>/<Name>.csproj builds
+    <Name>.dll with GUID s992.<Name>. A mod's csproj only sets <Version>, <Description> and any extra references.
+  -->
+  <PropertyGroup>
+    <TargetFramework>netstandard2.1</TargetFramework>
+    <AssemblyName>$(MSBuildProjectName)</AssemblyName>
+    <RootNamespace>$(MSBuildProjectName)</RootNamespace>
+
+    <!-- Generates MyPluginInfo (GUID/name/version) via BepInEx.PluginInfoProps -->
+    <BepInExPluginGuid>s992.$(MSBuildProjectName)</BepInExPluginGuid>
+    <BepInExPluginName>$(MSBuildProjectName)</BepInExPluginName>
+
+    <!-- Needed by the publicizer so private game members can be used directly -->
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+
+    <CopyLocalLockFileAssemblies>false</CopyLocalLockFileAssemblies>
+    <GenerateDocumentationFile>false</GenerateDocumentationFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="BepInEx.Core" Version="5.4.21" PrivateAssets="all" />
+    <PackageReference Include="BepInEx.PluginInfoProps" Version="2.1.0" PrivateAssets="all" />
+    <PackageReference Include="BepInEx.Analyzers" Version="1.0.8" PrivateAssets="all" />
+    <PackageReference Include="BepInEx.AssemblyPublicizer.MSBuild" Version="0.4.3" PrivateAssets="all" />
+  </ItemGroup>
+
+  <!-- Game assemblies are referenced from a local install and never committed -->
+  <ItemGroup>
+    <!-- Publicized, so private game members can be used directly (no reflection) -->
+    <Reference Include="assembly_valheim" HintPath="$(ValheimManagedDir)\assembly_valheim.dll" Private="false" Publicize="true" />
+    <Reference Include="assembly_utils" HintPath="$(ValheimManagedDir)\assembly_utils.dll" Private="false" />
+    <Reference Include="Splatform" HintPath="$(ValheimManagedDir)\Splatform.dll" Private="false" />
+    <Reference Include="UnityEngine" HintPath="$(ValheimManagedDir)\UnityEngine.dll" Private="false" />
+    <Reference Include="UnityEngine.CoreModule" HintPath="$(ValheimManagedDir)\UnityEngine.CoreModule.dll" Private="false" />
+    <!--
+      Add others in the mod's csproj as needed (CS0012 errors name the missing assembly):
+      assembly_guiutils                 Localization (player-facing item/biome names)
+      gui_framework                     GuiInputField (Terminal.m_input)
+      UnityEngine.UI, Unity.TextMeshPro Image, TextMeshProUGUI, TMP_Text
+      Unity.InputSystem                 checking keys against the game's bindings
+      UnityEngine.PhysicsModule         Physics, Collider, Rigidbody
+      UnityEngine.IMGUIModule           OnGUI, GUI, GUIStyle
+      UnityEngine.TextRenderingModule   Font, FontStyle (with IMGUI)
+      UnityEngine.ParticleSystemModule  ParticleSystem
+    -->
+  </ItemGroup>
+
+</Project>

@@ -67,11 +67,13 @@ jobs:
 
           cp -r "$managed" valheim-managed
 
+      # Builds every mod in ValheimMods.sln
       - name: Build
-        run: dotnet build -c Release -p:ValheimManagedDir="$GITHUB_WORKSPACE/valheim-managed"
+        run: dotnet build ValheimMods.sln -c Release -p:ValheimManagedDir="$GITHUB_WORKSPACE/valheim-managed"
 
+      # Stored relative to mods/, so downloading into mods/ restores each <Name>/bin/... path
       - uses: actions/upload-artifact@v7
         with:
-          name: LootFilter
-          path: src/LootFilter/bin/Release/netstandard2.1/LootFilter.dll
+          name: plugins
+          path: mods/*/bin/Release/netstandard2.1/*.dll
           if-no-files-found: error

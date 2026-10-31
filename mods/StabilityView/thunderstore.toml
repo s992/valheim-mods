@@ -7,7 +7,7 @@ name = "StabilityView"
 # Placeholder: release builds pass --package-version from <Version> in StabilityView.csproj
 versionNumber = "0.0.0"
 description = "Debug overlay for structure stability: support values on every piece, where support comes from, and how building or removing changes it."
-websiteUrl = "https://github.com/s992/ValheimStabilityView"
+websiteUrl = "https://github.com/s992/valheim-mods/tree/main/mods/StabilityView"
 containsNsfwContent = false
 
 [package.dependencies]
@@ -19,7 +19,7 @@ readme = "./README.md"
 outdir = "./build"
 
 [[build.copy]]
-source = "./src/StabilityView/bin/Release/netstandard2.1/StabilityView.dll"
+source = "./bin/Release/netstandard2.1/StabilityView.dll"
 target = "plugins/StabilityView.dll"
 
 [publish]
