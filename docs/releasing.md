@@ -39,7 +39,8 @@ their fork and open a pull request; the maintainer merges.
 
 `main` is protected: changes arrive by pull request, the `build` check must pass on a branch that's up to date with
 `main`, no approval is required (agents push as the maintainer, who can't approve their own pull request), and force
-pushes and deletion are blocked. Admins can bypass it; that's for emergencies, not routine work. The settings live in
+pushes and deletion are blocked. Admins are held to it too, since agents push as the maintainer; in an emergency the
+maintainer can switch that off for a moment in the settings. The settings live in
 GitHub (Settings, Branches), not in the repo: check them with `gh api repos/s992/valheim-mods/branches/main/protection`.
 
 ## How CI builds without the game
