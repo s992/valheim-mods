@@ -182,6 +182,12 @@ private void Update()
 private void OnDisable() => Hide();
 ```
 
+- **`PatchGuard`** as the finalizer of patches on game methods that run every frame (input, hover, tooltips,
+  requirement checks). An exception from a patch otherwise escapes into the game's Update and skips the rest of it
+  every frame (the player can't move). `private static Exception Finalizer(Exception __exception) =>
+  PatchGuard.Contain(__exception, "the tool menu");` stops exceptions from the mod's own code there, logs the first
+  and tells the player; the game's own exceptions pass through. Not on paths where ending early would let something
+  through for free (ConsumeResources): there the exception has to stop the action.
 - **`PlayerNotice.Show(message)`** shows a message once the player is in game (top left and the console), for
   problems that would otherwise be only in the log.
 
