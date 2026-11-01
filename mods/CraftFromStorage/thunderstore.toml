@@ -22,6 +22,11 @@ outdir = "./build"
 source = "./bin/Release/netstandard2.1/CraftFromStorage.dll"
 target = "plugins/CraftFromStorage.dll"
 
+# tcli has no changelog setting; Thunderstore shows a CHANGELOG.md from the package root
+[[build.copy]]
+source = "./CHANGELOG.md"
+target = "CHANGELOG.md"
+
 [publish]
 repository = "https://thunderstore.io"
 communities = ["valheim"]
