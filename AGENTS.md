@@ -13,7 +13,8 @@ is what any agent needs to build, change or create a mod here; the `docs/` files
 - **Humans write READMEs** (`mods/<Name>/README.md`, including the AI-usage disclaimer). Don't create or rewrite
   one; review it against the code when asked (docs/releasing.md, "Reviewing the README").
 - **Agents write changelogs, visibly as AI**: `mods/<Name>/CHANGELOG.md` entries in neutral sentence-case prose
-  under the file's "written by an AI" note, never in the README's voice. The same goes for anything else an agent
+  under the file's "written by an AI" note, never in the README's voice. A change players will notice gets its entry
+  under `## Unreleased` in the same pull request. The same goes for anything else an agent
   writes for a public page. The project doesn't hide that its content is AI-generated.
 - Don't change the user's global setup (git config, SSH, installed tools) to get around a problem; explain it.
 - Commit messages explain why, and the why must be true (no invented "players asked for..."). Keep each commit to

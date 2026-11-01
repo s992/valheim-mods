@@ -66,6 +66,8 @@ before" in AGENTS.md apply. Also:
 - Build the mod (or everything, after changing a root file); warnings fail the build. Run `dotnet test -c Release`
   and `dotnet format ValheimMods.sln` before committing. The build deploys to the profile.
 - Changed logic that can run without the game (see AGENTS.md, Conventions): add or update its tests.
+- Something players will notice: add a line under `## Unreleased` in the mod's `CHANGELOG.md` (every mod, for a change
+  in `shared/`), and a check to its `TESTING.md` if the change needs one before every release.
 - CI also boots a server with every mod (docs/releasing.md, "Boot test"); a patch that fails there turns the mod
   off, so after pushing, check the Build run before calling the change done.
 - Commit with a message explaining why, ending with the attribution line from the system reminder.
@@ -102,7 +104,7 @@ Every change reaches `main` through a pull request: fill in each section of `.gi
 (the report above maps onto it: Checked, Not checked, In-game test list).
 Before tagging, ask the maintainer to run `mods/<Name>/TESTING.md` in game on this build (with any checks this
 release adds) and wait for a yes.
-Every release needs a `## <version>` entry in `mods/<Name>/CHANGELOG.md`: write it from
+Every release needs a `## <version>` entry in `mods/<Name>/CHANGELOG.md` (the `## Unreleased` section, renamed): write it from
 `git log <Name>/v<previous>..HEAD -- mods/<Name>` and show it before tagging, since a published version can't be
 changed. After tagging, watch the run and verify the GitHub release and the Thunderstore API.
 

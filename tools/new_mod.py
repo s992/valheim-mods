@@ -98,7 +98,7 @@ Next:
   - dotnet build mods/{name}/{name}.csproj -c Release   (deploys to the r2modman profile unless CI=true)
   - fill in mods/{name}/TESTING.md with the in-game checks, riskiest first
   - commit; push only when the user says so
-  - before each release, add a '## <version>' entry to mods/{name}/CHANGELOG.md (neutral voice; release.yml checks it)
+  - note player-visible changes under '## Unreleased' in mods/{name}/CHANGELOG.md; a release renames it to '## <version>'
 """)
 
 

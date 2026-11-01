@@ -99,9 +99,9 @@ and on the remote. `main` must not get the placeholder README.
 
 Publishing is public and a Thunderstore version can't be replaced, only superseded, so confirm with the user first.
 1. Bump `<Version>` in `mods/<Name>/<Name>.csproj` (semver; a behaviour-free metadata change is a patch).
-2. Add a `## <version>` entry at the top of `mods/<Name>/CHANGELOG.md` (below the note) from
-   `git log <Name>/v<previous>..HEAD -- mods/<Name>`, describing what players notice. Changes at the repo root
-   (shared props, workflows) matter only if players would notice them. Show the entry to the user before tagging.
+2. Rename the `## Unreleased` section of `mods/<Name>/CHANGELOG.md` to `## <version>`, checking it against
+   `git log <Name>/v<previous>..HEAD -- mods/<Name> shared` for anything players would notice that it misses.
+   Show the entry to the user before tagging.
 3. Commit, push, and wait for `main`'s Build run to be green (build, tests, format, boot test).
    Before tagging, the maintainer runs `mods/<Name>/TESTING.md` in game against this build: agents ask for that and
    wait for a yes, listing any checks the release's changes add.
@@ -164,7 +164,9 @@ about what players notice, under the note "*This changelog is written by Claude,
 project's commit history.*" (name the agent that actually wrote it). Never imitate the author's README voice: the
 repo doesn't hide AI-generated content.
 
-Older mods (MarkerCommand, StabilityView, LootFilter, CraftFromStorage) were scaffolded before this. On their next
-release, copy `CHANGELOG.md` and the changelog `[[build.copy]]` block from the mod template (or from
-`mods/EverythingsANail`), and backfill entries for earlier versions from the `<Name>/v*` tags. Published versions
-can't gain a changelog afterwards; it shows from the next version, whose changelog can list the history.
+Changes that players will notice get their entry when they're made, under `## Unreleased` at the top (create the
+section if it isn't there), so a release only has to rename it. That includes changes in `shared/`, which reach every
+mod. Build, test and repo-only changes don't get entries.
+
+Every mod has a changelog (the four older mods' were backfilled from their `<Name>/v*` tags in October 2026).
+Published versions can't gain one afterwards; Thunderstore shows it from each mod's next version.
