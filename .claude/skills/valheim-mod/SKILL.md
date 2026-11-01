@@ -44,7 +44,8 @@ Read `docs/game-api.md` for where things live and `docs/integrations.md` before 
 
 New mod: `python tools/new_mod.py <Name> --description "..." --categories tools,client-side` (`--help` lists the
 options). It creates `mods/<Name>/` with a slim csproj, `Plugin.cs`, `thunderstore.toml` (the `ai-generated`
-category is always included) and `CHANGELOG.md`, and adds it to `ValheimMods.sln`; the repo root supplies the rest.
+category is always included), `CHANGELOG.md` and `TESTING.md`, and adds it to `ValheimMods.sln`; the repo root
+supplies the rest.
 A mod that isn't ready to be public goes on a local branch (`git switch -c <Name>/wip`).
 
 Existing mod: `git pull`, read the files involved, and check `git status` is clean before starting. Ask before
