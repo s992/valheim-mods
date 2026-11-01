@@ -2,6 +2,13 @@
 
 *This changelog is written by Claude, an AI assistant, from the project's commit history.*
 
+## Unreleased
+
+- If a game update breaks something the mod relies on, the mod now turns itself off completely and says so in game and in the log, instead of running half-patched.
+- A malformed rules message from a server is now rejected with a warning (local rules stay) instead of causing an error.
+- An error in the radial menu, its hints or tooltips is logged once and shown as a single message instead of repeating every frame (which could block the player's controls).
+- On a dedicated server, a config file edit made while the file was still locked is now picked up a moment later instead of being missed.
+
 ## 1.0.2
 
 - Added this changelog to the Thunderstore package. No gameplay changes.
