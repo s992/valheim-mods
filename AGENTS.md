@@ -30,7 +30,7 @@ Builds reference the game's own DLLs from the install (never committed) and copy
 | Setting | Default | Meaning |
 |---|---|---|
 | `ValheimDir` | `C:\Program Files (x86)\Steam\steamapps\common\Valheim` | game (or dedicated server) install |
-| `PluginsDir` | `%APPDATA%\r2modmanPlus-local\Valheim\profiles\Default\BepInEx\plugins` | where builds are deployed; skipped if missing |
+| `PluginsDir` | `%APPDATA%\r2modmanPlus-local\Valheim\profiles\Default\BepInEx\plugins` | builds go to `s992-<Name>/` in it, the Thunderstore install's folder; skipped if missing |
 
 Override them as environment variables, or in a gitignored `Directory.Build.user.props` at the repo root, which
 both the build and `tools/decompile.py` read:
@@ -118,8 +118,10 @@ Things that cost time before:
   (a status line), or missing things look like bugs.
 - Edit csproj/XML files with a real editor, not `sed`: an escape like `\a` once became a BEL character.
 - BepInEx keeps saved config values, so a changed default doesn't reach existing configs. Say so when one changes.
-- Players often have the dev build (`plugins/<Name>/`) and the Thunderstore copy in one profile; two copies or
-  two GUIDs loading is a common cause of odd reports.
+- Two copies of a mod in one profile (a dev build in `plugins/<Name>/` beside the Thunderstore `plugins/s992-<Name>/`)
+  load whichever BepInEx finds first, with the same version in the log; a common cause of odd reports. Builds now
+  replace the DLL in `s992-<Name>/` and remove the old `plugins/<Name>/` copy. Reinstalling the mod in r2modman
+  restores the released DLL; a mod disabled there isn't deployed.
 
 ## Docs
 
