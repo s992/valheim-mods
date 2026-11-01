@@ -35,6 +35,16 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
+          # Pull requests need their commits' history for the commit rules check
+          fetch-depth: ${{ github.event_name == 'pull_request' && 0 || 1 }}
+
+      # One mod per commit, and no AI-authored README edits (tools/check_commits.py)
+      - name: Check commit rules
+        if: github.event_name == 'pull_request'
+        env:
+          BASE: ${{ github.event.pull_request.base.sha }}
+          HEAD: ${{ github.event.pull_request.head.sha }}
+        run: python3 tools/check_commits.py "$BASE" "$HEAD"
 
       - uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
         with:
