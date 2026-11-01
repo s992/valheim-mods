@@ -93,17 +93,25 @@ namespace CraftFromStorage
                 (value ?? "").Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries).Select(s => s.Trim()).Where(s => s.Length > 0),
                 StringComparer.OrdinalIgnoreCase);
 
-        public static void ToggleBlocklisted(string prefabName)
+        public static void ToggleBlocklisted(string prefabName) => SmeltBlocklist.Value = Toggled(SmeltBlocklist.Value, prefabName);
+
+        public static string GetSelection(string smelterPrefab) => SelectionIn(SmeltSelections.Value, smelterPrefab);
+
+        public static void SetSelection(string smelterPrefab, string itemPrefab) =>
+            SmeltSelections.Value = WithSelection(SmeltSelections.Value, smelterPrefab, itemPrefab);
+
+        /// <summary>The comma-separated <paramref name="list"/> with <paramref name="name"/> added, or removed if it was there.</summary>
+        public static string Toggled(string list, string name)
         {
-            var names = SplitNames(SmeltBlocklist.Value);
-            if (!names.Remove(prefabName)) names.Add(prefabName);
-            SmeltBlocklist.Value = string.Join(",", names);
+            var names = SplitNames(list);
+            if (!names.Remove(name)) names.Add(name);
+            return string.Join(",", names);
         }
 
         // Selections are stored as "SmelterPrefab=ItemPrefab;..." in one config string (per player, local)
-        public static string GetSelection(string smelterPrefab)
+        public static string SelectionIn(string selections, string smelterPrefab)
         {
-            foreach (string pair in (SmeltSelections.Value ?? "").Split(';'))
+            foreach (string pair in (selections ?? "").Split(';'))
             {
                 int eq = pair.IndexOf('=');
                 if (eq > 0 && pair.Substring(0, eq) == smelterPrefab) return pair.Substring(eq + 1);
@@ -111,12 +119,12 @@ namespace CraftFromStorage
             return null;
         }
 
-        public static void SetSelection(string smelterPrefab, string itemPrefab)
+        public static string WithSelection(string selections, string smelterPrefab, string itemPrefab)
         {
-            var pairs = (SmeltSelections.Value ?? "").Split(new[] { ';' }, StringSplitOptions.RemoveEmptyEntries)
+            var pairs = (selections ?? "").Split(new[] { ';' }, StringSplitOptions.RemoveEmptyEntries)
                 .Where(p => !p.StartsWith(smelterPrefab + "=", StringComparison.Ordinal)).ToList();
             pairs.Add($"{smelterPrefab}={itemPrefab}");
-            SmeltSelections.Value = string.Join(";", pairs);
+            return string.Join(";", pairs);
         }
     }
 }

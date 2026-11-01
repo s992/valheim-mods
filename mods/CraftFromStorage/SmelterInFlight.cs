@@ -13,28 +13,28 @@ namespace CraftFromStorage
         // Backstop for lost updates: by then our copy has long caught up
         private const float Expiry = 3f;
 
-        private sealed class Channel
+        internal sealed class Channel
         {
             private int m_pending;
             private float m_lastSeen = float.NaN;
             private float m_expires;
 
-            public float Effective(float observed)
+            public float Effective(float observed, float now)
             {
-                Catch(observed);
+                Catch(observed, now);
                 return observed + m_pending;
             }
 
-            public void Sent(float observed)
+            public void Sent(float observed, float now)
             {
-                Catch(observed);
+                Catch(observed, now);
                 m_pending++;
-                m_expires = Time.time + Expiry;
+                m_expires = now + Expiry;
             }
 
             // Each confirmed insert raises the count by one. Fuel also burns down slowly meanwhile, so a rise of half a
             // unit or more counts as arrivals (rounded).
-            private void Catch(float observed)
+            private void Catch(float observed, float now)
             {
                 if (!float.IsNaN(m_lastSeen))
                 {
@@ -42,7 +42,7 @@ namespace CraftFromStorage
                     if (rise >= 0.5f) m_pending = Mathf.Max(0, m_pending - Mathf.RoundToInt(rise));
                 }
                 m_lastSeen = observed;
-                if (m_pending > 0 && Time.time > m_expires) m_pending = 0;
+                if (m_pending > 0 && now > m_expires) m_pending = 0;
             }
         }
 
@@ -55,18 +55,18 @@ namespace CraftFromStorage
             return channels;
         }
 
-        public static int Queue(Smelter smelter) => Mathf.RoundToInt(For(smelter).Ore.Effective(smelter.GetQueueSize()));
-        public static float Fuel(Smelter smelter) => For(smelter).Fuel.Effective(smelter.GetFuel());
+        public static int Queue(Smelter smelter) => Mathf.RoundToInt(For(smelter).Ore.Effective(smelter.GetQueueSize(), Time.time));
+        public static float Fuel(Smelter smelter) => For(smelter).Fuel.Effective(smelter.GetFuel(), Time.time);
 
         // When we own the smelter the RPC is handled on the spot, so the count already includes the insert
         public static void OreSent(Smelter smelter)
         {
-            if (!smelter.m_nview.IsOwner()) For(smelter).Ore.Sent(smelter.GetQueueSize());
+            if (!smelter.m_nview.IsOwner()) For(smelter).Ore.Sent(smelter.GetQueueSize(), Time.time);
         }
 
         public static void FuelSent(Smelter smelter)
         {
-            if (!smelter.m_nview.IsOwner()) For(smelter).Fuel.Sent(smelter.GetFuel());
+            if (!smelter.m_nview.IsOwner()) For(smelter).Fuel.Sent(smelter.GetFuel(), Time.time);
         }
 
         public static void Prune()
