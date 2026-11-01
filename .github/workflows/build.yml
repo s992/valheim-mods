@@ -35,8 +35,9 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-          # Pull requests need their commits' history for the commit rules check
-          fetch-depth: ${{ github.event_name == 'pull_request' && 0 || 1 }}
+          # Pull requests need their commits' history for the commit rules check. The 0 is a string because
+          # a number 0 is falsy in expressions and `&& 0 || 1` would always give 1
+          fetch-depth: ${{ github.event_name == 'pull_request' && '0' || '1' }}
 
       # One mod per commit, and no AI-authored README edits (tools/check_commits.py)
       - name: Check commit rules
