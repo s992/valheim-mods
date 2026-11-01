@@ -32,6 +32,7 @@
     <ProjectReference Include="..\..\mods\MarkerCommand\MarkerCommand.csproj" />
     <ProjectReference Include="..\..\mods\SearchEverything\SearchEverything.csproj" />
     <ProjectReference Include="..\..\mods\StabilityView\StabilityView.csproj" />
+    <ProjectReference Include="..\..\mods\UtilityBelt\UtilityBelt.csproj" />
   </ItemGroup>
 
   <!--

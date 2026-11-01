@@ -1,0 +1,26 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Shared settings, packages and game references: Directory.Build.props at the repo root -->
+  <PropertyGroup>
+    <Version>0.1.0</Version>
+    <Description>A Haldor-bought utility belt that grows with you: upgrade it with a swamp key, wishbone, wolf cape, wisplight and feather cape to wear them all at once. Server-synced costs and tiers. Needs Jotunn.</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!--
+      Jotunn registers the item, its status effects and translations, and syncs the admin-only settings from the
+      server. A hard dependency (the user's choice), also listed in thunderstore.toml.
+      Only the DLL is used: the package's build files add references to Jotunn's own publicized game assemblies,
+      which this repo doesn't make, and its lib is net462 (fine in the game's Mono, but NuGet won't pick it for
+      netstandard2.1).
+    -->
+    <PackageReference Include="JotunnLib" Version="2.30.2" ExcludeAssets="all" PrivateAssets="all" GeneratePathProperty="true" />
+    <Reference Include="Jotunn" HintPath="$(PkgJotunnLib)\lib\net462\Jotunn.dll" Private="false" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Localization: any player-facing item/biome name goes through it -->
+    <Reference Include="assembly_guiutils" HintPath="$(ValheimManagedDir)\assembly_guiutils.dll" Private="false" />
+  </ItemGroup>
+
+</Project>

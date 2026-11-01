@@ -12,6 +12,7 @@ unless the user asks.
 - Configuration Manager (shudnal)
 - My Build Camera (free camera; its own resource pickup)
 - MultiUserChest and chest ownership
+- Jotunn (UtilityBelt's dependency)
 - Others in the profile
 
 ## Server Devcommands (JereKuusela, GUID `server_devcommands`, 1.115)
@@ -96,9 +97,25 @@ Full write-up with code references: `mods/CraftFromStorage/docs/ownership.md`. T
 - Smelter queue/fuel live on the smelter owner; a remote client's count lags one round trip, and the owner's RPC doesn't
   re-check the limit, so hold-to-repeat can overfill. Count your own unconfirmed inserts.
 
+## Jotunn (Valheim-Modding, GUID `com.jotunn.jotunn`, 2.30.2)
+
+The one hard dependency in the repo, for UtilityBelt (a new item; the user chose Jotunn over registering it by hand).
+- Build: the `JotunnLib` NuGet package's build files reference Jotunn's own `*_publicized` game assemblies and its lib
+  is net462, which NuGet won't pick for netstandard2.1. UtilityBelt's csproj takes the package with
+  `ExcludeAssets="all"` and references `$(PkgJotunnLib)\lib\net462\Jotunn.dll` directly.
+- Items: `new CustomItem(name, basePrefab, ItemConfig)` inside `PrefabManager.OnVanillaPrefabsAvailable`. The config is
+  applied in the constructor, so shared data changed afterwards (max quality, equip effect) sticks; `item.Recipe.Recipe`
+  is the recipe ObjectDB gets. Status effects: `ItemManager.Instance.AddStatusEffect(new CustomStatusEffect(se, false))`.
+- Config sync: entries with Jotunn's `ConfigurationManagerAttributes { IsAdminOnly = true }` take the server's values
+  and only admins can change them; `SynchronizationManager.OnConfigurationSynchronized` fires after a sync.
+- `[NetworkCompatibility(CompatibilityLevel.EveryoneMustHaveMod, VersionStrictness.Minor)]` turns away clients without
+  the mod, needed for a mod that adds items.
+- The boot test installs it: `tools/boot_test.py` installs the dependencies in each mod's `thunderstore.toml`.
+- `python tools/decompile.py --plugin Jotunn --type ...` fails for Jotunn's namespaced types; use `--project` and grep.
+
 ## Others in the profile
 
 Jotunn (2.30), Epic Loot, Server Devcommands, World Edit Commands (older Steam install), Infinity Hammer,
 PlanBuild, My Build Camera (above), Compass, Configuration Manager, QuickStackStore, CraftFromChests, Adventure Backpacks, MultiUserChest, and others.
 Check the profile's `BepInEx/LogOutput.log` "Loading [...]" lines for the current list and versions.
-Jotunn is installed but none of s992's mods depend on it; plain BepInEx + Harmony has been enough.
+Only UtilityBelt depends on Jotunn (above); the other mods are plain BepInEx + Harmony.
