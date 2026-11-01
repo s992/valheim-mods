@@ -171,12 +171,12 @@ dependency and mods released at different times can't conflict.
   then), not only in `OnDestroy`.
 
 ```csharp
-private FrameGuard _guard;
-private void Awake() => _guard = new FrameGuard(this, "the stability overlay"); // the player's name for it
+private FrameGuard m_guard;
+private void Awake() => m_guard = new FrameGuard(this, "the stability overlay"); // the player's name for it
 private void Update()
 {
     try { Tick(); }
-    catch (Exception e) { _guard.Report(e); }
+    catch (Exception e) { m_guard.Report(e); }
 }
 private void OnDisable() => Hide();
 ```
