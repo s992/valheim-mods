@@ -44,7 +44,7 @@ namespace CraftFromStorage
         private static bool RejectIfUseKey()
         {
             KeyCode key = Settings.ChangeMaterialKey.Value.MainKey;
-            if (!Hotkeys.IsBoundToUse(key)) return false;
+            if (!UseKey.IsBound(key)) return false;
             Settings.ChangeMaterialKey.Value = KeyboardShortcut.Empty;
             string message = $"Change material key can't be your Use key ({key}); it's back to Alt Place + Use";
             StorageLog.Warning(message);

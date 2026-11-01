@@ -53,7 +53,7 @@ both the build and `tools/decompile.py` read:
   plugin GUID `s992.<Name>` from the folder name, the paths above. `Directory.Build.targets`: deploy to the profile.
 - `ValheimMods.sln`: every mod, and `tests/ValheimMods.Tests` (xUnit, .NET 8, sees each mod's internals).
 - `shared/`: source compiled into every mod: all-or-nothing patching, per-frame error guards, player notices
-  (docs/patterns.md, "Failing safely").
+  (docs/patterns.md, "Failing safely"), hotkeys, the mod's name and version. Use it rather than copying it.
 - `tools/`: `new_mod.py` (scaffold), `mod-template/`, `decompile.py` (read game/mod code), `icon_kit.py`,
   `boot_test.py` (CI's boot test).
 - `docs/`: `game-api.md`, `integrations.md`, `patterns.md`, `icons.md`, `releasing.md` (see below).
@@ -113,7 +113,7 @@ rather than silencing it; when a rule really is wrong for one spot, suppress it 
   `Settings` in tests: qualify it (`LootFilter.Settings`).
 
 Things that cost time before:
-- Valheim uses Unity's new input system: `KeyboardShortcut.IsDown()` may miss presses. Read keys through `ZInput`.
+- Valheim uses Unity's new input system: `KeyboardShortcut.IsDown()` may miss presses. Read keys with `shared/Hotkeys.cs`, which uses `ZInput`.
 - "Nearby" means near the **camera** (players use build-camera mods). Any limit must be visible to the player
   (a status line), or missing things look like bugs.
 - Edit csproj/XML files with a real editor, not `sed`: an escape like `\a` once became a BEL character.

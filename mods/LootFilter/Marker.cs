@@ -7,21 +7,21 @@ namespace LootFilter
     // Toggles rules for whatever item is under the cursor (inventory/chest) or crosshair (ground)
     internal sealed class Marker : MonoBehaviour
     {
-        private FrameGuard _guard;
+        private FrameGuard m_guard;
 
-        private void Awake() => _guard = new FrameGuard(this, "the loot filter hotkeys");
+        private void Awake() => m_guard = new FrameGuard(this, "the loot filter hotkeys");
 
         private void Update()
         {
             try { Tick(); }
-            catch (Exception e) { _guard.Report(e); }
+            catch (Exception e) { m_guard.Report(e); }
         }
 
         private static void Tick()
         {
-            if (!Player.m_localPlayer || Input.IsTyping()) return;
+            if (!Player.m_localPlayer || Hotkeys.IsTyping()) return;
 
-            if (Input.Pressed(Settings.TogglePause))
+            if (Hotkeys.Pressed(Settings.TogglePause))
             {
                 Rules.Paused = !Rules.Paused;
                 Message(Rules.Paused
@@ -29,8 +29,8 @@ namespace LootFilter
                     : "Loot filter active");
             }
 
-            bool item = Input.Pressed(Settings.ToggleItem);
-            bool group = Input.Pressed(Settings.ToggleGroup);
+            bool item = Hotkeys.Pressed(Settings.ToggleItem);
+            bool group = Hotkeys.Pressed(Settings.ToggleGroup);
             if (!item && !group) return;
 
             ItemDrop.ItemData target = HoveredItem();

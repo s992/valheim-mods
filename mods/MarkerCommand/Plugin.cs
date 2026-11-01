@@ -30,7 +30,7 @@ namespace MarkerCommand
                 }
             }
 
-            Logger.LogInfo($"{MyPluginInfo.PLUGIN_NAME} {MyPluginInfo.PLUGIN_VERSION} loaded");
+            Logger.LogInfo($"{ModInfo.Name} {ModInfo.Version} loaded");
         }
     }
 }

@@ -14,7 +14,7 @@ namespace ValheimMods.Tests
 
         // Item types that land in Misc on purpose. A game update that adds an item type fails this test, so someone
         // decides which group it belongs in instead of it quietly becoming Misc.
-        private static readonly ItemDrop.ItemData.ItemType[] KnownMisc =
+        private static readonly ItemDrop.ItemData.ItemType[] s_knownMisc =
         {
             ItemDrop.ItemData.ItemType.None,
             ItemDrop.ItemData.ItemType.Misc,
@@ -28,7 +28,7 @@ namespace ValheimMods.Tests
                 .Where(type => Groups.Of(Item(type)) == ItemGroups.Misc)
                 .OrderBy(type => type).ToArray();
 
-            Assert.Equal(KnownMisc.OrderBy(type => type).ToArray(), misc);
+            Assert.Equal(s_knownMisc.OrderBy(type => type).ToArray(), misc);
         }
 
         [Theory]

@@ -18,7 +18,8 @@ Adapt them rather than pasting blindly; the folders under `mods/` have full vers
 
 One class per concern keeps files small and reviewable, e.g. `Plugin.cs` (wiring only), `Settings.cs`
 (all ConfigEntries), `Rules.cs` / domain logic, `Patches.cs` (Harmony), one MonoBehaviour per runtime job
-(`Overlay`, `DropEffects`, `Marker`), `Input.cs`, `<OtherMod>Compat.cs`.
+(`Overlay`, `DropEffects`, `Marker`), `<OtherMod>Compat.cs`. Code every mod needs (hotkeys, safe patching, player
+notices, the mod's name and version) is in `shared/` and compiled into each mod; use it rather than copying it.
 
 ```csharp
 [BepInPlugin(MyPluginInfo.PLUGIN_GUID, MyPluginInfo.PLUGIN_NAME, MyPluginInfo.PLUGIN_VERSION)]
@@ -32,13 +33,17 @@ public class Plugin : BaseUnityPlugin
         // All or nothing (see "Failing safely"); nothing else starts when it fails
         if (!SafePatching.PatchAll(new Harmony(MyPluginInfo.PLUGIN_GUID), Logger)) return;
         gameObject.AddComponent<Overlay>();   // MonoBehaviours live on the plugin's GameObject
-        Logger.LogInfo($"{MyPluginInfo.PLUGIN_NAME} {MyPluginInfo.PLUGIN_VERSION} loaded");
+        Logger.LogInfo($"{ModInfo.Name} {ModInfo.Version} loaded"); // the boot test looks for this line
     }
 }
 ```
 
 `MyPluginInfo` is generated from `<BepInExPluginGuid>`, `<BepInExPluginName>` and `<Version>` in the csproj;
 the config file is `BepInEx/config/<GUID>.cfg`, so the GUID `s992.<Name>` gives `s992.<Name>.cfg`.
+`ModInfo.Version` is the same version, plus `-dev+<build time>` on local builds, so a log shows which build ran.
+
+Private fields are named like the game's code, `m_name` and `s_name` (static ones, readonly included), constants
+`PascalCase`; the build enforces it (IDE1006 in `.editorconfig`).
 
 ## Config (Configuration Manager friendly)
 
@@ -65,23 +70,17 @@ Radius = config.Bind("Display", "Radius", 30f,
 
 ## Hotkeys
 
-```csharp
-private static readonly KeyCode[] ModifierKeys =
-    { KeyCode.LeftShift, KeyCode.RightShift, KeyCode.LeftControl, KeyCode.RightControl, KeyCode.LeftAlt, KeyCode.RightAlt };
+Store a `KeyboardShortcut` in config and read it with `shared/Hotkeys.cs`, which goes through ZInput (the game's
+input system; `KeyboardShortcut.IsDown()` misses presses) and matches exactly: extra modifiers must not be held, so F8
+and Shift+F8 can be bound to different actions.
 
-// Exact match through ZInput (the new input system): extra modifiers must not be held,
-// so F8 and Shift+F8 can be bound to different actions
-public static bool Pressed(ConfigEntry<KeyboardShortcut> entry)
-{
-    KeyboardShortcut shortcut = entry.Value;
-    if (shortcut.MainKey == KeyCode.None || !ZInput.GetKeyDown(shortcut.MainKey, false)) return false;
-    var modifiers = shortcut.Modifiers.ToList();
-    if (modifiers.Any(key => !ZInput.GetKey(key, false))) return false;
-    return !ModifierKeys.Any(key => !modifiers.Contains(key) && ZInput.GetKey(key, false));
-}
+```csharp
+if (Hotkeys.IsTyping()) return;               // console, chat, text fields, menus
+if (Hotkeys.Pressed(Settings.ToggleOverlay)) ...
+bool revealing = Hotkeys.Held(Settings.Reveal);
 ```
 
-Guard with an `IsTyping()` check (game-api.md lists the calls). For text the player sees (status lines,
+For text the player sees (status lines,
 messages), print the configured shortcut (`Settings.X.Value.ToString()`) rather than hard-coding "Shift+F8".
 
 ## Optional integration with another mod

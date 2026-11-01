@@ -24,7 +24,7 @@ namespace CraftFromStorage
             m_patched = SafePatching.PatchAll(m_harmony, Logger);
             if (!m_patched) return;
             gameObject.AddComponent<Runner>();
-            Logger.LogInfo($"{MyPluginInfo.PLUGIN_NAME} {MyPluginInfo.PLUGIN_VERSION} loaded");
+            Logger.LogInfo($"{ModInfo.Name} {ModInfo.Version} loaded");
         }
 
         // Start runs after every plugin's Awake, which is where MUC applies its patches

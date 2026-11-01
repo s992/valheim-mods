@@ -1,6 +1,18 @@
 <Project>
 
   <!--
+    Local builds say so in their version string ("1.2.0-dev+20261031.1742", logged by every mod on load), so a log
+    tells a dev build from the Thunderstore release. CI builds, which are the released ones, keep the plain version
+    (without the SDK's "+<commit>" suffix, which the boot test doesn't expect).
+  -->
+  <PropertyGroup>
+    <IncludeSourceRevisionInInformationalVersion>false</IncludeSourceRevisionInInformationalVersion>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(CI)' != 'true' and '$(IsTestProject)' != 'true'">
+    <InformationalVersion>$(Version)-dev+$([System.DateTime]::Now.ToString('yyyyMMdd.HHmm'))</InformationalVersion>
+  </PropertyGroup>
+
+  <!--
     Copy the build into the local mod profile for testing; skipped in CI and for tests/.
     It goes where r2modman installs the Thunderstore package (plugins/s992-<Name>/), replacing that DLL, so a profile
     only ever has one copy of each mod: BepInEx loads the first of two copies it finds and skips the other, and both

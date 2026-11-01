@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using System.Text;
-using BepInEx.Configuration;
 using UnityEngine;
 using UnityEngine.Rendering;
 using ValheimMods.Shared;
@@ -18,16 +17,10 @@ namespace StabilityView
         private const float SourceMaxAge = 1f;
         private const int SourcesPerFrame = 25;
 
-        private static readonly int EmissionColorId = Shader.PropertyToID("_EmissionColor");
-        private static readonly Color IncreaseColor = new Color(0.35f, 1f, 0.4f);
-        private static readonly Color DecreaseColor = new Color(1f, 0.3f, 0.25f);
-        private static readonly Color NewColor = new Color(0.55f, 0.8f, 1f);
-
-        private static readonly KeyCode[] ModifierKeys =
-        {
-            KeyCode.LeftShift, KeyCode.RightShift, KeyCode.LeftControl,
-            KeyCode.RightControl, KeyCode.LeftAlt, KeyCode.RightAlt,
-        };
+        private static readonly int s_emissionColorId = Shader.PropertyToID("_EmissionColor");
+        private static readonly Color s_increaseColor = new Color(0.35f, 1f, 0.4f);
+        private static readonly Color s_decreaseColor = new Color(1f, 0.3f, 0.25f);
+        private static readonly Color s_newColor = new Color(0.55f, 0.8f, 1f);
 
         private sealed class Entry
         {
@@ -38,28 +31,28 @@ namespace StabilityView
             public string Plain;
         }
 
-        private bool _enabled;
-        private readonly List<Entry> _entries = new List<Entry>();
-        private readonly Dictionary<WearNTear, SourceInfo> _sources = new Dictionary<WearNTear, SourceInfo>();
-        private HashSet<GameObject> _highlighted = new HashSet<GameObject>();
-        private HashSet<GameObject> _nextHighlighted = new HashSet<GameObject>();
-        private float _nextRefresh;
-        private int _sourceCursor;
-        private int _hiddenByLimit;
-        private int _hiddenByRadius;
-        private GUIStyle _style;
-        private GUIStyle _shadowStyle;
-        private Material _lineMaterial;
-        private bool _lineMaterialFailed;
-        private bool _analysisErrorLogged;
-        private FrameGuard _guard;
+        private bool m_enabled;
+        private readonly List<Entry> m_entries = new List<Entry>();
+        private readonly Dictionary<WearNTear, SourceInfo> m_sources = new Dictionary<WearNTear, SourceInfo>();
+        private HashSet<GameObject> m_highlighted = new HashSet<GameObject>();
+        private HashSet<GameObject> m_nextHighlighted = new HashSet<GameObject>();
+        private float m_nextRefresh;
+        private int m_sourceCursor;
+        private int m_hiddenByLimit;
+        private int m_hiddenByRadius;
+        private GUIStyle m_style;
+        private GUIStyle m_shadowStyle;
+        private Material m_lineMaterial;
+        private bool m_lineMaterialFailed;
+        private bool m_analysisErrorLogged;
+        private FrameGuard m_guard;
 
         public bool IsShowing { get; private set; }
 
         private void Awake()
         {
             Instance = this;
-            _guard = new FrameGuard(this, "the stability overlay");
+            m_guard = new FrameGuard(this, "the stability overlay");
         }
 
         // Also runs when the guard switches this off, so the overlay doesn't stay on screen
@@ -70,23 +63,23 @@ namespace StabilityView
         private void Update()
         {
             try { Tick(); }
-            catch (Exception e) { _guard.Report(e); }
+            catch (Exception e) { m_guard.Report(e); }
         }
 
         private void Tick()
         {
             HandleKeys();
 
-            if (!_enabled || !CanShow())
+            if (!m_enabled || !CanShow())
             {
                 if (IsShowing) Hide();
                 return;
             }
 
             IsShowing = true;
-            if (Time.time >= _nextRefresh)
+            if (Time.time >= m_nextRefresh)
             {
-                _nextRefresh = Time.time + RefreshInterval;
+                m_nextRefresh = Time.time + RefreshInterval;
                 Refresh();
             }
             if (Settings.ShowSourceLines.Value)
@@ -103,9 +96,9 @@ namespace StabilityView
         private void Hide()
         {
             IsShowing = false;
-            _entries.Clear();
-            _sources.Clear();
-            _nextHighlighted.Clear();
+            m_entries.Clear();
+            m_sources.Clear();
+            m_nextHighlighted.Clear();
             ApplyHighlightChanges();
         }
 
@@ -115,24 +108,24 @@ namespace StabilityView
         {
             if (IsTyping()) return;
 
-            if (Pressed(Settings.ToggleOverlay))
+            if (Hotkeys.Pressed(Settings.ToggleOverlay))
             {
-                _enabled = !_enabled;
-                Message(!_enabled ? "Stability overlay off"
+                m_enabled = !m_enabled;
+                Message(!m_enabled ? "Stability overlay off"
                     : Settings.OnlyInBuildMode.Value ? "Stability overlay on (shown while building)"
                     : "Stability overlay on");
             }
-            if (Pressed(Settings.ToggleSourceLines))
+            if (Hotkeys.Pressed(Settings.ToggleSourceLines))
             {
                 Settings.ShowSourceLines.Value = !Settings.ShowSourceLines.Value;
                 Message(Settings.ShowSourceLines.Value ? "Support source lines on" : "Support source lines off");
             }
-            if (Pressed(Settings.ClearSnapshot))
+            if (Hotkeys.Pressed(Settings.ClearSnapshot))
             {
                 Snapshot.Clear();
                 Message("Stability snapshot cleared");
             }
-            if (Pressed(Settings.TakeSnapshot))
+            if (Hotkeys.Pressed(Settings.TakeSnapshot))
             {
                 Snapshot.Capture(manual: true);
                 Message(Settings.AutoSnapshot.Value
@@ -141,23 +134,8 @@ namespace StabilityView
             }
         }
 
-        private static bool IsTyping() =>
-            Console.IsVisible() || TextInput.IsVisible() || Menu.IsVisible() || InventoryGui.IsVisible()
-            || Minimap.InTextInput() || (Chat.instance && Chat.instance.HasFocus());
-
-        // Read through ZInput: the game uses Unity's new input system, which BepInEx's
-        // KeyboardShortcut.IsDown() doesn't see. Extra modifiers must not be held, so
-        // F8 and Shift+F8 can be bound to different things.
-        private static bool Pressed(ConfigEntry<KeyboardShortcut> entry)
-        {
-            KeyboardShortcut shortcut = entry.Value;
-            if (shortcut.MainKey == KeyCode.None || !ZInput.GetKeyDown(shortcut.MainKey, false))
-                return false;
-            List<KeyCode> modifiers = shortcut.Modifiers.ToList();
-            if (modifiers.Any(key => !ZInput.GetKey(key, false)))
-                return false;
-            return !ModifierKeys.Any(key => !modifiers.Contains(key) && ZInput.GetKey(key, false));
-        }
+        // The overlay's keys are off in the inventory too
+        private static bool IsTyping() => Hotkeys.IsTyping() || InventoryGui.IsVisible();
 
         private static void Message(string text)
         {
@@ -192,12 +170,12 @@ namespace StabilityView
             nearby.Sort((a, b) => a.Key.CompareTo(b.Key));
 
             int limit = Settings.MaxPieces.Value;
-            _hiddenByLimit = Math.Max(0, nearby.Count - limit);
-            _hiddenByRadius = beyondRadius;
+            m_hiddenByLimit = Math.Max(0, nearby.Count - limit);
+            m_hiddenByRadius = beyondRadius;
 
             bool showChanges = Snapshot.Active;
-            _entries.Clear();
-            _nextHighlighted.Clear();
+            m_entries.Clear();
+            m_nextHighlighted.Clear();
 
             foreach (var pair in nearby.Take(limit))
             {
@@ -226,22 +204,22 @@ namespace StabilityView
 
                 var entry = new Entry { Piece = wnt, Color = Stability.ColorFor(support, material) };
                 BuildText(entry, wnt, support, material, changed ? delta : (float?)null, isNew);
-                _entries.Add(entry);
+                m_entries.Add(entry);
 
                 if (Settings.HighlightChanges.Value && (changed || isNew))
                 {
-                    Color tint = isNew ? NewColor : delta > 0f ? IncreaseColor : DecreaseColor;
-                    MaterialMan.instance.SetValue(wnt.gameObject, EmissionColorId, tint * 0.4f);
-                    _nextHighlighted.Add(wnt.gameObject);
+                    Color tint = isNew ? s_newColor : delta > 0f ? s_increaseColor : s_decreaseColor;
+                    MaterialMan.instance.SetValue(wnt.gameObject, s_emissionColorId, tint * 0.4f);
+                    m_nextHighlighted.Add(wnt.gameObject);
                 }
             }
 
             ApplyHighlightChanges();
 
             // Forget sources for pieces that are gone or out of range
-            var visible = new HashSet<WearNTear>(_entries.Select(e => e.Piece));
-            foreach (WearNTear stale in _sources.Keys.Where(k => !k || !visible.Contains(k)).ToList())
-                _sources.Remove(stale);
+            var visible = new HashSet<WearNTear>(m_entries.Select(e => e.Piece));
+            foreach (WearNTear stale in m_sources.Keys.Where(k => !k || !visible.Contains(k)).ToList())
+                m_sources.Remove(stale);
         }
 
         private static bool IsOnScreen(Camera camera, Vector3 position)
@@ -268,12 +246,12 @@ namespace StabilityView
             if (isNew)
             {
                 change = "new";
-                changeColor = NewColor;
+                changeColor = s_newColor;
             }
             else if (delta.HasValue)
             {
                 change = (delta.Value > 0f ? "+" : "") + delta.Value.ToString("0.#", CultureInfo.CurrentCulture);
-                changeColor = delta.Value > 0f ? IncreaseColor : DecreaseColor;
+                changeColor = delta.Value > 0f ? s_increaseColor : s_decreaseColor;
             }
 
             string first = line.ToString();
@@ -287,39 +265,39 @@ namespace StabilityView
         // Resets tints that are no longer wanted and swaps in the new set
         private void ApplyHighlightChanges()
         {
-            foreach (GameObject go in _highlighted)
+            foreach (GameObject go in m_highlighted)
             {
-                if (go && !_nextHighlighted.Contains(go))
-                    MaterialMan.instance.ResetValue(go, EmissionColorId);
+                if (go && !m_nextHighlighted.Contains(go))
+                    MaterialMan.instance.ResetValue(go, s_emissionColorId);
             }
-            (_highlighted, _nextHighlighted) = (_nextHighlighted, _highlighted);
-            _nextHighlighted.Clear();
+            (m_highlighted, m_nextHighlighted) = (m_nextHighlighted, m_highlighted);
+            m_nextHighlighted.Clear();
         }
 
         // Spread the physics queries over frames: a few pieces per frame, each refreshed about once a second
         private void AnalyzeSources()
         {
-            if (_entries.Count == 0) return;
-            int budget = Math.Min(SourcesPerFrame, _entries.Count);
+            if (m_entries.Count == 0) return;
+            int budget = Math.Min(SourcesPerFrame, m_entries.Count);
             for (int n = 0; n < budget; n++)
             {
-                _sourceCursor = (_sourceCursor + 1) % _entries.Count;
-                WearNTear wnt = _entries[_sourceCursor].Piece;
+                m_sourceCursor = (m_sourceCursor + 1) % m_entries.Count;
+                WearNTear wnt = m_entries[m_sourceCursor].Piece;
                 if (!wnt) continue;
-                if (_sources.TryGetValue(wnt, out SourceInfo cached) && Time.time - cached.AnalyzedAt < SourceMaxAge)
+                if (m_sources.TryGetValue(wnt, out SourceInfo cached) && Time.time - cached.AnalyzedAt < SourceMaxAge)
                     continue;
                 try
                 {
-                    _sources[wnt] = SupportAnalyzer.Analyze(wnt);
+                    m_sources[wnt] = SupportAnalyzer.Analyze(wnt);
                 }
                 catch (Exception e)
                 {
-                    if (!_analysisErrorLogged)
+                    if (!m_analysisErrorLogged)
                     {
                         Debug.LogWarning($"[StabilityView] Support source analysis failed: {e}");
-                        _analysisErrorLogged = true;
+                        m_analysisErrorLogged = true;
                     }
-                    _sources[wnt] = new SourceInfo { Kind = SourceKind.None, AnalyzedAt = Time.time };
+                    m_sources[wnt] = new SourceInfo { Kind = SourceKind.None, AnalyzedAt = Time.time };
                 }
             }
         }
@@ -329,7 +307,7 @@ namespace StabilityView
         private void OnGUI()
         {
             try { Draw(); }
-            catch (Exception e) { _guard.Report(e); }
+            catch (Exception e) { m_guard.Report(e); }
         }
 
         private void Draw()
@@ -341,26 +319,26 @@ namespace StabilityView
             EnsureStyles();
             if (Settings.ShowStatus.Value)
                 DrawStatus();
-            foreach (Entry entry in _entries)
+            foreach (Entry entry in m_entries)
             {
                 if (!entry.Piece) continue;
                 Vector3 screen = camera.WorldToScreenPoint(Stability.CenterOfMass(entry.Piece));
                 if (screen.z <= 0f) continue;
 
                 var rect = new Rect(screen.x - 100f, Screen.height - screen.y - 20f, 200f, 40f);
-                GUI.Label(new Rect(rect.x + 1f, rect.y + 1f, rect.width, rect.height), entry.Plain, _shadowStyle);
-                GUI.Label(rect, entry.Text, _style);
+                GUI.Label(new Rect(rect.x + 1f, rect.y + 1f, rect.width, rect.height), entry.Plain, m_shadowStyle);
+                GUI.Label(rect, entry.Text, m_style);
             }
         }
 
         // Says when pieces were left out, so missing labels are never a mystery
         private void DrawStatus()
         {
-            var status = new StringBuilder("StabilityView: ").Append(_entries.Count).Append(" shown");
-            if (_hiddenByLimit > 0)
-                status.Append(" · ").Append(_hiddenByLimit).Append(" hidden by MaxPieces (").Append(Settings.MaxPieces.Value).Append(')');
-            if (_hiddenByRadius > 0)
-                status.Append(" · ").Append(_hiddenByRadius).Append(" beyond ").Append(Settings.Radius.Value.ToString("0", CultureInfo.CurrentCulture)).Append(" m");
+            var status = new StringBuilder("StabilityView: ").Append(m_entries.Count).Append(" shown");
+            if (m_hiddenByLimit > 0)
+                status.Append(" · ").Append(m_hiddenByLimit).Append(" hidden by MaxPieces (").Append(Settings.MaxPieces.Value).Append(')');
+            if (m_hiddenByRadius > 0)
+                status.Append(" · ").Append(m_hiddenByRadius).Append(" beyond ").Append(Settings.Radius.Value.ToString("0", CultureInfo.CurrentCulture)).Append(" m");
             if (Snapshot.Active)
                 status.Append(Snapshot.IsManual
                     ? $" · changes since manual snapshot ({Settings.ClearSnapshot.Value} clears)"
@@ -369,41 +347,41 @@ namespace StabilityView
             string text = status.ToString();
             // Top centre, under the compass (the bottom is taken by the build hints)
             var rect = new Rect(0f, 44f, Screen.width, 24f);
-            GUI.Label(new Rect(rect.x + 1f, rect.y + 1f, rect.width, rect.height), text, _shadowStyle);
-            GUI.Label(rect, text, _style);
+            GUI.Label(new Rect(rect.x + 1f, rect.y + 1f, rect.width, rect.height), text, m_shadowStyle);
+            GUI.Label(rect, text, m_style);
         }
 
         private void EnsureStyles()
         {
             int size = Settings.FontSize.Value;
-            if (_style != null && _style.fontSize == size) return;
+            if (m_style != null && m_style.fontSize == size) return;
 
-            _style = new GUIStyle(GUI.skin.label)
+            m_style = new GUIStyle(GUI.skin.label)
             {
                 alignment = TextAnchor.MiddleCenter,
                 richText = true,
                 fontSize = size,
                 fontStyle = FontStyle.Bold,
             };
-            _style.normal.textColor = Color.white;
-            _shadowStyle = new GUIStyle(_style) { richText = false };
-            _shadowStyle.normal.textColor = new Color(0f, 0f, 0f, 0.85f);
+            m_style.normal.textColor = Color.white;
+            m_shadowStyle = new GUIStyle(m_style) { richText = false };
+            m_shadowStyle.normal.textColor = new Color(0f, 0f, 0f, 0.85f);
         }
 
         // Lines run from each piece to its support source(s), fading towards the source
         private void OnRenderObject()
         {
-            if (!IsShowing || !Settings.ShowSourceLines.Value || _sources.Count == 0) return;
+            if (!IsShowing || !Settings.ShowSourceLines.Value || m_sources.Count == 0) return;
             Camera camera = GameCamera.instance ? GameCamera.instance.m_camera : null;
             if (!camera || Camera.current != camera || !EnsureLineMaterial()) return;
 
-            _lineMaterial.SetInt("_ZTest", (int)(Settings.LinesThroughWalls.Value ? CompareFunction.Always : CompareFunction.LessEqual));
-            _lineMaterial.SetPass(0);
+            m_lineMaterial.SetInt("_ZTest", (int)(Settings.LinesThroughWalls.Value ? CompareFunction.Always : CompareFunction.LessEqual));
+            m_lineMaterial.SetPass(0);
             GL.PushMatrix();
             GL.Begin(GL.LINES);
-            foreach (Entry entry in _entries)
+            foreach (Entry entry in m_entries)
             {
-                if (!entry.Piece || !_sources.TryGetValue(entry.Piece, out SourceInfo source)) continue;
+                if (!entry.Piece || !m_sources.TryGetValue(entry.Piece, out SourceInfo source)) continue;
                 Vector3 from = Stability.CenterOfMass(entry.Piece);
                 if (source.A) Line(from, Stability.CenterOfMass(source.A), entry.Color);
                 if (source.B) Line(from, Stability.CenterOfMass(source.B), entry.Color);
@@ -422,21 +400,21 @@ namespace StabilityView
 
         private bool EnsureLineMaterial()
         {
-            if (_lineMaterial) return true;
-            if (_lineMaterialFailed) return false;
+            if (m_lineMaterial) return true;
+            if (m_lineMaterialFailed) return false;
 
             Shader shader = Shader.Find("Hidden/Internal-Colored");
             if (!shader)
             {
                 Debug.LogWarning("[StabilityView] Line shader not found; support source lines are disabled");
-                _lineMaterialFailed = true;
+                m_lineMaterialFailed = true;
                 return false;
             }
-            _lineMaterial = new Material(shader) { hideFlags = HideFlags.HideAndDontSave };
-            _lineMaterial.SetInt("_SrcBlend", (int)BlendMode.SrcAlpha);
-            _lineMaterial.SetInt("_DstBlend", (int)BlendMode.OneMinusSrcAlpha);
-            _lineMaterial.SetInt("_Cull", (int)CullMode.Off);
-            _lineMaterial.SetInt("_ZWrite", 0);
+            m_lineMaterial = new Material(shader) { hideFlags = HideFlags.HideAndDontSave };
+            m_lineMaterial.SetInt("_SrcBlend", (int)BlendMode.SrcAlpha);
+            m_lineMaterial.SetInt("_DstBlend", (int)BlendMode.OneMinusSrcAlpha);
+            m_lineMaterial.SetInt("_Cull", (int)CullMode.Off);
+            m_lineMaterial.SetInt("_ZWrite", 0);
             return true;
         }
     }
