@@ -5,6 +5,7 @@ using GUIFramework;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
+using ValheimMods.Shared;
 
 namespace SearchEverything
 {
@@ -69,10 +70,15 @@ namespace SearchEverything
         private int m_scroll;
         private float m_nextScan;
         private bool m_focusNextFrame;
+        private FrameGuard m_guard;
 
         public bool IsOpen => m_root && m_root.activeSelf;
 
-        private void Awake() => Instance = this;
+        private void Awake()
+        {
+            Instance = this;
+            m_guard = new FrameGuard(this, "the nearby search");
+        }
 
         public void Open()
         {
@@ -99,6 +105,21 @@ namespace SearchEverything
 
         private void Update()
         {
+            try
+            {
+                Tick();
+            }
+            catch (Exception e)
+            {
+                m_guard.Report(e);
+            }
+        }
+
+        // The guard disables this component after repeated errors: don't leave the window up, holding the input
+        private void OnDisable() => Close();
+
+        private void Tick()
+        {
             if (!IsOpen)
             {
                 InputGuard.WindowOpen = false;
@@ -112,7 +133,7 @@ namespace SearchEverything
                 Close();
                 return;
             }
-            if (Hotkeys.KeyDown(KeyCode.Escape))
+            if (SearchKeys.Down(KeyCode.Escape))
             {
                 Close();
                 return;
@@ -123,13 +144,13 @@ namespace SearchEverything
                 m_field.ActivateInputField();
             }
 
-            if (Hotkeys.KeyDown(KeyCode.DownArrow)) MoveSelection(1);
-            if (Hotkeys.KeyDown(KeyCode.UpArrow)) MoveSelection(-1);
-            if (Hotkeys.KeyDown(KeyCode.PageDown)) MoveSelection(VisibleRows);
-            if (Hotkeys.KeyDown(KeyCode.PageUp)) MoveSelection(-VisibleRows);
-            if (Hotkeys.KeyDown(KeyCode.RightArrow)) SetExpanded(m_selected, true);
-            if (Hotkeys.KeyDown(KeyCode.LeftArrow)) SetExpanded(m_selected, false);
-            if (Hotkeys.KeyDown(KeyCode.Return) || Hotkeys.KeyDown(KeyCode.KeypadEnter))
+            if (SearchKeys.Down(KeyCode.DownArrow)) MoveSelection(1);
+            if (SearchKeys.Down(KeyCode.UpArrow)) MoveSelection(-1);
+            if (SearchKeys.Down(KeyCode.PageDown)) MoveSelection(VisibleRows);
+            if (SearchKeys.Down(KeyCode.PageUp)) MoveSelection(-VisibleRows);
+            if (SearchKeys.Down(KeyCode.RightArrow)) SetExpanded(m_selected, true);
+            if (SearchKeys.Down(KeyCode.LeftArrow)) SetExpanded(m_selected, false);
+            if (SearchKeys.Down(KeyCode.Return) || SearchKeys.Down(KeyCode.KeypadEnter))
             {
                 // Enter also ends editing in the box: with nothing to pick, put the caret back
                 if (m_flat.Count > 0)
@@ -154,7 +175,7 @@ namespace SearchEverything
         }
 
         private static bool CanOpenNow() =>
-            !Hotkeys.IsTyping() && !Minimap.IsOpen() && !StoreGui.IsVisible() && !Hud.InRadial() &&
+            !SearchKeys.IsTyping() && !Minimap.IsOpen() && !StoreGui.IsVisible() && !Hud.InRadial() &&
             !Hud.IsPieceSelectionVisible() && !GameCamera.InFreeFly();
 
         // ---- data ----
@@ -276,7 +297,7 @@ namespace SearchEverything
 
             string where = chests.Count == 1 ? "1 chest" : $"{chests.Count} chests";
             string dismiss = Settings.DismissKey.Value.MainKey != KeyCode.None ? $" ({Settings.DismissKey.Value} clears)" : "";
-            Player.m_localPlayer?.Message(MessageHud.MessageType.TopLeft, $"{group.Name}: marked {where}{dismiss}");
+            if (Player.m_localPlayer) Player.m_localPlayer.Message(MessageHud.MessageType.TopLeft, $"{group.Name}: marked {where}{dismiss}");
         }
 
         // ---- view ----

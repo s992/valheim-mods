@@ -29,7 +29,7 @@ namespace SearchEverything
             // Take All's gamepad hint would also press this button
             foreach (UIGamePad pad in go.GetComponentsInChildren<UIGamePad>(true)) Object.DestroyImmediate(pad);
             foreach (Transform child in go.transform)
-                if (child.name.StartsWith("gamepad_hint")) Object.Destroy(child.gameObject);
+                if (child.name.StartsWith("gamepad_hint", System.StringComparison.Ordinal)) Object.Destroy(child.gameObject);
             foreach (Localize localize in go.GetComponentsInChildren<Localize>(true)) Object.DestroyImmediate(localize);
 
             var button = go.GetComponent<Button>();

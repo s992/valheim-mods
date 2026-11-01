@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using GUIFramework;
 using HarmonyLib;
 using UnityEngine;
+using ValheimMods.Shared;
 
 namespace SearchEverything
 {
@@ -110,5 +111,7 @@ namespace SearchEverything
             InventoryGui gui = InventoryGui.instance;
             if (gui && (__instance == gui.m_playerGrid || __instance == gui.m_containerGrid)) ChestSearch.Apply(__instance);
         }
+
+        private static Exception Finalizer(Exception __exception) => PatchGuard.Contain(__exception, "the chest search");
     }
 }

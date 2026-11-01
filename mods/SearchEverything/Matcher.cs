@@ -38,7 +38,7 @@ namespace SearchEverything
         public static string Localize(string token) =>
             Localization.instance != null ? Localization.instance.Localize(token) : token;
 
-        private static bool ContainsAll(string text, string[] words)
+        internal static bool ContainsAll(string text, string[] words)
         {
             foreach (string word in words)
                 if (text.IndexOf(word, StringComparison.Ordinal) < 0) return false;
@@ -58,12 +58,18 @@ namespace SearchEverything
         {
             CheckLanguage();
             if (s_itemText.TryGetValue(shared, out string text)) return text;
-            var builder = new StringBuilder();
-            builder.Append(Localize(shared.m_name)).Append('\n');
-            AppendTypeWords(builder, shared);
-            text = builder.ToString().ToLowerInvariant();
+            text = BuildItemText(shared, Localize);
             s_itemText[shared] = text;
             return text;
+        }
+
+        /// <summary>An item's search text, lowercase: its name and type words. Takes the localizer to be testable.</summary>
+        internal static string BuildItemText(ItemDrop.ItemData.SharedData shared, Func<string, string> localize)
+        {
+            var builder = new StringBuilder();
+            builder.Append(localize(shared.m_name)).Append('\n');
+            AppendTypeWords(builder, shared, localize);
+            return builder.ToString().ToLowerInvariant();
         }
 
         private static string RecipeText(Recipe recipe)
@@ -80,7 +86,7 @@ namespace SearchEverything
         }
 
         // English words, plus the game's own (localized) skill name for weapons and tools
-        private static void AppendTypeWords(StringBuilder builder, ItemDrop.ItemData.SharedData shared)
+        private static void AppendTypeWords(StringBuilder builder, ItemDrop.ItemData.SharedData shared, Func<string, string> localize)
         {
             void Add(string words) => builder.Append(words).Append('\n');
             switch (shared.m_itemType)
@@ -118,7 +124,7 @@ namespace SearchEverything
                              shared.m_itemType != ItemDrop.ItemData.ItemType.Consumable &&
                              shared.m_skillType != Skills.SkillType.None;
             if (!usesSkill) return;
-            Add(Localize("$skill_" + shared.m_skillType.ToString().ToLower()));
+            Add(localize("$skill_" + shared.m_skillType.ToString().ToLowerInvariant()));
             switch (shared.m_skillType)
             {
                 case Skills.SkillType.Swords: Add("sword"); break;

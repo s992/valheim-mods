@@ -2,6 +2,7 @@ using GUIFramework;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
+using ValheimMods.Shared;
 
 namespace SearchEverything
 {
@@ -13,7 +14,7 @@ namespace SearchEverything
             GuiInputField template = Hud.instance ? Hud.instance.m_buildUi.m_searchField : null;
             if (!template)
             {
-                Plugin.Log.LogWarning("The build menu's search box wasn't found; search boxes are disabled");
+                ModInfo.Log.LogWarning("The build menu's search box wasn't found; search boxes are disabled");
                 return null;
             }
 
@@ -78,12 +79,12 @@ namespace SearchEverything
         public static void LogLayout(string what, RectTransform box)
         {
             if (!Settings.LogLayout.Value || !box) return;
-            Plugin.Log.LogInfo($"{what}: {Describe(box)}");
+            ModInfo.Log.LogInfo($"{what}: {Describe(box)}");
             if (box.parent is RectTransform parent)
             {
-                Plugin.Log.LogInfo($"  in {parent.name}: {Describe(parent)}");
+                ModInfo.Log.LogInfo($"  in {parent.name}: {Describe(parent)}");
                 foreach (RectTransform child in parent)
-                    if (child != box && child.gameObject.activeSelf) Plugin.Log.LogInfo($"    {child.name}: {Describe(child)}");
+                    if (child != box && child.gameObject.activeSelf) ModInfo.Log.LogInfo($"    {child.name}: {Describe(child)}");
             }
         }
 
