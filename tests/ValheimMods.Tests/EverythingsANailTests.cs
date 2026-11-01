@@ -103,4 +103,65 @@ namespace ValheimMods.Tests
             Assert.NotNull(problem);
         }
     }
+
+    // Tools are recognised by what they do, so other mods' tools join the menu without a list to maintain. Build tools
+    // and harvesting attacks are recognised through Unity objects (PieceTable, Attack) that can't be made outside the
+    // game, so the hoe, cultivator and scythe are left to the in-game test list.
+    public class EverythingsANailClassifyTests
+    {
+        private static ItemDrop.ItemData.SharedData Item(Skills.SkillType skill = Skills.SkillType.None,
+            ItemDrop.ItemData.ItemType type = ItemDrop.ItemData.ItemType.OneHandedWeapon, HitData.DamageTypes damage = default,
+            int tier = 0) =>
+            new ItemDrop.ItemData.SharedData { m_name = "$item", m_skillType = skill, m_itemType = type, m_damages = damage, m_toolTier = tier };
+
+        [Fact]
+        public void OneHandedChoppingAxe_IsLogging_BattleAxeIsNot()
+        {
+            var chop = new HitData.DamageTypes { m_chop = 30f };
+
+            Assert.Equal(ToolCategories.Logging, ToolCatalog.Classify("AxeBronze", Item(Skills.SkillType.Axes, damage: chop)).Category);
+            Assert.Null(ToolCatalog.Classify("Battleaxe",
+                Item(Skills.SkillType.Axes, ItemDrop.ItemData.ItemType.TwoHandedWeapon, chop)));
+        }
+
+        [Fact]
+        public void BetterTier_RanksHigherThanMoreDamage()
+        {
+            ToolInfo bronze = ToolCatalog.Classify("PickaxeBronze",
+                Item(Skills.SkillType.Pickaxes, damage: new HitData.DamageTypes { m_pickaxe = 90f }, tier: 2));
+            ToolInfo iron = ToolCatalog.Classify("PickaxeIron",
+                Item(Skills.SkillType.Pickaxes, damage: new HitData.DamageTypes { m_pickaxe = 40f }, tier: 3));
+
+            Assert.Equal(ToolCategories.Mining, iron.Category);
+            Assert.True(iron.Rank > bronze.Rank);
+        }
+
+        [Fact]
+        public void ButcherKnife_AndTamedOnlyItems_AreButchering()
+        {
+            Assert.Equal(ToolCategories.Butchering, ToolCatalog.Classify("KnifeButcher", Item(Skills.SkillType.Knives)).Category);
+            ItemDrop.ItemData.SharedData modded = Item(Skills.SkillType.Knives);
+            modded.m_tamedOnly = true;
+            Assert.Equal(ToolCategories.Butchering, ToolCatalog.Classify("ModdedCleaver", modded).Category);
+        }
+
+        [Fact]
+        public void FishingRod_IsRecognisedByItsAnimation()
+        {
+            ItemDrop.ItemData.SharedData rod = Item(type: ItemDrop.ItemData.ItemType.TwoHandedWeapon);
+            rod.m_animationState = ItemDrop.ItemData.AnimationState.FishingRod;
+
+            Assert.Equal(ToolCategories.Fishing, ToolCatalog.Classify("FishingRod", rod).Category);
+        }
+
+        [Fact]
+        public void ServingTray_AndPlainWeapons_AreNotTools()
+        {
+            ItemDrop.ItemData.SharedData tray = Item();
+            tray.m_animationState = ItemDrop.ItemData.AnimationState.Feaster;
+
+            Assert.Null(ToolCatalog.Classify("ServingTray", tray));
+            Assert.Null(ToolCatalog.Classify("SwordIron", Item(Skills.SkillType.Swords, damage: new HitData.DamageTypes { m_slash = 50f })));
+        }
+    }
 }
