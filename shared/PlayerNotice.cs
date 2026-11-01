@@ -32,7 +32,7 @@ namespace ValheimMods.Shared
             catch (Exception e)
             {
                 // The game API this uses may itself have changed; the message is already in the log
-                Debug.LogWarning($"[{ModInfo.Name}] Couldn't show a message in game: {e.Message}");
+                ModInfo.Log.LogWarning($"Couldn't show a message in game: {e.Message}");
             }
             m_pending.Clear();
         }

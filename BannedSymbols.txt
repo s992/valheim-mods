@@ -1,0 +1,20 @@
+# APIs the mods must not call directly (RS0030, a build error). Each line says what to use instead. shared/ wraps
+# some of them on purpose and suppresses the rule there with a comment.
+
+# Harmony's PatchAll stops at the first failing patch and keeps the rest: a game update leaves the mod half-patched
+M:HarmonyLib.Harmony.PatchAll;Use SafePatching.PatchAll (shared/): all or nothing, and it tells the player
+M:HarmonyLib.Harmony.PatchAll(System.Reflection.Assembly);Use SafePatching.PatchAll (shared/): all or nothing, and it tells the player
+M:HarmonyLib.Harmony.PatchAll(System.Type);Use SafePatching.PatchAll (shared/): all or nothing, and it tells the player
+M:HarmonyLib.Harmony.CreateAndPatchAll(System.Type,System.String);Use SafePatching.PatchAll (shared/): all or nothing, and it tells the player
+M:HarmonyLib.Harmony.CreateAndPatchAll(System.Reflection.Assembly,System.String);Use SafePatching.PatchAll (shared/): all or nothing, and it tells the player
+
+# Valheim reads input through Unity's new input system; these miss presses or skip the exact-modifier match
+T:UnityEngine.Input;Use Hotkeys (shared/), which reads keys through ZInput
+M:BepInEx.Configuration.KeyboardShortcut.IsDown;Use Hotkeys.Pressed (shared/): IsDown uses the legacy input API
+M:BepInEx.Configuration.KeyboardShortcut.IsPressed;Use Hotkeys.Held (shared/): IsPressed uses the legacy input API
+M:BepInEx.Configuration.KeyboardShortcut.IsUp;Use Hotkeys (shared/): IsUp uses the legacy input API
+M:ZInput.GetKeyDown(UnityEngine.KeyCode,System.Boolean);Use Hotkeys.Pressed (shared/) for configured shortcuts
+M:ZInput.GetKey(UnityEngine.KeyCode,System.Boolean);Use Hotkeys.Held (shared/) for configured shortcuts
+
+# Unity's log shows up as "Unity Log", not as the mod
+T:UnityEngine.Debug;Log through the plugin's Logger or ModInfo.Log (shared/)
