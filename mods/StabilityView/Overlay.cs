@@ -1,8 +1,6 @@
 using System;
 using System.Collections.Generic;
-using System.Globalization;
 using System.Linq;
-using System.Text;
 using UnityEngine;
 using UnityEngine.Rendering;
 using ValheimMods.Shared;
@@ -18,9 +16,6 @@ namespace StabilityView
         private const int SourcesPerFrame = 25;
 
         private static readonly int s_emissionColorId = Shader.PropertyToID("_EmissionColor");
-        private static readonly Color s_increaseColor = new Color(0.35f, 1f, 0.4f);
-        private static readonly Color s_decreaseColor = new Color(1f, 0.3f, 0.25f);
-        private static readonly Color s_newColor = new Color(0.55f, 0.8f, 1f);
 
         private sealed class Entry
         {
@@ -202,13 +197,12 @@ namespace StabilityView
                 if (Settings.HideFullySupported.Value && Stability.IsAtMax(support, material) && !changed && !isNew)
                     continue;
 
-                var entry = new Entry { Piece = wnt, Color = Stability.ColorFor(support, material) };
-                BuildText(entry, wnt, support, material, changed ? delta : (float?)null, isNew);
-                m_entries.Add(entry);
+                var (text, plain) = Labels.Piece(wnt.m_materialType.ToString(), support, material, changed ? delta : (float?)null, isNew);
+                m_entries.Add(new Entry { Piece = wnt, Color = Stability.ColorFor(support, material), Text = text, Plain = plain });
 
                 if (Settings.HighlightChanges.Value && (changed || isNew))
                 {
-                    Color tint = isNew ? s_newColor : delta > 0f ? s_increaseColor : s_decreaseColor;
+                    Color tint = Labels.ChangeColor(delta, isNew);
                     MaterialMan.instance.SetValue(wnt.gameObject, s_emissionColorId, tint * 0.4f);
                     m_nextHighlighted.Add(wnt.gameObject);
                 }
@@ -229,38 +223,6 @@ namespace StabilityView
                 && viewport.x >= -0.05f && viewport.x <= 1.05f
                 && viewport.y >= -0.05f && viewport.y <= 1.05f;
         }
-
-        private static void BuildText(Entry entry, WearNTear wnt, float support, MaterialInfo material, float? delta, bool isNew)
-        {
-            var line = new StringBuilder();
-            if (Settings.ShowMaterial.Value)
-                line.Append(wnt.m_materialType).Append(' ');
-            line.Append(support.ToString("0.#", CultureInfo.CurrentCulture));
-            if (Settings.ShowMaxSupport.Value)
-                line.Append('/').Append(material.Max.ToString("0", CultureInfo.CurrentCulture));
-            if (Settings.ShowBreakThreshold.Value)
-                line.Append(" (min ").Append(material.Min.ToString("0", CultureInfo.CurrentCulture)).Append(')');
-
-            string change = null;
-            Color changeColor = Color.white;
-            if (isNew)
-            {
-                change = "new";
-                changeColor = s_newColor;
-            }
-            else if (delta.HasValue)
-            {
-                change = (delta.Value > 0f ? "+" : "") + delta.Value.ToString("0.#", CultureInfo.CurrentCulture);
-                changeColor = delta.Value > 0f ? s_increaseColor : s_decreaseColor;
-            }
-
-            string first = line.ToString();
-            entry.Plain = change == null ? first : first + "\n" + change;
-            entry.Text = Colored(first, entry.Color) + (change == null ? "" : "\n" + Colored(change, changeColor));
-        }
-
-        private static string Colored(string text, Color color) =>
-            $"<color=#{ColorUtility.ToHtmlStringRGB(color)}>{text}</color>";
 
         // Resets tints that are no longer wanted and swaps in the new set
         private void ApplyHighlightChanges()
@@ -294,7 +256,7 @@ namespace StabilityView
                 {
                     if (!m_analysisErrorLogged)
                     {
-                        Debug.LogWarning($"[StabilityView] Support source analysis failed: {e}");
+                        ModInfo.Log.LogWarning($"Support source analysis failed: {e}");
                         m_analysisErrorLogged = true;
                     }
                     m_sources[wnt] = new SourceInfo { Kind = SourceKind.None, AnalyzedAt = Time.time };
@@ -331,20 +293,9 @@ namespace StabilityView
             }
         }
 
-        // Says when pieces were left out, so missing labels are never a mystery
         private void DrawStatus()
         {
-            var status = new StringBuilder("StabilityView: ").Append(m_entries.Count).Append(" shown");
-            if (m_hiddenByLimit > 0)
-                status.Append(" · ").Append(m_hiddenByLimit).Append(" hidden by MaxPieces (").Append(Settings.MaxPieces.Value).Append(')');
-            if (m_hiddenByRadius > 0)
-                status.Append(" · ").Append(m_hiddenByRadius).Append(" beyond ").Append(Settings.Radius.Value.ToString("0", CultureInfo.CurrentCulture)).Append(" m");
-            if (Snapshot.Active)
-                status.Append(Snapshot.IsManual
-                    ? $" · changes since manual snapshot ({Settings.ClearSnapshot.Value} clears)"
-                    : " · showing changes");
-
-            string text = status.ToString();
+            string text = Labels.Status(m_entries.Count, m_hiddenByLimit, m_hiddenByRadius, Snapshot.Active, Snapshot.IsManual);
             // Top centre, under the compass (the bottom is taken by the build hints)
             var rect = new Rect(0f, 44f, Screen.width, 24f);
             GUI.Label(new Rect(rect.x + 1f, rect.y + 1f, rect.width, rect.height), text, m_shadowStyle);
@@ -406,7 +357,7 @@ namespace StabilityView
             Shader shader = Shader.Find("Hidden/Internal-Colored");
             if (!shader)
             {
-                Debug.LogWarning("[StabilityView] Line shader not found; support source lines are disabled");
+                ModInfo.Log.LogWarning("Line shader not found; support source lines are disabled");
                 m_lineMaterialFailed = true;
                 return false;
             }
