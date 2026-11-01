@@ -107,18 +107,23 @@ namespace EverythingsANail
             if (!prefab) return null;
             ItemDrop drop = prefab.GetComponent<ItemDrop>();
             ItemDrop.ItemData.SharedData shared = drop ? drop.m_itemData?.m_shared : null;
-            if (shared == null) return null;
+            return shared == null ? null : Classify(prefab.name, shared);
+        }
+
+        /// <summary>What kind of tool an item is, from what it does (null for anything that isn't a tool).</summary>
+        public static ToolInfo Classify(string prefabName, ItemDrop.ItemData.SharedData shared)
+        {
             // The serving tray has its own animation and isn't a tool
             if (shared.m_animationState == ItemDrop.ItemData.AnimationState.Feaster) return null;
 
-            var tool = new ToolInfo { Prefab = prefab.name, Shared = shared };
+            var tool = new ToolInfo { Prefab = prefabName, Shared = shared };
             HitData.DamageTypes damage = shared.m_damages;
             if (shared.m_buildPieces)
             {
                 tool.Category = ToolCategories.Building;
-                tool.Group = prefab.name;
+                tool.Group = prefabName;
             }
-            else if (shared.m_tamedOnly || prefab.name == "KnifeButcher")
+            else if (shared.m_tamedOnly || prefabName == "KnifeButcher")
             {
                 tool.Category = ToolCategories.Butchering;
                 tool.Rank = damage.GetTotalDamage();
