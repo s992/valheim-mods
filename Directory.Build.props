@@ -72,6 +72,9 @@
     <PackageReference Include="BepInEx.AssemblyPublicizer.MSBuild" Version="0.4.3" PrivateAssets="all" />
     <!-- Unity-specific checks (e.g. ?. and ?? on Unity objects skip Unity's destroyed-object check) -->
     <PackageReference Include="Microsoft.Unity.Analyzers" Version="1.28.0" PrivateAssets="all" />
+    <!-- APIs that bypass shared/ (Harmony's PatchAll, legacy input, Unity's log) are build errors: BannedSymbols.txt -->
+    <PackageReference Include="Microsoft.CodeAnalysis.BannedApiAnalyzers" Version="3.3.4" PrivateAssets="all" />
+    <AdditionalFiles Include="$(MSBuildThisFileDirectory)BannedSymbols.txt" />
   </ItemGroup>
 
   <!-- Game assemblies are referenced from a local install and never committed -->

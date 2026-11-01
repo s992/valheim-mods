@@ -6,6 +6,8 @@ namespace ValheimMods.Shared
 {
     // Keys are read through ZInput: the game uses Unity's new input system, which BepInEx's KeyboardShortcut.IsDown()
     // doesn't see
+    // This is the one place mods read keys directly, so the BannedSymbols.txt rule against it is off here
+#pragma warning disable RS0030
     internal static class Hotkeys
     {
         private static readonly KeyCode[] s_modifierKeys =
@@ -38,4 +40,5 @@ namespace ValheimMods.Shared
             global::Console.IsVisible() || TextInput.IsVisible() || Menu.IsVisible() || Minimap.InTextInput() ||
             (Chat.instance && Chat.instance.HasFocus());
     }
+#pragma warning restore RS0030
 }
