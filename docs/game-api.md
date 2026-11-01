@@ -221,8 +221,8 @@ To find an unknown type: `ilspycmd -l c <dll>` on each candidate in `valheim_Dat
   and BepInEx's `KeyboardShortcut.IsDown()` (its `NewInputSystem` reader). Bound buttons (`ZInput.GetButtonDown("Use")`,
   WASD) go through input actions and hear every keyboard. A second device reporting as a keyboard can leave raw-key
   hotkeys (ours, Configuration Manager's F1) dead for a while (s992 saw ~90 s after spawning, Oct 2026) while movement
-  works. SearchEverything's `Hotkeys.KeyState` checks every `Keyboard` in `InputSystem.devices`, mapping through
-  `ZInput.KeyCodeToKey` (private static, reflection), and logs the devices once when a key came from a non-current one.
+  works. Unconfirmed: a later restart didn't repeat it. If it comes back, the fix belongs in `shared/Hotkeys.cs` (check
+  every `Keyboard` in `InputSystem.devices`, mapping through `ZInput.KeyCodeToKey`, private static) for every mod.
 - Camera zoom (`GameCamera.UpdateCamera`) reads `ZInput.GetMouseScrollWheel()` unless the inventory, map, chat, menu
   or build menu is open; it doesn't check `TextInput`. SearchEverything transpiles those calls while its window is open.
 
