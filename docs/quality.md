@@ -22,16 +22,23 @@ human. Agents follow it through AGENTS.md; this file is the reasoning.
 
 | Gate | Where | Catches | Covers |
 |---|---|---|---|
-| Warnings are errors, .NET + Unity analyzers | every build (`Directory.Build.props`, `.editorconfig`) | sloppy code, `?.`/`??` on Unity objects (skips Unity's destroyed-object check), locale-dependent number formatting | 2 |
+| Warnings are errors, .NET + Unity analyzers | every build (`Directory.Build.props`, `.editorconfig`) | sloppy code, `?.`/`??` on Unity objects (skips Unity's destroyed-object check), locale-dependent number formatting, field names outside the `m_`/`s_` style | 2 |
 | Format check | CI (`dotnet format --verify-no-changes`) | style drift between agents | 2 |
-| Unit tests | CI, `tests/ValheimMods.Tests` | logic regressions in parsing, rules, wire formats; a game update adding an item type LootFilter hasn't grouped | 2, 1 |
+| Unit tests | CI, `tests/ValheimMods.Tests` | logic regressions in parsing, rules, wire formats, CraftFromStorage's item taking and pull planning, labels; a game update adding an item type LootFilter hasn't grouped | 2, 1, 5 |
 | Boot test | CI, `tools/boot_test.py` | patches that don't apply, transpiler counts that changed, errors in `Awake`/`Start`, missing references, on the real game with real BepInEx | 1, 2 |
 | Nightly game check | `game-check.yml` | the above against the latest game build, and with the latest integrated mods (their warnings fail it); opens a `game-check` issue | 1, 3 |
 | All-or-nothing patching | every mod (`shared/SafePatching.cs`) | a patch that fails in a player's game turns the whole mod off with a log line and an in-game message, instead of half applying | 1 |
 | Per-frame guards | `shared/FrameGuard.cs`, `shared/PatchGuard.cs` | an error in an `Update`/`OnGUI` or in a patch on a per-frame game method is logged once and contained, instead of filling the log or breaking the player's update loop | 2 |
 | Package check | `release.yml` (`tools/check_package.py`) | missing files, a manifest that doesn't match the csproj, a stale or extra DLL | 4 |
+| Changelog as you go | `## Unreleased` in each `CHANGELOG.md`, `release.yml`'s changelog check | a release whose notes miss changes (shared code reaches every mod) | 4 |
+| Dev builds say so | `Directory.Build.targets` | "which copy was I running?": local builds log `<version>-dev+<time>` and deploy over the Thunderstore install's DLL, so a profile has one copy | 2 |
 | In-game test list | `mods/<Name>/TESTING.md`, before each release | everything client-side: UI, input, multiplayer behaviour | 2, 5 |
 | Review routing | `CODEOWNERS`, pull request template, branch protection on `main` | READMEs and the build/release files go past the maintainer; every change says its risk, what was checked and what wasn't | all |
+
+Known gap: agents push and merge as the maintainer's GitHub account, so branch protection can't require a review
+(nobody can approve their own pull request) and the history can't tell an agent's change from the maintainer's.
+Commits carry a `Co-Authored-By` line for the agent. Separating them needs a bot account or GitHub App, which only the
+maintainer can create.
 
 Deliberately not done:
 - **Nullable reference types**: Unity's destroyed objects compare equal to null without being null, which nullable
@@ -65,6 +72,10 @@ Checked and left as is:
 
 Not read line by line: StabilityView's support analysis (read-only display) and CraftFromStorage's storage
 network bookkeeping beyond the paths above. Their failures show up on screen, not in save data.
+
+The cleanup that followed (also October 2026) moved code shared by several mods into `shared/` (hotkeys, the log
+source, name and version), gave every mod a changelog, and split testable logic out of CraftFromStorage,
+StabilityView and EverythingsANail: 85 tests, up from 39.
 
 ## When something fails
 
