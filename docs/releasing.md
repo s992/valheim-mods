@@ -42,6 +42,8 @@ their fork and open a pull request; the maintainer merges.
 pushes and deletion are blocked. Admins are held to it too, since agents push as the maintainer; in an emergency the
 maintainer can switch that off for a moment in the settings. The settings live in
 GitHub (Settings, Branches), not in the repo: check them with `gh api repos/s992/valheim-mods/branches/main/protection`.
+Pull requests merge by rebase only (squash is off), so each commit lands on `main` as written: one mod per commit
+stays true after merging. Merged branches are deleted automatically.
 
 ## How CI builds without the game
 
