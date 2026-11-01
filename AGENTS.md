@@ -56,7 +56,7 @@ both the build and `tools/decompile.py` read:
 - `shared/`: source compiled into every mod: all-or-nothing patching, per-frame error guards, player notices
   (docs/patterns.md, "Failing safely"), hotkeys, the mod's name and version. Use it rather than copying it.
 - `tools/`: `new_mod.py` (scaffold), `mod-template/`, `decompile.py` (read game/mod code), `icon_kit.py`,
-  `boot_test.py` (CI's boot test).
+  `boot_test.py` (CI's boot test), `check_package.py` and `check_commits.py` (CI checks).
 - `docs/`: `game-api.md`, `integrations.md`, `patterns.md`, `icons.md`, `releasing.md` (see below).
 - `.github/workflows/`: `build.yml` (every push; builds against the Valheim dedicated server, checks formatting,
   boots the server with every mod: docs/releasing.md, "Boot test"),
@@ -94,6 +94,11 @@ Warnings are errors, locally and in CI. MSB3277 is silenced on purpose (Unity's 
 that clash with Harmony, Unity or Valheim are turned off in `.editorconfig`, each with its reason. Fix a warning
 rather than silencing it; when a rule really is wrong for one spot, suppress it there with a justification
 (`[SuppressMessage(..., Justification = "...")]`), and only turn a rule off repo-wide for a reason like those.
+
+`BannedSymbols.txt` makes calls that bypass `shared/` build errors (RS0030): Harmony's `PatchAll`, Unity's legacy
+input and `KeyboardShortcut.IsDown`, direct `ZInput` key reads, `UnityEngine.Debug`. Each line names the
+replacement. On pull requests CI also runs `tools/check_commits.py`: one mod per commit (unless the commit also
+changes shared code), and no README edits in commits with an AI co-author line.
 
 ## Conventions
 

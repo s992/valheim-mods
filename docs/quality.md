@@ -23,7 +23,9 @@ human. Agents follow it through AGENTS.md; this file is the reasoning.
 | Gate | Where | Catches | Covers |
 |---|---|---|---|
 | Warnings are errors, .NET + Unity analyzers | every build (`Directory.Build.props`, `.editorconfig`) | sloppy code, `?.`/`??` on Unity objects (skips Unity's destroyed-object check), locale-dependent number formatting, field names outside the `m_`/`s_` style | 2 |
+| Banned APIs | every build (`BannedSymbols.txt`) | code that bypasses `shared/`: Harmony's `PatchAll` (half-patching), legacy input, `ZInput` key reads, Unity's log | 1, 2 |
 | Format check | CI (`dotnet format --verify-no-changes`) | style drift between agents | 2 |
+| Commit rules | CI on pull requests (`tools/check_commits.py`) | a commit changing several mods without a shared change; an AI-authored commit editing a README | all |
 | Unit tests | CI, `tests/ValheimMods.Tests` | logic regressions in parsing, rules, wire formats, CraftFromStorage's item taking and pull planning, labels; a game update adding an item type LootFilter hasn't grouped | 2, 1, 5 |
 | Boot test | CI, `tools/boot_test.py` | patches that don't apply, transpiler counts that changed, errors in `Awake`/`Start`, missing references, on the real game with real BepInEx | 1, 2 |
 | Nightly game check | `game-check.yml` | the above against the latest game build, and with the latest integrated mods (their warnings fail it); opens a `game-check` issue | 1, 3 |
