@@ -25,7 +25,7 @@ namespace EverythingsANail
             Settings.RulesChanged += ToolSwitcher.Revalidate;
             if (!SafePatching.PatchAll(new Harmony(MyPluginInfo.PLUGIN_GUID), Logger)) return;
             WatchConfigFile();
-            Logger.LogInfo($"{MyPluginInfo.PLUGIN_NAME} {MyPluginInfo.PLUGIN_VERSION} loaded");
+            Logger.LogInfo($"{ModInfo.Name} {ModInfo.Version} loaded");
         }
 
         // Dedicated servers have no Configuration Manager: pick up edits to the config file so a

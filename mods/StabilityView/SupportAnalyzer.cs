@@ -39,8 +39,8 @@ namespace StabilityView
             public WearNTear Piece;
         }
 
-        private static readonly Collider[] Overlaps = new Collider[128];
-        private static readonly List<SupportPoint> Points = new List<SupportPoint>();
+        private static readonly Collider[] s_overlaps = new Collider[128];
+        private static readonly List<SupportPoint> s_points = new List<SupportPoint>();
 
         public static SourceInfo Analyze(WearNTear wnt)
         {
@@ -54,14 +54,14 @@ namespace StabilityView
             bool touchesTerrain = false;
             float best = 0f;
             WearNTear bestPiece = null;
-            Points.Clear();
+            s_points.Clear();
 
             foreach (var bound in wnt.m_bounds)
             {
-                int count = Physics.OverlapBoxNonAlloc(bound.m_pos, bound.m_size, Overlaps, bound.m_rot, WearNTear.s_rayMask);
+                int count = Physics.OverlapBoxNonAlloc(bound.m_pos, bound.m_size, s_overlaps, bound.m_rot, WearNTear.s_rayMask);
                 for (int i = 0; i < count; i++)
                 {
-                    Collider collider = Overlaps[i];
+                    Collider collider = s_overlaps[i];
                     if (collider.attachedRigidbody != null || collider.isTrigger || wnt.m_colliders.Contains(collider))
                         continue;
 
@@ -100,7 +100,7 @@ namespace StabilityView
                             float loss = Mathf.Lerp(material.HorizontalLoss, material.VerticalLoss, t);
                             Consider(support - loss * distance * support, other, ref best, ref bestPiece);
                         }
-                        Points.Add(new SupportPoint
+                        s_points.Add(new SupportPoint
                         {
                             Point = point,
                             Value = support - material.VerticalLoss * distance * support,
@@ -124,22 +124,22 @@ namespace StabilityView
             }
 
             // Bracing: two supports below, at least 100 degrees apart around the piece
-            for (int i = 0; i < Points.Count - 1; i++)
+            for (int i = 0; i < s_points.Count - 1; i++)
             {
-                Vector3 from = Points[i].Point - com;
+                Vector3 from = s_points[i].Point - com;
                 from.y = 0f;
-                for (int j = i + 1; j < Points.Count; j++)
+                for (int j = i + 1; j < s_points.Count; j++)
                 {
-                    float average = (Points[i].Value + Points[j].Value) * 0.5f;
+                    float average = (s_points[i].Value + s_points[j].Value) * 0.5f;
                     if (average <= best) continue;
-                    Vector3 to = Points[j].Point - com;
+                    Vector3 to = s_points[j].Point - com;
                     to.y = 0f;
                     if (Vector3.Angle(from, to) >= 100f)
                     {
                         best = average;
                         info.Kind = SourceKind.Braced;
-                        info.A = Points[i].Piece;
-                        info.B = Points[j].Piece;
+                        info.A = s_points[i].Piece;
+                        info.B = s_points[j].Piece;
                     }
                 }
             }

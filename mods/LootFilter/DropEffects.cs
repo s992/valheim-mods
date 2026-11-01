@@ -23,44 +23,44 @@ namespace LootFilter
                 new Dictionary<Light, (Color, float)>();
         }
 
-        private readonly Dictionary<ItemDrop, State> _changed = new Dictionary<ItemDrop, State>();
-        private float _nextScan;
-        private int _seenVersion = -1;
-        private bool _wasRevealing;
-        private bool _effectSettingsChanged;
-        private FrameGuard _guard;
+        private readonly Dictionary<ItemDrop, State> m_changed = new Dictionary<ItemDrop, State>();
+        private float m_nextScan;
+        private int m_seenVersion = -1;
+        private bool m_wasRevealing;
+        private bool m_effectSettingsChanged;
+        private FrameGuard m_guard;
 
         private void Awake()
         {
-            _guard = new FrameGuard(this, "the filtered-drop effects");
+            m_guard = new FrameGuard(this, "the filtered-drop effects");
             Settings.FilteredSparkles.SettingChanged += OnEffectSettingChanged;
             Settings.SparkleColor.SettingChanged += OnEffectSettingChanged;
         }
 
-        private void OnEffectSettingChanged(object sender, EventArgs e) => _effectSettingsChanged = true;
+        private void OnEffectSettingChanged(object sender, EventArgs e) => m_effectSettingsChanged = true;
 
         private void Update()
         {
             try { Tick(); }
-            catch (Exception e) { _guard.Report(e); }
+            catch (Exception e) { m_guard.Report(e); }
         }
 
         private void Tick()
         {
-            bool revealing = Input.Held(Settings.Reveal);
-            bool dirty = revealing != _wasRevealing || _seenVersion != Rules.Version || _effectSettingsChanged;
-            if (!dirty && Time.time < _nextScan) return;
+            bool revealing = Hotkeys.Held(Settings.Reveal);
+            bool dirty = revealing != m_wasRevealing || m_seenVersion != Rules.Version || m_effectSettingsChanged;
+            if (!dirty && Time.time < m_nextScan) return;
 
             // New effect settings: put everything back, then apply them fresh
-            if (_effectSettingsChanged)
+            if (m_effectSettingsChanged)
             {
                 RestoreAll();
-                _effectSettingsChanged = false;
+                m_effectSettingsChanged = false;
             }
 
-            _wasRevealing = revealing;
-            _seenVersion = Rules.Version;
-            _nextScan = Time.time + ScanInterval;
+            m_wasRevealing = revealing;
+            m_seenVersion = Rules.Version;
+            m_nextScan = Time.time + ScanInterval;
             Scan(revealing);
         }
 
@@ -71,8 +71,8 @@ namespace LootFilter
 
         private void RestoreAll()
         {
-            foreach (State state in _changed.Values) Restore(state);
-            _changed.Clear();
+            foreach (State state in m_changed.Values) Restore(state);
+            m_changed.Clear();
         }
 
         private void Scan(bool revealing)
@@ -85,24 +85,24 @@ namespace LootFilter
 
                 // Includes items you dropped yourself: vanilla won't auto-pick those up, but they should still look filtered
                 bool change = anyEffect && !revealing && !Rules.Paused && Rules.IsFiltered(drop.m_itemData);
-                bool isChanged = _changed.TryGetValue(drop, out State state);
+                bool isChanged = m_changed.TryGetValue(drop, out State state);
 
                 if (change)
                 {
-                    if (!isChanged) _changed[drop] = state = new State();
+                    if (!isChanged) m_changed[drop] = state = new State();
                     // Run every scan: effects can start after the drop spawns
                     Apply(drop, state);
                 }
                 else if (isChanged)
                 {
                     Restore(state);
-                    _changed.Remove(drop);
+                    m_changed.Remove(drop);
                 }
             }
 
             // Forget drops that were picked up or despawned
-            foreach (ItemDrop gone in _changed.Keys.Where(d => !d).ToList())
-                _changed.Remove(gone);
+            foreach (ItemDrop gone in m_changed.Keys.Where(d => !d).ToList())
+                m_changed.Remove(gone);
         }
 
         private static void Apply(ItemDrop drop, State state)

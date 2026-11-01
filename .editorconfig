@@ -207,19 +207,19 @@ dotnet_naming_rule.local_constants_should_be_camelcase.severity = suggestion
 dotnet_naming_rule.local_constants_should_be_camelcase.symbols = local_constants
 dotnet_naming_rule.local_constants_should_be_camelcase.style = camelcase
 
-dotnet_naming_rule.parameters_should_be_camelcase.severity = suggestion
-dotnet_naming_rule.parameters_should_be_camelcase.symbols = parameters
-dotnet_naming_rule.parameters_should_be_camelcase.style = camelcase
-
 dotnet_naming_rule.public_fields_should_be_pascalcase.severity = suggestion
 dotnet_naming_rule.public_fields_should_be_pascalcase.symbols = public_fields
 dotnet_naming_rule.public_fields_should_be_pascalcase.style = pascalcase
 
-dotnet_naming_rule.private_fields_should_be__camelcase.severity = suggestion
-dotnet_naming_rule.private_fields_should_be__camelcase.symbols = private_fields
-dotnet_naming_rule.private_fields_should_be__camelcase.style = _camelcase
+# Field names follow the game's own code (m_ for instance fields, s_ for static ones), and the build enforces them
+# (static readonly ones too). Every rule here is enforced, which is why there's no rule for parameters: Harmony
+# injects them by name (__instance, __result).
+dotnet_diagnostic.IDE1006.severity = warning
+dotnet_naming_rule.private_fields_should_be_m_camelcase.severity = warning
+dotnet_naming_rule.private_fields_should_be_m_camelcase.symbols = private_fields
+dotnet_naming_rule.private_fields_should_be_m_camelcase.style = m_camelcase
 
-dotnet_naming_rule.private_static_fields_should_be_s_camelcase.severity = suggestion
+dotnet_naming_rule.private_static_fields_should_be_s_camelcase.severity = warning
 dotnet_naming_rule.private_static_fields_should_be_s_camelcase.symbols = private_static_fields
 dotnet_naming_rule.private_static_fields_should_be_s_camelcase.style = s_camelcase
 
@@ -227,17 +227,13 @@ dotnet_naming_rule.public_constant_fields_should_be_pascalcase.severity = sugges
 dotnet_naming_rule.public_constant_fields_should_be_pascalcase.symbols = public_constant_fields
 dotnet_naming_rule.public_constant_fields_should_be_pascalcase.style = pascalcase
 
-dotnet_naming_rule.private_constant_fields_should_be_pascalcase.severity = suggestion
+dotnet_naming_rule.private_constant_fields_should_be_pascalcase.severity = warning
 dotnet_naming_rule.private_constant_fields_should_be_pascalcase.symbols = private_constant_fields
 dotnet_naming_rule.private_constant_fields_should_be_pascalcase.style = pascalcase
 
 dotnet_naming_rule.public_static_readonly_fields_should_be_pascalcase.severity = suggestion
 dotnet_naming_rule.public_static_readonly_fields_should_be_pascalcase.symbols = public_static_readonly_fields
 dotnet_naming_rule.public_static_readonly_fields_should_be_pascalcase.style = pascalcase
-
-dotnet_naming_rule.private_static_readonly_fields_should_be_pascalcase.severity = suggestion
-dotnet_naming_rule.private_static_readonly_fields_should_be_pascalcase.symbols = private_static_readonly_fields
-dotnet_naming_rule.private_static_readonly_fields_should_be_pascalcase.style = pascalcase
 
 dotnet_naming_rule.enums_should_be_pascalcase.severity = suggestion
 dotnet_naming_rule.enums_should_be_pascalcase.symbols = enums
@@ -346,10 +342,10 @@ dotnet_naming_style.tpascalcase.required_suffix =
 dotnet_naming_style.tpascalcase.word_separator = 
 dotnet_naming_style.tpascalcase.capitalization = pascal_case
 
-dotnet_naming_style._camelcase.required_prefix = _
-dotnet_naming_style._camelcase.required_suffix = 
-dotnet_naming_style._camelcase.word_separator = 
-dotnet_naming_style._camelcase.capitalization = camel_case
+dotnet_naming_style.m_camelcase.required_prefix = m_
+dotnet_naming_style.m_camelcase.required_suffix = 
+dotnet_naming_style.m_camelcase.word_separator = 
+dotnet_naming_style.m_camelcase.capitalization = camel_case
 
 dotnet_naming_style.camelcase.required_prefix = 
 dotnet_naming_style.camelcase.required_suffix = 

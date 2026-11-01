@@ -62,7 +62,7 @@ namespace MarkerCommand
             Minimap.instance.m_icons.Any(s => s.m_name == type && s.m_icon != null);
 
         // Friendly names for the map's five placeable icons; the enum names still work too
-        private static readonly Dictionary<Minimap.PinType, string> Aliases = new Dictionary<Minimap.PinType, string>
+        private static readonly Dictionary<Minimap.PinType, string> s_aliases = new Dictionary<Minimap.PinType, string>
         {
             { Minimap.PinType.Icon0, "fire" },
             { Minimap.PinType.Icon1, "house" },
@@ -74,7 +74,7 @@ namespace MarkerCommand
         private static string EnumName(Minimap.PinType type) => type.ToString().ToLowerInvariant();
 
         public static string IconName(Minimap.PinType type) =>
-            Aliases.TryGetValue(type, out string alias) ? alias : EnumName(type);
+            s_aliases.TryGetValue(type, out string alias) ? alias : EnumName(type);
 
         public static bool TryParseIcon(Token token, out Minimap.PinType icon)
         {

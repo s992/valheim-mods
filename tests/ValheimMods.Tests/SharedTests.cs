@@ -8,14 +8,14 @@ namespace ValheimMods.Tests
     // LootFilter's copy through reflection. Paths that show the player a message need Unity and aren't tested here.
     public class PatchGuardTests
     {
-        private static readonly Type Guard =
+        private static readonly Type s_guard =
             typeof(LootFilter.Rules).Assembly.GetType("ValheimMods.Shared.PatchGuard", throwOnError: true);
 
         private static bool FromThisMod(Exception e) =>
-            (bool)Guard.GetMethod("FromThisMod", BindingFlags.NonPublic | BindingFlags.Static).Invoke(null, new object[] { e });
+            (bool)s_guard.GetMethod("FromThisMod", BindingFlags.NonPublic | BindingFlags.Static).Invoke(null, new object[] { e });
 
         private static Exception Contain(Exception e) =>
-            (Exception)Guard.GetMethod("Contain").Invoke(null, new object[] { e, "test" });
+            (Exception)s_guard.GetMethod("Contain").Invoke(null, new object[] { e, "test" });
 
         private static Exception Caught(Action action)
         {

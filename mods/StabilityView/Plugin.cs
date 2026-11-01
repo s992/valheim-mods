@@ -12,7 +12,7 @@ namespace StabilityView
             Settings.Bind(Config);
             if (!SafePatching.PatchAll(new Harmony(MyPluginInfo.PLUGIN_GUID), Logger)) return;
             gameObject.AddComponent<Overlay>();
-            Logger.LogInfo($"{MyPluginInfo.PLUGIN_NAME} {MyPluginInfo.PLUGIN_VERSION} loaded");
+            Logger.LogInfo($"{ModInfo.Name} {ModInfo.Version} loaded");
         }
     }
 }
