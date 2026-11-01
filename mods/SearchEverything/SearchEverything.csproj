@@ -2,7 +2,7 @@
 
   <!-- Shared settings, packages and game references: Directory.Build.props at the repo root -->
   <PropertyGroup>
-    <Version>0.1.0</Version>
+    <Version>1.0.0</Version>
     <Description>Search crafting recipes and chests, and find items in nearby chests with a quick-search window that marks where they are.</Description>
   </PropertyGroup>
 
