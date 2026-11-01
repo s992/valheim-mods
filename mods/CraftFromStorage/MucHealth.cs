@@ -8,7 +8,7 @@ using HarmonyLib;
 
 namespace CraftFromStorage
 {
-    public enum MucState
+    internal enum MucState
     {
         /// <summary>Not checked yet (plugins still loading).</summary>
         Unknown,
@@ -24,7 +24,7 @@ namespace CraftFromStorage
 
     // Decides whether chests this client doesn't own may be used. Without a working MUC, a non-owner's edit to a
     // chest is never saved and gets overwritten on the next reload, so in that case we stay owned-only.
-    public static class MucHealth
+    internal static class MucHealth
     {
         public const string Guid = "com.maxsch.valheim.MultiUserChest";
         public static readonly System.Version MinVersion = new System.Version(0, 6, 2);
