@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Reflection;
-using BepInEx.Logging;
 
 namespace ValheimMods.Shared
 {
@@ -19,7 +18,6 @@ namespace ValheimMods.Shared
     internal static class PatchGuard
     {
         private static readonly HashSet<string> s_reported = new HashSet<string>();
-        private static ManualLogSource s_log;
 
         /// <param name="feature">What the player would call it, e.g. "the tool menu".</param>
         /// <returns>Null to swallow the exception (ours), or the exception itself to rethrow it (the game's).</returns>
@@ -28,8 +26,7 @@ namespace ValheimMods.Shared
             if (exception == null || !FromThisMod(exception)) return exception;
             if (s_reported.Add(feature))
             {
-                s_log ??= Logger.CreateLogSource(ModInfo.Name);
-                s_log.LogError($"Error in {feature} (further errors there aren't logged): {exception}");
+                ModInfo.Log.LogError($"Error in {feature} (further errors there aren't logged): {exception}");
                 PlayerNotice.Show($"{ModInfo.Name}: {feature} hit an error and may not work until the game restarts. " +
                                   "Details are in BepInEx/LogOutput.log.");
             }

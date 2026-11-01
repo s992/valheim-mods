@@ -1,5 +1,4 @@
 using System;
-using BepInEx.Logging;
 using UnityEngine;
 
 namespace ValheimMods.Shared
@@ -19,8 +18,6 @@ namespace ValheimMods.Shared
         // A few errors can be a one-off (a scene loading); this many means the feature is broken
         private const int MaxErrors = 10;
 
-        private static ManualLogSource s_log;
-
         private readonly Behaviour m_owner;
         private readonly string m_feature;
         private int m_errors;
@@ -34,15 +31,14 @@ namespace ValheimMods.Shared
 
         public void Report(Exception e)
         {
-            s_log ??= BepInEx.Logging.Logger.CreateLogSource(ModInfo.Name);
             m_errors++;
-            if (m_errors == 1) s_log.LogError($"Error in {m_feature}: {e}");
+            if (m_errors == 1) ModInfo.Log.LogError($"Error in {m_feature}: {e}");
             if (m_errors < MaxErrors) return;
 
             m_owner.enabled = false;
             string message = $"{ModInfo.Name}: {m_feature} kept failing and is off until the game restarts. " +
                              "Details are in BepInEx/LogOutput.log.";
-            s_log.LogError(message);
+            ModInfo.Log.LogError(message);
             PlayerNotice.Show(message);
         }
     }
