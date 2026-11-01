@@ -47,16 +47,24 @@ namespace CraftFromStorage
             {
                 if (remaining <= 0) break;
                 if (!StorageNetwork.IsOwnedForUse(chest) || !PrepareOwned(chest)) continue;
-                Inventory inventory = chest.GetInventory();
-                foreach (ItemDrop.ItemData item in inventory.m_inventory.ToList())
-                {
-                    if (remaining <= 0) break;
-                    if (!StorageNetwork.Matches(item, name, quality, worldLevelBased)) continue;
-                    int take = Mathf.Min(item.m_stack, remaining);
-                    if (!inventory.RemoveItem(item, take)) continue;
-                    remaining -= take;
-                    StorageLog.Action($"took {take} {name} from {Describe(chest)} for {reason}");
-                }
+                int taken = TakeFrom(chest.GetInventory(), name, remaining, quality, worldLevelBased);
+                if (taken == 0) continue;
+                remaining -= taken;
+                StorageLog.Action($"took {taken} {name} from {Describe(chest)} for {reason}");
+            }
+            return amount - remaining;
+        }
+
+        /// <summary>Removes up to <paramref name="amount"/> matching items from one inventory. Returns how many it took.</summary>
+        public static int TakeFrom(Inventory inventory, string name, int amount, int quality, bool worldLevelBased)
+        {
+            int remaining = amount;
+            foreach (ItemDrop.ItemData item in inventory.m_inventory.ToList())
+            {
+                if (remaining <= 0) break;
+                if (!StorageNetwork.Matches(item, name, quality, worldLevelBased)) continue;
+                int take = Mathf.Min(item.m_stack, remaining);
+                if (inventory.RemoveItem(item, take)) remaining -= take;
             }
             return amount - remaining;
         }
@@ -220,30 +228,37 @@ namespace CraftFromStorage
         /// <summary>Plans pulling <paramref name="amount"/> items from chests other players own, nearest first. Changes nothing.</summary>
         public static PullPlan PlanPulls(string name, int quality, int amount, SlotReservation slots)
         {
-            var plan = new PullPlan();
             Player player = Player.m_localPlayer;
+            if (!player || amount <= 0 || !MucHealth.CanUseNonOwnedChests) return new PullPlan { Missing = Mathf.Max(0, amount) };
+            IEnumerable<(Container, Inventory)> chests = StorageNetwork.Usable
+                .Where(chest => !StorageNetwork.IsOwnedForUse(chest))
+                .Select(chest => (chest, chest.GetInventory()));
+            return Plan(chests, name, quality, amount, player.GetInventory(), slots);
+        }
+
+        /// <summary>
+        /// The planning itself: takes from <paramref name="chests"/> in order, at most a stack per step, each step into
+        /// its own reserved slot of <paramref name="target"/>. Items with no slot to go to count as <see cref="PullPlan.SlotsShort"/>.
+        /// </summary>
+        public static PullPlan Plan(IEnumerable<(Container Chest, Inventory Inventory)> chests, string name, int quality, int amount,
+            Inventory target, SlotReservation slots)
+        {
+            var plan = new PullPlan();
             int remaining = amount;
-            if (!player || amount <= 0 || !MucHealth.CanUseNonOwnedChests)
-            {
-                plan.Missing = Mathf.Max(0, amount);
-                return plan;
-            }
-            Inventory inventory = player.GetInventory();
-            foreach (Container chest in StorageNetwork.Usable)
+            foreach (var (chest, inventory) in chests)
             {
                 if (remaining <= 0) break;
-                if (StorageNetwork.IsOwnedForUse(chest)) continue;
-                foreach (ItemDrop.ItemData item in chest.GetInventory().m_inventory)
+                foreach (ItemDrop.ItemData item in inventory.m_inventory)
                 {
                     if (remaining <= 0) break;
                     if (!StorageNetwork.Matches(item, name, quality, true)) continue;
                     int take = Mathf.Min(item.m_stack, remaining, item.m_shared.m_maxStackSize);
                     remaining -= take;
-                    if (slots.TryReserve(inventory, item, take, out Vector2i slot)) plan.Steps.Add((chest, item, take, slot));
+                    if (slots.TryReserve(target, item, take, out Vector2i slot)) plan.Steps.Add((chest, item, take, slot));
                     else plan.SlotsShort++;
                 }
             }
-            plan.Missing = remaining;
+            plan.Missing = Mathf.Max(0, remaining);
             return plan;
         }
 
