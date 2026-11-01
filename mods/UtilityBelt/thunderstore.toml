@@ -1,0 +1,36 @@
+[config]
+schemaVersion = "0.0.1"
+
+[package]
+namespace = "s992"
+name = "UtilityBelt"
+# Placeholder: release builds pass --package-version from <Version> in UtilityBelt.csproj
+versionNumber = "0.0.0"
+description = "A Haldor-bought utility belt that grows with you: upgrade it with a swamp key, wishbone, wolf cape, wisplight and feather cape to wear them all at once. Server-synced costs and tiers. Needs Jotunn."
+websiteUrl = "https://github.com/s992/valheim-mods/tree/main/mods/UtilityBelt"
+containsNsfwContent = false
+
+[package.dependencies]
+denikson-BepInExPack_Valheim = "5.4.2351"
+ValheimModding-Jotunn = "2.30.2"
+
+[build]
+icon = "./icon.png"
+readme = "./README.md"
+outdir = "./build"
+
+[[build.copy]]
+source = "./bin/Release/netstandard2.1/UtilityBelt.dll"
+target = "plugins/UtilityBelt.dll"
+
+# tcli has no changelog setting; Thunderstore shows a CHANGELOG.md from the package root
+[[build.copy]]
+source = "./CHANGELOG.md"
+target = "CHANGELOG.md"
+
+[publish]
+repository = "https://thunderstore.io"
+communities = ["valheim"]
+
+[publish.categories]
+valheim = ["ai-generated", "gear", "server-side", "client-side"]

@@ -31,6 +31,7 @@
     <ProjectReference Include="..\..\mods\LootFilter\LootFilter.csproj" />
     <ProjectReference Include="..\..\mods\MarkerCommand\MarkerCommand.csproj" />
     <ProjectReference Include="..\..\mods\StabilityView\StabilityView.csproj" />
+    <ProjectReference Include="..\..\mods\UtilityBelt\UtilityBelt.csproj" />
   </ItemGroup>
 
   <!--
