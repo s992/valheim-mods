@@ -112,18 +112,28 @@ namespace CraftFromStorage
             s_deadline = Time.time + MaxWait;
         }
 
+        /// <summary>
+        /// Whether the craft that fetched materials should hold off paying. Until the deadline: while fetches are on their
+        /// way, and while a chest is being handed to us and the cost can't be paid yet. A fetch from a chest whose owner
+        /// just handed it to us comes back empty, and the items are only payable once our copy shows us as the owner.
+        /// </summary>
+        public static bool ShouldWait(bool pullsPending, bool borrowsInFlight, bool payableNow, bool beforeDeadline) =>
+            beforeDeadline && (pullsPending || (borrowsInFlight && !payableNow));
+
         /// <returns>False to skip this DoCrafting call.</returns>
         public static bool BeforeDoCrafting(InventoryGui gui, Player player)
         {
             if (player != Player.m_localPlayer || !Hooks.Active(Settings.Crafting.Value) || gui.m_craftRecipe == null) return true;
-            if (s_pulls != null && s_pulls.Any(p => !p.Finished) && Time.time < s_deadline)
+            Inventory inventory = player.GetInventory();
+            List<Need> needs = CurrentNeeds(gui, player);
+            if (s_pulls != null && ShouldWait(s_pulls.Any(p => !p.Finished), ChestAccess.BorrowsInFlight,
+                    needs.All(n => n.PayableNow(inventory) >= n.Amount), Time.time < s_deadline))
             {
                 s_resume = true;
                 return false;
             }
             s_pulls = null;
-            Inventory inventory = player.GetInventory();
-            foreach (Need need in CurrentNeeds(gui, player))
+            foreach (Need need in needs)
             {
                 if (need.PayableNow(inventory) >= need.Amount) continue;
                 // Counts include chests other players own; if their items didn't arrive, don't craft for free

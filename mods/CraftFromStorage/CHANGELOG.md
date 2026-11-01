@@ -8,6 +8,7 @@
 - If a game update changes how the game counts or takes crafting materials, the mod now turns off rather than risk counting chest contents without taking them (or the reverse).
 - An error in the crafting menu counts, requirement checks or smelter hints is logged once and shown as a single message instead of repeating every frame. Paying for a craft is deliberately not covered: an error there stops the craft.
 - With "Log actions" on, items taken from a chest are logged once per chest instead of once per stack.
+- Fixed a craft stopping with "didn't arrive from storage" when it started just as another player's chest was being handed over. The chest's materials then no longer vanish from the bench for 30 seconds. A chest you own is never counted as "not answering".
 
 ## 1.0.0
 

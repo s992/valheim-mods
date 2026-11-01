@@ -205,6 +205,9 @@ players own are left out entirely.
    - Either way, a pull that brought nothing (no reply, or a stale owner's "failed") leaves that chest out of counts
      for 30 s, so the UI stops promising its items. The status line counts these as "not answering". A borrow request
      that gets no reply does the same.
+   - Not when the chest is ours or being handed to us. MUC sends the request to the owner we knew of; if a borrow
+     reached that owner first, it has just given the chest away and answers "failed". The craft then waits (within
+     its 5 s limit) until our copy shows us as the owner, and pays from the chest directly.
 
 **Crafting** (`CraftPatches`):
 - The requirement checks (`Player.HaveRequirementItems`, `HaveRequirements(Piece)`, `GetFirstRequiredItem`) count
