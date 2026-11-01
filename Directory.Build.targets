@@ -1,9 +1,29 @@
 <Project>
 
-  <!-- Copy the build into the local mod profile for testing; skipped in CI and for tests/ -->
+  <!--
+    Copy the build into the local mod profile for testing; skipped in CI and for tests/.
+    It goes where r2modman installs the Thunderstore package (plugins/s992-<Name>/), replacing that DLL, so a profile
+    only ever has one copy of each mod: BepInEx loads the first of two copies it finds and skips the other, and both
+    say the same version. Reinstalling or updating the mod in r2modman puts the released DLL back.
+  -->
+  <PropertyGroup>
+    <DeployDir>$(PluginsDir)\s992-$(AssemblyName)</DeployDir>
+    <LegacyDeployDir>$(PluginsDir)\$(AssemblyName)</LegacyDeployDir>
+  </PropertyGroup>
+
   <Target Name="DeployToPlugins" AfterTargets="Build" Condition="'$(CI)' != 'true' and '$(IsTestProject)' != 'true' and Exists('$(PluginsDir)')">
-    <Copy SourceFiles="$(TargetPath)" DestinationFolder="$(PluginsDir)\$(AssemblyName)" />
-    <Message Importance="high" Text="Deployed $(AssemblyName) to $(PluginsDir)\$(AssemblyName)" />
+    <!-- r2modman disables a mod by renaming its files to *.old; a fresh DLL beside them would turn it back on -->
+    <Message Importance="high" Condition="Exists('$(DeployDir)\$(TargetFileName).old')"
+             Text="Not deployed: $(AssemblyName) is disabled in r2modman ($(DeployDir)). Enable it there and build again." />
+    <Copy SourceFiles="$(TargetPath)" DestinationFolder="$(DeployDir)" Condition="!Exists('$(DeployDir)\$(TargetFileName).old')" />
+    <Message Importance="high" Condition="!Exists('$(DeployDir)\$(TargetFileName).old')" Text="Deployed $(AssemblyName) to $(DeployDir)" />
+
+    <!-- Older builds deployed to plugins/<Name>/; remove that copy so it can't load instead of this one -->
+    <Delete Files="$(LegacyDeployDir)\$(TargetFileName)" Condition="Exists('$(LegacyDeployDir)\$(TargetFileName)')" />
+    <ItemGroup>
+      <_LegacyDeployLeftovers Include="$(LegacyDeployDir)\**\*" />
+    </ItemGroup>
+    <RemoveDir Directories="$(LegacyDeployDir)" Condition="Exists('$(LegacyDeployDir)') and '@(_LegacyDeployLeftovers)' == ''" />
   </Target>
 
 </Project>
