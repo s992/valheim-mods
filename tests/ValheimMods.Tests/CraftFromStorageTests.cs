@@ -244,4 +244,29 @@ namespace ValheimMods.Tests
             Assert.InRange(radius, 64f, 128f);
         }
     }
+
+    // When a craft that fetched materials pays, or stops with "didn't arrive"
+    public class CraftFromStorageCraftWaitTests
+    {
+        [Fact]
+        public void WaitsForFetchesOnTheirWay() =>
+            Assert.True(CraftFlow.ShouldWait(pullsPending: true, borrowsInFlight: false, payableNow: false, beforeDeadline: true));
+
+        // The fetch went to the chest's old owner, who had just handed it to us and answered "failed"
+        [Fact]
+        public void FetchCameBackEmpty_ChestBeingHandedToUs_Waits() =>
+            Assert.True(CraftFlow.ShouldWait(pullsPending: false, borrowsInFlight: true, payableNow: false, beforeDeadline: true));
+
+        [Fact]
+        public void HandOverStillGoing_ButAlreadyPayable_DoesntWait() =>
+            Assert.False(CraftFlow.ShouldWait(pullsPending: false, borrowsInFlight: true, payableNow: true, beforeDeadline: true));
+
+        [Fact]
+        public void NothingInFlight_DoesntWait() =>
+            Assert.False(CraftFlow.ShouldWait(pullsPending: false, borrowsInFlight: false, payableNow: false, beforeDeadline: true));
+
+        [Fact]
+        public void PastTheDeadline_NeverWaits() =>
+            Assert.False(CraftFlow.ShouldWait(pullsPending: true, borrowsInFlight: true, payableNow: false, beforeDeadline: false));
+    }
 }

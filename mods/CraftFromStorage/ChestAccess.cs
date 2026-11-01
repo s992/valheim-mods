@@ -130,6 +130,20 @@ namespace CraftFromStorage
         public static void BorrowFor(string itemName) =>
             BorrowFor(itemName, item => item.m_shared.m_name == itemName);
 
+        /// <summary>A hand-over to us is asked for, or granted and not yet seen in our copy of the chest.</summary>
+        public static bool BorrowsInFlight => s_borrowPending.Count + s_awaitingOwnership.Count > 0;
+
+        /// <summary>
+        /// The chest is ours or on its way to us. A fetch from it that brought nothing doesn't mean its owner can't deliver:
+        /// MUC sent the request to the owner we knew of, who had just handed the chest over and so answered "failed".
+        /// </summary>
+        private static bool BeingHandedToUs(Container chest)
+        {
+            if (!chest || !chest.m_nview || !chest.m_nview.IsValid()) return false;
+            ZDOID id = chest.m_nview.GetZDO().m_uid;
+            return chest.m_nview.IsOwner() || s_borrowPending.ContainsKey(id) || s_awaitingOwnership.ContainsKey(id) || s_borrowedAt.ContainsKey(id);
+        }
+
         // Runs on the chest's owner. Same transfer vanilla's Container.RPC_RequestOpen does, minus opening the UI.
         private static void RPC_Borrow(long sender, ZDOID id)
         {
@@ -345,8 +359,13 @@ namespace CraftFromStorage
                     // have the chest loaded). Leave such a chest out for a while instead of promising its items again.
                     if (inventory.CountItems(pull.Name, -1, false) <= pull.StartCount)
                     {
-                        if (pull.Chest) StorageNetwork.MarkUnresponsive(pull.Chest);
-                        StorageLog.Action($"fetch of {pull.Amount} {pull.Name} from {Describe(pull.Chest)} came back empty");
+                        if (BeingHandedToUs(pull.Chest))
+                            StorageLog.Action($"fetch of {pull.Amount} {pull.Name} from {Describe(pull.Chest)} came back empty: the chest is being handed to us");
+                        else
+                        {
+                            if (pull.Chest) StorageNetwork.MarkUnresponsive(pull.Chest);
+                            StorageLog.Action($"fetch of {pull.Amount} {pull.Name} from {Describe(pull.Chest)} came back empty");
+                        }
                     }
                     else StorageLog.Action($"fetch of {pull.Amount} {pull.Name} from {Describe(pull.Chest)} answered");
                 }
@@ -356,7 +375,7 @@ namespace CraftFromStorage
                     // a late reply still lands in the inventory or at the player's feet.
                     MucInternals.ReleaseSlot(inventory, pull.Slot);
                     pull.Finished = true;
-                    if (pull.Chest) StorageNetwork.MarkUnresponsive(pull.Chest);
+                    if (pull.Chest && !BeingHandedToUs(pull.Chest)) StorageNetwork.MarkUnresponsive(pull.Chest);
                     StorageLog.Warning($"Fetch of {pull.Amount} {pull.Name} from {Describe(pull.Chest)} got no reply in {PullTimeout:0} s");
                     StorageLog.Action($"fetch of {pull.Amount} {pull.Name} from {Describe(pull.Chest)} timed out");
                 }

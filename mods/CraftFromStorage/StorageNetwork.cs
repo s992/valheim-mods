@@ -60,7 +60,8 @@ namespace CraftFromStorage
 
         public static void MarkUnresponsive(Container container)
         {
-            if (!container || !container.m_nview || !container.m_nview.IsValid()) return;
+            // A chest we own answers to us, so it can't be "not answering"
+            if (!container || !container.m_nview || !container.m_nview.IsValid() || container.m_nview.IsOwner()) return;
             s_unresponsiveUntil[container.m_nview.GetZDO().m_uid] = Time.time + UnresponsiveSeconds;
             Invalidate();
         }
@@ -167,7 +168,8 @@ namespace CraftFromStorage
                 }
                 if (s_unresponsiveUntil.TryGetValue(zdo.m_uid, out float until))
                 {
-                    if (Time.time < until)
+                    // Became ours since (borrowed, or opened): usable again right away
+                    if (Time.time < until && !nview.IsOwner())
                     {
                         Unresponsive++;
                         continue;
