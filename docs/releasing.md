@@ -58,7 +58,8 @@ Game DLLs are never committed (copyright). The stale `ValheimGameLibs` NuGet pac
 ## Boot test
 
 After building, `build.yml` runs `tools/boot_test.py`: it installs BepInExPack_Valheim (version pinned in
-`build.yml`'s `BEPINEX_PACK_VERSION`) and every built mod into the cached server, starts it headless with a fresh
+`build.yml`'s `BEPINEX_PACK_VERSION`), the Thunderstore dependencies in the mods' `thunderstore.toml` files
+(Jotunn, latest version) and every built mod into the cached server, starts it headless with a fresh
 world, stops it once the world is up (~30 s), and reads `BepInEx/LogOutput.log`. It fails when a mod doesn't log
 `<Name> <Version> loaded`, or on any `[Error]`/`[Fatal]` line except the game's own headless noise listed in
 `ALLOWED` (matched only on Unity's log source, so a mod's errors can't hide there).

@@ -20,6 +20,7 @@ import subprocess
 import sys
 import tempfile
 import time
+import tomllib
 import urllib.request
 import zipfile
 from pathlib import Path
@@ -107,6 +108,15 @@ def install_package(server: Path, full_name: str, latest: dict) -> None:
             target.parent.mkdir(parents=True, exist_ok=True)
             target.write_bytes(archive.read(entry))
     print(f"Installed {full_name} {latest['version_number']}")
+
+
+def mod_dependencies(mods: Path) -> list[str]:
+    """Thunderstore packages our mods depend on (thunderstore.toml), which a mod manager would install with them."""
+    names = []
+    for toml in sorted(mods.glob("*/thunderstore.toml")):
+        dependencies = tomllib.loads(toml.read_text(encoding="utf-8")).get("package", {}).get("dependencies", {})
+        names.extend(name for name in dependencies if name != BEPINEX_PACK)
+    return names
 
 
 def install_mods(server: Path, mods: Path) -> dict[str, str]:
@@ -211,8 +221,9 @@ def main() -> None:
     if (server / "BepInEx").exists():
         shutil.rmtree(server / "BepInEx")
     install_bepinex(server, args.bepinex)
+    # Our mods' own dependencies (Jotunn) are always installed; only --with turns on the stricter warning check
     others = resolve(args.others)
-    for full_name, latest in others.items():
+    for full_name, latest in resolve(mod_dependencies(args.mods.resolve()) + args.others).items():
         install_package(server, full_name, latest)
     ours = install_mods(server, args.mods.resolve())
 
