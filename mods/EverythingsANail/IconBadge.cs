@@ -1,5 +1,6 @@
 using System;
 using UnityEngine;
+using ValheimMods.Shared;
 
 namespace EverythingsANail
 {
@@ -36,7 +37,7 @@ namespace EverythingsANail
             }
             catch (Exception e)
             {
-                Debug.LogWarning($"[EverythingsANail] couldn't draw the hammer badge on {icon.name}, using the plain icon: {e.Message}");
+                ModInfo.Log.LogWarning($"Couldn't draw the hammer badge on {icon.name}, using the plain icon: {e.Message}");
                 return icon;
             }
             finally
