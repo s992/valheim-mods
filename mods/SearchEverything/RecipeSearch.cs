@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using GUIFramework;
 using HarmonyLib;
 using UnityEngine;
+using ValheimMods.Shared;
 
 namespace SearchEverything
 {
@@ -63,5 +64,7 @@ namespace SearchEverything
             string[] words = RecipeSearch.Words;
             if (words.Length > 0 && recipes != null) recipes.RemoveAll(recipe => !Matcher.Matches(recipe, words));
         }
+
+        private static Exception Finalizer(Exception __exception) => PatchGuard.Contain(__exception, "the recipe search");
     }
 }

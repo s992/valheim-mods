@@ -1,4 +1,6 @@
+using System;
 using HarmonyLib;
+using ValheimMods.Shared;
 
 namespace SearchEverything
 {
@@ -19,5 +21,7 @@ namespace SearchEverything
             ChestSearch.Update(__instance);
             InventoryButton.Update(__instance);
         }
+
+        private static Exception Finalizer(Exception __exception) => PatchGuard.Contain(__exception, "the search boxes");
     }
 }

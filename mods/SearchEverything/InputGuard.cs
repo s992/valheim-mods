@@ -1,9 +1,11 @@
+using System;
 using System.Collections.Generic;
 using System.Reflection;
 using System.Reflection.Emit;
 using GUIFramework;
 using HarmonyLib;
 using UnityEngine;
+using ValheimMods.Shared;
 
 namespace SearchEverything
 {
@@ -58,6 +60,8 @@ namespace SearchEverything
     internal static class TextInputIsVisiblePatch
     {
         private static void Postfix(ref bool __result) => __result = __result || InputGuard.Active;
+
+        private static Exception Finalizer(Exception __exception) => PatchGuard.Contain(__exception, "search box typing");
     }
 
     // TextInput.IsVisible is small enough that Mono may inline it into callers, which would bypass the patch above.
@@ -69,13 +73,17 @@ namespace SearchEverything
     internal static class PlayerTakeInputPatch
     {
         private static void Postfix(ref bool __result) =>
-            __result = __result && !InputGuard.Active && !Hotkeys.OurKeyPressed();
+            __result = __result && !InputGuard.Active && !SearchKeys.OurKeyPressed();
+
+        private static Exception Finalizer(Exception __exception) => PatchGuard.Contain(__exception, "search box typing");
     }
 
     [HarmonyPatch(typeof(PlayerController), nameof(PlayerController.TakeInput))]
     internal static class PlayerControllerTakeInputPatch
     {
         private static void Postfix(ref bool __result) => __result = __result && !InputGuard.Active;
+
+        private static Exception Finalizer(Exception __exception) => PatchGuard.Contain(__exception, "search box typing");
     }
 
     [HarmonyPatch(typeof(GameCamera), nameof(GameCamera.UpdateMouseCapture))]
@@ -87,6 +95,8 @@ namespace SearchEverything
             ZCursor.LockState = CursorLockMode.None;
             ZCursor.Show();
         }
+
+        private static Exception Finalizer(Exception __exception) => PatchGuard.Contain(__exception, "the nearby search");
     }
 
     // The camera zooms on the mouse wheel unless the inventory, map, chat... is open; it doesn't check TextInput,
@@ -108,7 +118,7 @@ namespace SearchEverything
                 }
                 else yield return instruction;
             }
-            if (replaced == 0) Plugin.Log.LogWarning("Camera zoom wasn't found; the mouse wheel may zoom while the nearby search is open");
+            SafePatching.ExpectReplaced(replaced, 2, "GameCamera.UpdateCamera mouse wheel reads");
         }
 
         private static float ScrollWheel() => InputGuard.WindowOpen ? 0f : ZInput.GetMouseScrollWheel();
@@ -119,6 +129,8 @@ namespace SearchEverything
     {
         // While hidden, Menu.Update only checks whether to open (and re-localizes now and then)
         private static bool Prefix() => Menu.IsVisible() || !InputGuard.Active;
+
+        private static Exception Finalizer(Exception __exception) => PatchGuard.Contain(__exception, "search box typing");
     }
 
     // The inventory closes on its Inventory/Use buttons (Tab, E) and Escape, and opens on Tab, none of which checks
@@ -136,10 +148,14 @@ namespace SearchEverything
             ZInput.ResetButtonStatus("Use");
             ZInput.ResetButtonStatus("JoyButtonB");
             ZInput.ResetButtonStatus("JoyButtonY");
-            BlockHide = ZInput.GetKeyDown(KeyCode.Escape, false);
+            BlockHide = SearchKeys.Down(KeyCode.Escape);
         }
 
-        private static void Finalizer() => BlockHide = false;
+        private static Exception Finalizer(Exception __exception)
+        {
+            BlockHide = false;
+            return PatchGuard.Contain(__exception, "search box typing");
+        }
     }
 
     [HarmonyPatch(typeof(InventoryGui), nameof(InventoryGui.Hide))]
@@ -154,5 +170,7 @@ namespace SearchEverything
             RecipeSearch.Clear();
             ChestSearch.Clear();
         }
+
+        private static Exception Finalizer(Exception __exception) => PatchGuard.Contain(__exception, "the search boxes");
     }
 }

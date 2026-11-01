@@ -1,7 +1,9 @@
+using System;
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
+using ValheimMods.Shared;
 
 namespace SearchEverything
 {
@@ -42,7 +44,38 @@ namespace SearchEverything
             s_markers.Clear();
         }
 
+        private FrameGuard m_guard;
+
+        private void Awake() => m_guard = new FrameGuard(this, "the chest markers");
+
         private void Update()
+        {
+            try
+            {
+                Tick();
+            }
+            catch (Exception e)
+            {
+                m_guard.Report(e);
+            }
+        }
+
+        private void LateUpdate()
+        {
+            try
+            {
+                Position();
+            }
+            catch (Exception e)
+            {
+                m_guard.Report(e);
+            }
+        }
+
+        // The guard disables this component after repeated errors: markers it no longer moves would be wrong
+        private void OnDisable() => Clear();
+
+        private static void Tick()
         {
             if (s_markers.Count == 0) return;
             if (!Player.m_localPlayer || !s_layer)
@@ -50,7 +83,7 @@ namespace SearchEverything
                 Clear();
                 return;
             }
-            if (Hotkeys.Pressed(Settings.DismissKey) && !Hotkeys.IsTyping())
+            if (Hotkeys.Pressed(Settings.DismissKey) && !SearchKeys.IsTyping())
             {
                 Clear();
                 Player.m_localPlayer.Message(MessageHud.MessageType.TopLeft, "Chest markers cleared");
@@ -66,7 +99,7 @@ namespace SearchEverything
             }
         }
 
-        private void LateUpdate()
+        private static void Position()
         {
             if (s_markers.Count == 0) return;
             Camera camera = Utils.GetMainCamera();

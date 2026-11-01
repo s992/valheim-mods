@@ -30,6 +30,7 @@
     <ProjectReference Include="..\..\mods\EverythingsANail\EverythingsANail.csproj" />
     <ProjectReference Include="..\..\mods\LootFilter\LootFilter.csproj" />
     <ProjectReference Include="..\..\mods\MarkerCommand\MarkerCommand.csproj" />
+    <ProjectReference Include="..\..\mods\SearchEverything\SearchEverything.csproj" />
     <ProjectReference Include="..\..\mods\StabilityView\StabilityView.csproj" />
   </ItemGroup>
 

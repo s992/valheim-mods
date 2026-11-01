@@ -1,22 +1,20 @@
 using BepInEx;
-using BepInEx.Logging;
 using HarmonyLib;
+using ValheimMods.Shared;
 
 namespace SearchEverything
 {
     [BepInPlugin(MyPluginInfo.PLUGIN_GUID, MyPluginInfo.PLUGIN_NAME, MyPluginInfo.PLUGIN_VERSION)]
     public class Plugin : BaseUnityPlugin
     {
-        internal static ManualLogSource Log;
-
         private void Awake()
         {
-            Log = Logger;
             Settings.Bind(Config);
-            new Harmony(MyPluginInfo.PLUGIN_GUID).PatchAll();
+            // All or nothing: a patch that fails after a game update turns the mod off instead of half applying it
+            if (!SafePatching.PatchAll(new Harmony(MyPluginInfo.PLUGIN_GUID), Logger)) return;
             gameObject.AddComponent<Finder>();
             gameObject.AddComponent<Markers>();
-            Logger.LogInfo($"{MyPluginInfo.PLUGIN_NAME} {MyPluginInfo.PLUGIN_VERSION} loaded");
+            Logger.LogInfo($"{ModInfo.Name} {ModInfo.Version} loaded");
         }
     }
 }
