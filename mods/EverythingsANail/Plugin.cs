@@ -54,7 +54,16 @@ namespace EverythingsANail
             if (m_reloadAt >= 0f && Time.unscaledTime >= m_reloadAt)
             {
                 m_reloadAt = -1f;
-                if (File.Exists(Config.ConfigFilePath)) Config.Reload();
+                try
+                {
+                    if (File.Exists(Config.ConfigFilePath)) Config.Reload();
+                }
+                catch (IOException e)
+                {
+                    // Still being written (or locked by the editor): try again shortly
+                    Logger.LogWarning($"Couldn't reload the config file yet: {e.Message}");
+                    m_reloadAt = Time.unscaledTime + 1f;
+                }
             }
         }
 
