@@ -126,6 +126,37 @@ namespace ValheimMods.Tests
             Assert.Contains("Next at a workbench: <color=orange>Wisplight</color> (1 wisplight)", text);
         }
 
+        private static ItemDrop.ItemData BeltItem(int quality, string record)
+        {
+            var item = new ItemDrop.ItemData
+            {
+                m_shared = new ItemDrop.ItemData.SharedData { m_name = "$item_utilitybelt" },
+                m_quality = quality,
+            };
+            if (record != null) item.m_customData[Tiers.DataKey] = record;
+            return item;
+        }
+
+        [Fact]
+        public void Upgrade_FindsTheNewBeltEvenWhenTheGameCopiedTheOldRecord()
+        {
+            // In game, from the second upgrade on, the new item came with the old item's data already on it
+            ItemDrop.ItemData old = BeltItem(2, "1");
+            var pending = new Upgrade.Pending { Old = old, Quality = 3 };
+            ItemDrop.ItemData upgraded = BeltItem(3, "1");
+            Assert.True(pending.IsUpgraded(upgraded));
+            Assert.False(pending.HasOtherRecord(upgraded));
+            Assert.False(pending.IsUpgraded(old));
+        }
+
+        [Fact]
+        public void Upgrade_PrefersTheNewBeltOverAnotherAtTheSameQuality()
+        {
+            var pending = new Upgrade.Pending { Old = BeltItem(2, "1"), Quality = 3 };
+            Assert.True(pending.HasOtherRecord(BeltItem(3, "1,3")));
+            Assert.False(pending.HasOtherRecord(BeltItem(3, null)));
+        }
+
         [Fact]
         public void Describe_FullyUpgraded()
         {
