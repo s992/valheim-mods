@@ -3,7 +3,7 @@
   <!-- Shared settings, packages and game references: Directory.Build.props at the repo root.
        assembly_valheim is publicized there: the support calculation it mirrors lives in private WearNTear members. -->
   <PropertyGroup>
-    <Version>0.1.0</Version>
+    <Version>0.1.1</Version>
     <Description>Shows structure support values, where support comes from, and how changes affect it.</Description>
   </PropertyGroup>
 
