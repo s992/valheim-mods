@@ -139,16 +139,27 @@ namespace UtilityBelt
         }
     }
 
-    // The upgrade itself. The game replaces the belt with a new item one quality up, which has none of the old
-    // item's data, so the old data plus the new upgrade is written onto it afterwards.
+    // The upgrade itself. The game replaces the belt with a new item one quality up, and the new upgrade is written
+    // onto that item afterwards. Whether the new item already carries the old one's data varies (in testing it did
+    // from the second upgrade on), so it's found by quality and position, never by whether it has a record.
     [HarmonyPatch(typeof(InventoryGui), nameof(InventoryGui.DoCrafting))]
     internal static class Upgrade
     {
         internal sealed class Pending
         {
+            public ItemDrop.ItemData Old;
             public Vector2i Position;
             public int Quality;
             public Dictionary<string, string> Data;
+
+            // The new belt: one quality up and not the old item itself. Several could match only when the player
+            // carries another belt already at that quality; one without a different record is preferred then.
+            public bool IsUpgraded(ItemDrop.ItemData item) =>
+                Belt.IsBelt(item) && item.m_quality == Quality && !ReferenceEquals(item, Old);
+
+            public bool HasOtherRecord(ItemDrop.ItemData item) =>
+                item.m_customData.TryGetValue(Tiers.DataKey, out string text) &&
+                !(Old.m_customData.TryGetValue(Tiers.DataKey, out string oldText) && text == oldText);
         }
 
         private static bool Prefix(InventoryGui __instance, out Pending __state)
@@ -175,6 +186,7 @@ namespace UtilityBelt
             owned.Add(next.Value);
             __state = new Pending
             {
+                Old = old,
                 Position = old.m_gridPos,
                 Quality = old.m_quality + 1,
                 Data = new Dictionary<string, string>(old.m_customData) { [Tiers.DataKey] = Tiers.Format(owned) },
@@ -188,11 +200,11 @@ namespace UtilityBelt
             Inventory inventory = player.GetInventory();
             ItemDrop.ItemData upgraded = inventory.GetItemAt(__state.Position.x, __state.Position.y);
             UpgradeLog.Write($"DoCrafting end: expected q{__state.Quality} at {__state.Position}, found there {UpgradeLog.Describe(upgraded)}");
-            if (!Belt.IsBelt(upgraded) || upgraded.m_quality != __state.Quality || upgraded.m_customData.ContainsKey(Tiers.DataKey))
+            if (!__state.IsUpgraded(upgraded))
             {
-                // Not where the old one was (another mod moved it): the new belt is the one without a record yet
-                upgraded = inventory.GetAllItems().FirstOrDefault(item =>
-                    Belt.IsBelt(item) && item.m_quality == __state.Quality && !item.m_customData.ContainsKey(Tiers.DataKey));
+                // Not where the old one was (another mod moved it)
+                List<ItemDrop.ItemData> candidates = inventory.GetAllItems().Where(__state.IsUpgraded).ToList();
+                upgraded = candidates.FirstOrDefault(item => !__state.HasOtherRecord(item)) ?? candidates.FirstOrDefault();
                 UpgradeLog.Write($"DoCrafting end: searched the inventory, found {UpgradeLog.Describe(upgraded)}");
             }
             // None when the game didn't upgrade after all (requirements no longer met)
@@ -328,7 +340,13 @@ namespace UtilityBelt
         private static void Postfix(ItemDrop.ItemData item, ref string __result)
         {
             if (!Belt.IsBelt(item)) return;
-            __result += Settings.Rules.Describe(Belt.Owned(item), Settings.Wanted);
+            // The crafting panel describes the recipe's template item, which never has upgrades: describe the belt
+            // being upgraded instead
+            ItemDrop.ItemData belt = Belt.Prefab && ReferenceEquals(item, Belt.Prefab.m_itemData) &&
+                                     Belt.IsBelt(UpgradeContext.Item)
+                ? UpgradeContext.Item
+                : item;
+            __result += Settings.Rules.Describe(Belt.Owned(belt), Settings.Wanted);
         }
 
         private static Exception Finalizer(Exception __exception) =>
