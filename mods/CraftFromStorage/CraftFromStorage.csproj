@@ -5,7 +5,7 @@
     CraftFromChests must not be installed in the test profile: this mod refuses to load next to it.
   -->
   <PropertyGroup>
-    <Version>1.0.0</Version>
+    <Version>1.0.1</Version>
     <Description>Craft, build and smelt with materials from nearby chests. Built on Multi User Chest for multiplayer; works with Quick Stack Store Sort Trash Restock and Epic Loot.</Description>
   </PropertyGroup>
 
