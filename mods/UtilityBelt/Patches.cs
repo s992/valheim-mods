@@ -214,6 +214,9 @@ namespace UtilityBelt
                 return;
             }
             upgraded.m_customData = __state.Data;
+            // A worn belt is put back on by the game before the new upgrade is recorded, so its effects were worked
+            // out without it
+            if (upgraded.m_equipped) player.UpdateEquipmentStatusEffects();
             UpgradeLog.Write($"DoCrafting end: recorded {UpgradeLog.Describe(upgraded)}; inventory: {UpgradeLog.Belts(player)}");
         }
 
