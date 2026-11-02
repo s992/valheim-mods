@@ -43,6 +43,16 @@ namespace UtilityBelt
                 ["se_utilitybelt"] = "Utility Belt",
             });
             PrefabManager.OnVanillaPrefabsAvailable += Create;
+            ItemManager.OnItemsRegistered += LogRegistered;
+        }
+
+        // TEMPORARY (UpgradeLog): what ObjectDB ended up with, after Jotunn resolved the recipe
+        private static void LogRegistered()
+        {
+            if (!ObjectDB.instance || !Prefab) return;
+            Recipe registered = ObjectDB.instance.GetRecipe(Prefab.m_itemData);
+            UpgradeLog.Write($"registered: maxQuality={Prefab.m_itemData.m_shared.m_maxQuality} " +
+                             $"sameRecipe={registered == s_recipe}; {UpgradeLog.Recipe(registered)}; {UpgradeLog.Rules()}");
         }
 
         private static void Create()
