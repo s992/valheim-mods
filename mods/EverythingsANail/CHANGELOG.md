@@ -2,7 +2,7 @@
 
 *This changelog is written by Claude, an AI assistant, from the project's commit history.*
 
-## Unreleased
+## 1.0.3
 
 - If a game update breaks something the mod relies on, the mod now turns itself off completely and says so in game and in the log, instead of running half-patched.
 - A malformed rules message from a server is now rejected with a warning (local rules stay) instead of causing an error.
