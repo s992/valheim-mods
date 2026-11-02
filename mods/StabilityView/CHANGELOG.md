@@ -2,7 +2,7 @@
 
 *This changelog is written by Claude, an AI assistant, from the project's commit history.*
 
-## Unreleased
+## 0.1.1
 
 - If a game update breaks something the mod relies on, the mod now turns itself off completely and says so in game and in the log, instead of running half-patched.
 - An error in the overlay is logged once and shown as a single message; if it keeps failing, the overlay switches itself off and disappears instead of staying frozen on screen.
