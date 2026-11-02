@@ -131,7 +131,7 @@ namespace UtilityBelt
         {
             if (!sprite) return sprite;
             Rect rect = sprite.textureRect;
-            Texture source = sprite.texture;
+            Texture2D source = sprite.texture;
             RenderTexture target = RenderTexture.GetTemporary(source.width, source.height, 0, RenderTextureFormat.ARGB32,
                 RenderTextureReadWrite.sRGB);
             RenderTexture previous = RenderTexture.active;
