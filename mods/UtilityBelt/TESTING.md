@@ -18,8 +18,9 @@ Quick setup with cheats (`devcommands`): `spawn UtilityBelt`, `spawn CryptKey`, 
    is offered it as its next upgrade.
 3. Two belts at different tiers in the inventory: each shows its own next cost in the upgrade tab.
 4. With Equipment and Quick Slots (RandyKnapp) installed: the belt goes in the utility slot and the effects apply.
-5. Haldor: once he sells Megingjord, the Utility Belt is listed right after it at 950 (or the configured price), and
-   buying it gives a quality 1 belt that isn't craftable at the workbench.
+5. Haldor: once he sells Megingjord, the Utility Belt is listed right after it at 950 (or the configured price), with
+   its blue icon and its own tooltip (not "Tooltip"), and everything he sold before is still listed after it. Buying
+   it gives a quality 1 belt that isn't craftable at the workbench.
 6. Effects while worn: +150 carry weight (+300 with tier 6) and one "Utility Belt" status icon; a sunken crypt door
    opens without a swamp key; wishbone pings near buried treasure or silver; no freezing at night in the mountains;
    the wisp clears Mistlands mist; slow fall with no fall damage. All of them stop when the belt is taken off.
