@@ -21,6 +21,8 @@ namespace UtilityBelt
 
         // A cool blue, so it reads as a belt but isn't mistaken for Megingjord's brown and gold
         private static readonly Color s_tint = new Color(0.55f, 0.78f, 1f);
+        // The icon's version of the same: Megingjord's browns (hue ~0.08) to blue (~0.58)
+        private const float IconHueShift = 0.5f;
 
         // +150 carry weight from the base belt, with the belt's icon in the status bar
         private static StatusEffect s_baseEffect;
@@ -142,11 +144,15 @@ namespace UtilityBelt
                     name = "UtilityBeltIcon",
                 };
                 texture.ReadPixels(rect, 0, 0);
+                // Turned half way round the colour wheel rather than multiplied: brown leather times blue came out
+                // nearly black. Brown and gold become blues, at the same brightness.
                 Color[] pixels = texture.GetPixels();
                 for (int i = 0; i < pixels.Length; i++)
                 {
-                    Color p = pixels[i];
-                    pixels[i] = new Color(p.r * s_tint.r, p.g * s_tint.g, p.b * s_tint.b, p.a);
+                    Color.RGBToHSV(pixels[i], out float hue, out float saturation, out float value);
+                    Color shifted = Color.HSVToRGB((hue + IconHueShift) % 1f, saturation, value);
+                    shifted.a = pixels[i].a;
+                    pixels[i] = shifted;
                 }
                 texture.SetPixels(pixels);
                 texture.Apply();
