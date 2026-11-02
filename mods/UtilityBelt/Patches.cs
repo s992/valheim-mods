@@ -261,6 +261,10 @@ namespace UtilityBelt
             {
                 m_prefab = Belt.Prefab,
                 m_stack = 1,
+                // The store reads these without a null check (Unity fills them with "" for the game's own items);
+                // a null tooltip broke the rest of Haldor's list
+                m_name = "",
+                m_tooltip = "",
                 m_buyPlayerEffects = megingjord.m_buyPlayerEffects ?? new EffectList(),
                 m_levelUpEffect = megingjord.m_levelUpEffect,
             };
