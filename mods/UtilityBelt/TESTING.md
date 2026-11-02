@@ -12,7 +12,8 @@ Quick setup with cheats (`devcommands`): `spawn UtilityBelt`, `spawn CryptKey`, 
 
 1. Upgrading at a workbench (level 1): the upgrade tab lists the belt with the next tier's cost only (e.g. 1 swamp
    key), the upgrade takes exactly that, and the tooltip's "Upgrades" list gains the tier. Repeat up to tier 6
-   (1500 gold); afterwards the belt is gone from the upgrade tab.
+   (1500 gold); afterwards the belt is gone from the upgrade tab. Do it once with the belt worn: each upgrade's
+   effect (wishbone, wisplight, feather fall, the extra carry weight) works straight away, without re-equipping.
 2. A tier turned off in the server settings: the next upgrade skips it; a belt that already had it shows it as
    "turned off on this server" and its effect stops. Turn it back on: the effect returns, and a belt that skipped it
    is offered it as its next upgrade.
