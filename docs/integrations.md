@@ -105,7 +105,8 @@ The one hard dependency in the repo, for UtilityBelt (a new item; the user chose
   `ExcludeAssets="all"` and references `$(PkgJotunnLib)\lib\net462\Jotunn.dll` directly.
 - Items: `new CustomItem(name, basePrefab, ItemConfig)` inside `PrefabManager.OnVanillaPrefabsAvailable`. The config is
   applied in the constructor, so shared data changed afterwards (max quality, equip effect) sticks; `item.Recipe.Recipe`
-  is the recipe ObjectDB gets. Status effects: `ItemManager.Instance.AddStatusEffect(new CustomStatusEffect(se, false))`.
+  is the recipe ObjectDB gets. A `RequirementConfig` with `Amount` and `AmountPerLevel` both 0 is silently dropped,
+  and with no requirements left there's no recipe (`item.Recipe` is null). Status effects: `ItemManager.Instance.AddStatusEffect(new CustomStatusEffect(se, false))`.
 - Config sync: entries with Jotunn's `ConfigurationManagerAttributes { IsAdminOnly = true }` take the server's values
   and only admins can change them; `SynchronizationManager.OnConfigurationSynchronized` fires after a sync.
 - `[NetworkCompatibility(CompatibilityLevel.EveryoneMustHaveMod, VersionStrictness.Minor)]` turns away clients without

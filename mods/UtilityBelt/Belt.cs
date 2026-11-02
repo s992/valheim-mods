@@ -55,14 +55,17 @@ namespace UtilityBelt
                     CraftingStation = CraftingStations.Workbench,
                     MinStationLevel = 1,
                 };
-                // Every amount is 0 here; Patches.RequirementAmount gives the real cost for the belt being upgraded
-                config.AddRequirement(new RequirementConfig(Tiers.Coins, 0, 0, false));
+                // Placeholder amounts: Patches.RequirementAmount gives the real cost for the belt being upgraded. The
+                // per-level 1 is only there because Jotunn drops a requirement whose amounts are both 0, and makes
+                // no recipe at all when none are left. The base amount stays 0, so the recipe is known from the start.
+                config.AddRequirement(new RequirementConfig(Tiers.Coins, 0, 1, false));
                 foreach (string item in Tiers.All.Select(Tiers.UpgradeItem).Where(i => i != null))
-                    config.AddRequirement(new RequirementConfig(item, 0, 0, false));
+                    config.AddRequirement(new RequirementConfig(item, 0, 1, false));
 
                 var belt = new CustomItem(PrefabName, Megingjord, config);
                 ItemDrop.ItemData.SharedData shared = belt.ItemDrop.m_itemData.m_shared;
                 shared.m_maxQuality = Tiers.MaxQuality;
+                if (belt.Recipe == null) throw new InvalidOperationException("Jotunn made no upgrade recipe for the belt");
                 // Bought from Haldor, never crafted: the recipe is only for upgrades
                 s_recipe = belt.Recipe.Recipe;
                 s_recipe.m_noCraftOnlyUpgrade = true;
