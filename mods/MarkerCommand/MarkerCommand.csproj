@@ -2,7 +2,7 @@
 
   <!-- Shared settings, packages and game references: Directory.Build.props at the repo root -->
   <PropertyGroup>
-    <Version>1.2.1</Version>
+    <Version>1.2.2</Version>
     <Description>Console command for adding map markers at coordinates or your current position.</Description>
   </PropertyGroup>
 
