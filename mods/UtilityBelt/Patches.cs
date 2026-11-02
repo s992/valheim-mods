@@ -40,10 +40,15 @@ namespace UtilityBelt
         private static bool Prefix(Piece.Requirement __instance, int qualityLevel, ref int __result)
         {
             if (qualityLevel <= 1 || !Belt.IsBeltRequirement(__instance)) return true;
-            Tier? next = UpgradeContext.NextTier(UpgradeContext.Resolve(qualityLevel));
+            ItemDrop.ItemData belt = UpgradeContext.Resolve(qualityLevel);
+            Tier? next = UpgradeContext.NextTier(belt);
             __result = next != null && __instance.m_resItem
                 ? Settings.Rules.Amount(next.Value, __instance.m_resItem.gameObject.name)
                 : 0;
+            string resource = __instance.m_resItem ? __instance.m_resItem.gameObject.name : "<null>";
+            UpgradeLog.Changed($"GetAmount({resource}, q{qualityLevel})",
+                $"= {__result} for next={next?.ToString() ?? "none"} context={(UpgradeContext.Item == null ? "none" : "set")} " +
+                $"belt={UpgradeLog.Describe(belt)}");
             return false;
         }
     }
@@ -58,7 +63,18 @@ namespace UtilityBelt
             if (discover || !Belt.IsBeltRecipe(recipe)) return true;
             if (qualityLevel > 1 && UpgradeContext.NextTier(UpgradeContext.Resolve(qualityLevel)) != null) return true;
             __result = false;
+            UpgradeLog.Changed($"HaveRequirements(q{qualityLevel})",
+                $"blocked by the mod: belt={UpgradeLog.Describe(UpgradeContext.Resolve(qualityLevel))}");
             return false;
+        }
+
+        private static void Postfix(Player __instance, Recipe recipe, bool discover, int qualityLevel, bool __result)
+        {
+            if (discover || !Belt.IsBeltRecipe(recipe)) return;
+            UpgradeLog.Changed($"HaveRequirements(q{qualityLevel})",
+                $"= {__result} station={(__instance.GetCurrentCraftingStation() ? __instance.GetCurrentCraftingStation().GetLevel().ToString(System.Globalization.CultureInfo.InvariantCulture) : "none")} " +
+                $"stationOk={__instance.RequiredCraftingStation(recipe, qualityLevel, true)} noCost={__instance.NoCostCheat()} " +
+                $"belt={UpgradeLog.Describe(UpgradeContext.Resolve(qualityLevel))}");
         }
     }
 
@@ -81,7 +97,12 @@ namespace UtilityBelt
         private static bool Prefix(Player player, Recipe recipe, ItemDrop.ItemData item, ref bool canCraft)
         {
             if (item == null || !Belt.IsBeltRecipe(recipe)) return true;
-            if (UpgradeContext.NextTier(item) == null) return false;
+            if (UpgradeContext.NextTier(item) == null)
+            {
+                UpgradeLog.Write($"upgrade list: left out (nothing to buy) {UpgradeLog.Describe(item)}");
+                return false;
+            }
+            bool vanilla = canCraft;
             UpgradeContext.Item = item;
             try
             {
@@ -92,6 +113,7 @@ namespace UtilityBelt
             {
                 UpgradeContext.Item = null;
             }
+            UpgradeLog.Write($"upgrade list: canCraft={canCraft} (game said {vanilla}) {UpgradeLog.Describe(item)}");
             return true;
         }
 
@@ -103,7 +125,12 @@ namespace UtilityBelt
     [HarmonyPatch(typeof(InventoryGui), nameof(InventoryGui.UpdateRecipe))]
     internal static class UpgradePanel
     {
-        private static void Prefix(InventoryGui __instance) => UpgradeContext.Item = __instance.m_selectedRecipe.ItemData;
+        private static void Prefix(InventoryGui __instance)
+        {
+            UpgradeContext.Item = __instance.m_selectedRecipe.ItemData;
+            if (Belt.IsBeltRecipe(__instance.m_selectedRecipe.Recipe))
+                UpgradeLog.Changed("panel", $"selected {UpgradeLog.Describe(UpgradeContext.Item)}");
+        }
 
         private static Exception Finalizer(Exception __exception)
         {
@@ -128,12 +155,23 @@ namespace UtilityBelt
         {
             __state = null;
             ItemDrop.ItemData old = __instance.m_craftUpgradeItem;
-            if (old == null || !Belt.IsBeltRecipe(__instance.m_craftRecipe)) return true;
+            if (!Belt.IsBeltRecipe(__instance.m_craftRecipe)) return true;
+            Player player = Player.m_localPlayer;
+            UpgradeLog.Write($"DoCrafting start: upgrading {UpgradeLog.Describe(old)}; {UpgradeLog.Rules()}; " +
+                             $"noCost={player.NoCostCheat()} noCraftCostKey={ZoneSystem.instance.GetGlobalKey(GlobalKeys.NoCraftCost)}; " +
+                             $"inventory: {UpgradeLog.Belts(player)}; {UpgradeLog.Recipe(__instance.m_craftRecipe)}");
+            if (old == null) return true;
             UpgradeContext.Item = old;
             var owned = new HashSet<Tier>(Belt.Owned(old));
             Tier? next = Settings.Rules.Next(owned);
             // Nothing left to buy; the no-cost cheats would otherwise raise its quality for nothing
-            if (next == null) return false;
+            if (next == null)
+            {
+                UpgradeLog.Write("DoCrafting skipped: nothing left to buy");
+                return false;
+            }
+            UpgradeLog.Write($"DoCrafting: next={next}, game will check HaveRequirements(q{old.m_quality + 1}) = " +
+                             $"{player.HaveRequirements(__instance.m_craftRecipe, false, old.m_quality + 1)}");
             owned.Add(next.Value);
             __state = new Pending
             {
@@ -149,15 +187,22 @@ namespace UtilityBelt
             if (__state == null) return;
             Inventory inventory = player.GetInventory();
             ItemDrop.ItemData upgraded = inventory.GetItemAt(__state.Position.x, __state.Position.y);
+            UpgradeLog.Write($"DoCrafting end: expected q{__state.Quality} at {__state.Position}, found there {UpgradeLog.Describe(upgraded)}");
             if (!Belt.IsBelt(upgraded) || upgraded.m_quality != __state.Quality || upgraded.m_customData.ContainsKey(Tiers.DataKey))
             {
                 // Not where the old one was (another mod moved it): the new belt is the one without a record yet
                 upgraded = inventory.GetAllItems().FirstOrDefault(item =>
                     Belt.IsBelt(item) && item.m_quality == __state.Quality && !item.m_customData.ContainsKey(Tiers.DataKey));
+                UpgradeLog.Write($"DoCrafting end: searched the inventory, found {UpgradeLog.Describe(upgraded)}");
             }
             // None when the game didn't upgrade after all (requirements no longer met)
-            if (upgraded == null) return;
+            if (upgraded == null)
+            {
+                UpgradeLog.Write($"DoCrafting end: no upgraded belt; inventory: {UpgradeLog.Belts(player)}");
+                return;
+            }
             upgraded.m_customData = __state.Data;
+            UpgradeLog.Write($"DoCrafting end: recorded {UpgradeLog.Describe(upgraded)}; inventory: {UpgradeLog.Belts(player)}");
         }
 
         // Clears the context whatever happened; exceptions go on and stop the upgrade (it's paid for)
