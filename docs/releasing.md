@@ -108,12 +108,14 @@ Publishing is public and a Thunderstore version can't be replaced, only supersed
 3. Commit, push, and wait for `main`'s Build run to be green (build, tests, format, boot test).
    Before tagging, the maintainer runs `mods/<Name>/TESTING.md` in game against this build: agents ask for that and
    wait for a yes, listing any checks the release's changes add.
-4. `git tag -a <Name>/v<version> -m "<Name> v<version>"` and `git push origin <Name>/v<version>`.
+4. `git tag -a <Name>/v<version> -m "<Name> v<version>"` and `git push origin <Name>/v<version>`. Releasing
+   several mods: push at most three tags per `git push` (see "Gotchas we hit").
 5. Watch the Release run; all four jobs (build, package, github-release, thunderstore) should pass.
 6. Verify: `gh release view <Name>/v<version>` lists the zip,
    `curl -s https://thunderstore.io/api/experimental/package/s992/<Name>/` shows the new `version_number` and the
    monorepo `website_url`, and `.../s992/<Name>/<version>/changelog/` returns the changelog.
-   New packages went live immediately (no moderation wait) so far.
+   New packages went live immediately (no moderation wait) so far. The package endpoint's `latest` can lag
+   behind for a while (StabilityView 0.1.1, Nov 2026); `.../s992/<Name>/<version>/` shows whether the version is up.
 
 ## Reviewing the README
 
@@ -152,6 +154,10 @@ change the code instead.
 - Mod names are letters and digits only: release.yml reads the name from the part of the tag before `/`.
 - Pushing old tags that point at commits without a root `.github/workflows/release.yml` triggers nothing; that is how
   the imported `<Name>/v*` tags were pushed safely.
+- GitHub creates no push events when more than three tags are pushed at once, so a batch push of release tags
+  starts no Release runs (Nov 2026, seven tags). Push them in groups of three or fewer. If it already happened,
+  start each release with `gh workflow run release.yml --ref <Name>/v<version> -f mod=<Name>`: on a tag ref the
+  workflow reads the mod from the tag and publishes, exactly as a tag push would.
 - In PowerShell, `git commit -F -` with a here-string didn't work; use bash heredocs for multi-line commit messages.
 
 ## Changelog
