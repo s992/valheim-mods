@@ -3,7 +3,7 @@
   <!-- Shared settings, packages and game references: Directory.Build.props at the repo root.
        assembly_valheim is publicized there: inventory hover, drop list and auto-pickup are private members. -->
   <PropertyGroup>
-    <Version>1.0.0</Version>
+    <Version>1.0.1</Version>
     <Description>Marks items or item groups as junk: no auto-pickup and no sparkles on the ground.</Description>
   </PropertyGroup>
 
