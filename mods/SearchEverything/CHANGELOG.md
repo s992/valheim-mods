@@ -2,7 +2,7 @@
 
 *This changelog is written by Claude, an AI assistant, from the project's commit history.*
 
-## Unreleased
+## 1.0.1
 
 - Fixed the nearby-chest search window failing ("Error in the nearby search", then turning itself off) when opened after logging out and loading a world again in the same game session.
 
