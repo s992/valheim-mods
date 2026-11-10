@@ -2,6 +2,10 @@
 
 *This changelog is written by Claude, an AI assistant, from the project's commit history.*
 
+## Unreleased
+
+- Fixed the nearby-chest search window failing ("Error in the nearby search", then turning itself off) when opened after logging out and loading a world again in the same game session.
+
 ## 1.0.0
 
 - Initial release: a search box on the crafting panel filters recipes by name, ingredient or item type (such as "helmet" or "food"), and a search box in place of an open chest's name fades the items that don't match, in the chest and the inventory.
