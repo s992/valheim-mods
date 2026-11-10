@@ -381,6 +381,9 @@ namespace SearchEverything
             Canvas rootCanvas = hudCanvas ? hudCanvas.rootCanvas : null;
             if (!rootCanvas) return false;
 
+            // This component outlives the HUD: after a logout the old window and its rows are destroyed with it,
+            // so drop their views before building new ones
+            m_rows.Clear();
             m_root = new GameObject("SearchEverything_Finder", typeof(RectTransform));
             m_root.transform.SetParent(rootCanvas.transform, false);
             Ui.Stretch((RectTransform)m_root.transform, 0f);

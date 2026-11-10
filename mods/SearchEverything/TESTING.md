@@ -14,14 +14,16 @@ turned off` line.
 3. Ctrl+K and F1 (Configuration Manager) both work within a few seconds of spawning, after a fresh game start.
 4. Nearby window: the cursor is free, the mouse wheel scrolls results without zooming the camera, and the camera is
    back to normal after closing it. Arrows, Enter and clicks pick a result.
-5. Picking a result marks its chests through walls with a distance; each marker goes when its chest is opened, after
+5. Open the nearby window once, log out to the main menu, load a world again, and open it again: it works and lists
+   results (this used to fail with `Error in the nearby search`).
+6. Picking a result marks its chests through walls with a distance; each marker goes when its chest is opened, after
    the marker duration, or on the dismiss key (Ctrl+Shift+K). The window's status line names any range limit.
-6. Recipe search at a workbench and the cauldron: the box sits right of the tabs without covering them; name,
+7. Recipe search at a workbench and the cauldron: the box sits right of the tabs without covering them; name,
    ingredient (`wood`) and type (`helmet`, `food`) searches filter the list; switching tabs keeps the filter.
-7. Chest search: the box replaces the chest name; non-matching items fade in the chest and the inventory; take-all,
+8. Chest search: the box replaces the chest name; non-matching items fade in the chest and the inventory; take-all,
    moving items and closing the chest all work, and the box is empty next time.
-8. The inventory button (Search chests) sits above the inventory without covering other mods' buttons.
-9. Carts and ships are searched only with Carts and ships on; with the mod's features turned off in Configuration
+9. The inventory button (Search chests) sits above the inventory without covering other mods' buttons.
+10. Carts and ships are searched only with Carts and ships on; with the mod's features turned off in Configuration
    Manager, their boxes and button go away.
 
 After a session: no `[Error` lines from `SearchEverything` in `BepInEx/LogOutput.log`, and no `Error in ...` or
