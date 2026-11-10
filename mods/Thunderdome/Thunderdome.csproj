@@ -2,7 +2,7 @@
 
   <!-- Shared settings, packages and game references: Directory.Build.props at the repo root -->
   <PropertyGroup>
-    <Version>0.1.0</Version>
+    <Version>1.0.0</Version>
     <Description>A buildable ward whose dome strikes down monsters with lightning, or keeps them out the way the traders' force fields do. Server-synced mode and radius, shown while placing. Needs Jotunn.</Description>
   </PropertyGroup>
 
