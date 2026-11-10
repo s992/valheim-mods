@@ -112,6 +112,36 @@ To find an unknown type: `ilspycmd -l c <dll>` on each candidate in `valheim_Dat
   light blue = at max (grounded).
 - Each piece recalculates on its own timer, so changes ripple out over a few seconds.
 
+## Monster-free areas (traders' force fields; learned building Thunderdome, Nov 2026)
+
+- `EffectArea` with `Type.NoMonsters`, checked only in `MonsterAI.UpdateAI` for untamed monsters: with a target creature
+  inside the area it flees; with no target creature (including one attacking a piece) it flees when within the area
+  plus 15 m. A monster chasing a target outside can still cross it. Animals (`AnimalAI`) ignore it. Doesn't stop spawns
+  (`SpawnSystem` and `CreatureSpawner` check `Type.PlayerBase`). Bosses and raiders use the same code, so they flee too.
+- The checks use `collider.bounds` saved once in `EffectArea.Awake` to static lists, so the area is a world-aligned box
+  that doesn't follow later collider changes. Changing the size means a new `EffectArea`; `OnDestroy` removes the old one.
+- Monster AI runs on the client owning the monster, so every client needs the same areas.
+- Prefab `ForceField` (`Assets/Characters/TraderHaldor/`): Unity's built-in sphere mesh with material `ForceField`, child
+  `NoMonsterArea` (trigger `SphereCollider` r 0.5, `m_type` 32). In `ZNetScene`, only `charred_shieldgenerator` has that
+  material on a child; `piece_shieldgenerator` uses `invisible` and draws its dome with `ShieldDomeImageEffect`.
+- Placement ghosts: `Player.SetupPlacementGhost` instantiates the prefab with `ZNetView.m_forceDisableInit`, so `Awake`
+  and `Start` run. `Player.IsPlacementGhost(gameObject)` is only true from `Start` on. Anything registered in `Awake`,
+  such as an `EffectArea`, also works for the ghost.
+
+## Killing creatures from a mod (learned building Thunderdome, Nov 2026)
+
+- `Character.Damage(hit)` routes `RPC_Damage` to the owner. `HitData.m_damage.m_damage` (untyped) is never reduced by
+  resistances (`ApplyResistance` only modifies typed damage). With no attacker, the difficulty scaling is skipped too.
+- Loot comes from two places on death: `CharacterDrop.OnDeath` (skipped when `SetDropsEnabled(false)`, but still
+  hooked into `m_onDeath` after the component is destroyed) and `Ragdoll.Setup`, which saves the loot list from the
+  `CharacterDrop` that `Character.OnDeath` finds with `GetComponent`. For no loot, set the flag and then destroy the
+  component.
+- A boss killed this way still sets its `m_defeatSetGlobalKey` (in `Character.OnDeath`).
+- `lightningAOE` (incinerator, `Assets/GameElements/Pieces/_res/incinerator/`): a sky bolt with a non-persistent
+  `ZNetView`, `TimedDestruction` 10 s, `CameraShake` range 40, sounds, lights, and child `Aoe`s `AOE_ROD` (400 lightning)
+  and `AOE_AREA` (10). Those damage pieces too; remove them for a harmless visual.
+- `Character.GetAllCharacters()` returns the live list that `OnDestroy` removes from: collect targets before killing.
+
 ## Item drops, auto-pickup and tooltips
 
 - `ItemDrop.s_instances` (private static list) holds every drop in the world. `Awake` loads `m_itemData` from the

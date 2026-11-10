@@ -1,0 +1,29 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Shared settings, packages and game references: Directory.Build.props at the repo root -->
+  <PropertyGroup>
+    <Version>0.1.0</Version>
+    <Description>A buildable ward whose dome strikes down monsters with lightning, or keeps them out the way the traders' force fields do. Server-synced mode and radius, shown while placing. Needs Jotunn.</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!--
+      Jotunn registers the piece and its translations, and syncs the admin-only settings from the server. Also listed
+      in thunderstore.toml. Only the DLL is used, for the reasons in docs/integrations.md.
+    -->
+    <PackageReference Include="JotunnLib" Version="2.30.2" ExcludeAssets="all" PrivateAssets="all" GeneratePathProperty="true" />
+    <Reference Include="Jotunn" HintPath="$(PkgJotunnLib)\lib\net462\Jotunn.dll" Private="false" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Localization: any player-facing item/biome name goes through it -->
+    <Reference Include="assembly_guiutils" HintPath="$(ValheimManagedDir)\assembly_guiutils.dll" Private="false" />
+    <!-- Recolouring the guard stone's particles -->
+    <Reference Include="UnityEngine.ParticleSystemModule" HintPath="$(ValheimManagedDir)\UnityEngine.ParticleSystemModule.dll" Private="false" />
+    <!-- The ward's area collider -->
+    <Reference Include="UnityEngine.PhysicsModule" HintPath="$(ValheimManagedDir)\UnityEngine.PhysicsModule.dll" Private="false" />
+    <!-- Jotunn's CustomPiece constructors mention AssetBundle -->
+    <Reference Include="UnityEngine.AssetBundleModule" HintPath="$(ValheimManagedDir)\UnityEngine.AssetBundleModule.dll" Private="false" />
+  </ItemGroup>
+
+</Project>
