@@ -99,7 +99,8 @@ Full write-up with code references: `mods/CraftFromStorage/docs/ownership.md`. T
 
 ## Jotunn (Valheim-Modding, GUID `com.jotunn.jotunn`, 2.30.2)
 
-The one hard dependency in the repo, for UtilityBelt (a new item; the user chose Jotunn over registering it by hand).
+The one hard dependency in the repo, for UtilityBelt (a new item; the user chose Jotunn over registering it by hand)
+and Thunderdome (a new piece: `new CustomPiece(name, basePrefab, PieceConfig)`, same event).
 - Build: the `JotunnLib` NuGet package's build files reference Jotunn's own `*_publicized` game assemblies and its lib
   is net462, which NuGet won't pick for netstandard2.1. UtilityBelt's csproj takes the package with
   `ExcludeAssets="all"` and references `$(PkgJotunnLib)\lib\net462\Jotunn.dll` directly.
@@ -119,4 +120,4 @@ The one hard dependency in the repo, for UtilityBelt (a new item; the user chose
 Jotunn (2.30), Epic Loot, Server Devcommands, World Edit Commands (older Steam install), Infinity Hammer,
 PlanBuild, My Build Camera (above), Compass, Configuration Manager, QuickStackStore, CraftFromChests, Adventure Backpacks, MultiUserChest, and others.
 Check the profile's `BepInEx/LogOutput.log` "Loading [...]" lines for the current list and versions.
-Only UtilityBelt depends on Jotunn (above); the other mods are plain BepInEx + Harmony.
+Only UtilityBelt and Thunderdome depend on Jotunn (above); the other mods are plain BepInEx + Harmony.
