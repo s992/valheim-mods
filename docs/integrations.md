@@ -100,7 +100,8 @@ Full write-up with code references: `mods/CraftFromStorage/docs/ownership.md`. T
 ## Jotunn (Valheim-Modding, GUID `com.jotunn.jotunn`, 2.30.2)
 
 The one hard dependency in the repo, for UtilityBelt (a new item; the user chose Jotunn over registering it by hand)
-and Thunderdome (a new piece: `new CustomPiece(name, basePrefab, PieceConfig)`, same event).
+and Thunderdome (a new piece: `new CustomPiece(name, basePrefab, PieceConfig)`, same event). BuildRadius uses it only
+for config sync.
 - Build: the `JotunnLib` NuGet package's build files reference Jotunn's own `*_publicized` game assemblies and its lib
   is net462, which NuGet won't pick for netstandard2.1. UtilityBelt's csproj takes the package with
   `ExcludeAssets="all"` and references `$(PkgJotunnLib)\lib\net462\Jotunn.dll` directly.
@@ -110,8 +111,12 @@ and Thunderdome (a new piece: `new CustomPiece(name, basePrefab, PieceConfig)`, 
   and with no requirements left there's no recipe (`item.Recipe` is null). Status effects: `ItemManager.Instance.AddStatusEffect(new CustomStatusEffect(se, false))`.
 - Config sync: entries with Jotunn's `ConfigurationManagerAttributes { IsAdminOnly = true }` take the server's values
   and only admins can change them; `SynchronizationManager.OnConfigurationSynchronized` fires after a sync.
+  On connecting, a client's admin-only entries are reset to their **defaults** (not the player's own values) and
+  locked; the server's values arrive in the initial sync, and `args.UpdatedPluginGUIDs` names the mods they were for.
+  A server without the mod sends nothing, so a client there runs on the defaults: BuildRadius's `ServerAuthority`
+  keeps vanilla behaviour until its GUID shows up in a sync.
 - `[NetworkCompatibility(CompatibilityLevel.EveryoneMustHaveMod, VersionStrictness.Minor)]` turns away clients without
-  the mod, needed for a mod that adds items.
+  the mod, needed for a mod that adds items. `VersionCheckOnly` checks versions only when both sides have it.
 - The boot test installs it: `tools/boot_test.py` installs the dependencies in each mod's `thunderstore.toml`.
 - `python tools/decompile.py --plugin Jotunn --type ...` fails for Jotunn's namespaced types; use `--project` and grep.
 
@@ -120,4 +125,4 @@ and Thunderdome (a new piece: `new CustomPiece(name, basePrefab, PieceConfig)`, 
 Jotunn (2.30), Epic Loot, Server Devcommands, World Edit Commands (older Steam install), Infinity Hammer,
 PlanBuild, My Build Camera (above), Compass, Configuration Manager, QuickStackStore, CraftFromChests, Adventure Backpacks, MultiUserChest, and others.
 Check the profile's `BepInEx/LogOutput.log` "Loading [...]" lines for the current list and versions.
-Only UtilityBelt and Thunderdome depend on Jotunn (above); the other mods are plain BepInEx + Harmony.
+Only UtilityBelt, Thunderdome and BuildRadius depend on Jotunn (above); the other mods are plain BepInEx + Harmony.
