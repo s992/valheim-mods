@@ -1,0 +1,36 @@
+[config]
+schemaVersion = "0.0.1"
+
+[package]
+namespace = "s992"
+name = "BuildRadius"
+# Placeholder: release builds pass --package-version from <Version> in BuildRadius.csproj
+versionNumber = "0.0.0"
+description = "Bigger build radius for workbenches, forges and every other crafting station: one multiplier plus optional per-station radii, set by the server in multiplayer. Needs Jotunn."
+websiteUrl = "https://github.com/s992/valheim-mods/tree/main/mods/BuildRadius"
+containsNsfwContent = false
+
+[package.dependencies]
+denikson-BepInExPack_Valheim = "5.4.2351"
+ValheimModding-Jotunn = "2.30.2"
+
+[build]
+icon = "./icon.png"
+readme = "./README.md"
+outdir = "./build"
+
+[[build.copy]]
+source = "./bin/Release/netstandard2.1/BuildRadius.dll"
+target = "plugins/BuildRadius.dll"
+
+# tcli has no changelog setting; Thunderstore shows a CHANGELOG.md from the package root
+[[build.copy]]
+source = "./CHANGELOG.md"
+target = "CHANGELOG.md"
+
+[publish]
+repository = "https://thunderstore.io"
+communities = ["valheim"]
+
+[publish.categories]
+valheim = ["ai-generated", "tools", "server-side", "client-side"]

@@ -73,6 +73,7 @@ both the build and `tools/decompile.py` read:
 | SearchEverything | search boxes for crafting recipes and open chests (non-matches fade), and a nearby-chest search window that marks chests on screen; read-only, needs no other mod |
 | UtilityBelt | a Haldor-sold accessory with workbench upgrades that stand in for the swamp key, wishbone, wolf cape, wisplight and feather cape; uses Jotunn (item, effects, admin-only config sync) |
 | Thunderdome | a buildable ward whose dome strikes hostile creatures with lightning (no loot) or repels them with the traders' NoMonsters area; server-synced mode and radius, shown while placing; uses Jotunn (piece, network prefab, admin-only config sync) |
+| BuildRadius | a bigger build radius for every crafting station (multiplier plus per-station radii); uses Jotunn for admin-only config sync only, vanilla clients allowed, and a client keeps the game's radius until its server's values arrive |
 
 These are the best examples of finished code: read the closest one before building something similar.
 
