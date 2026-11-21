@@ -2,7 +2,7 @@
 
   <!-- Shared settings, packages and game references: Directory.Build.props at the repo root -->
   <PropertyGroup>
-    <Version>0.1.0</Version>
+    <Version>1.0.0</Version>
     <Description>Bigger build radius for workbenches, forges and every other crafting station: one multiplier plus optional per-station radii, set by the server in multiplayer. Needs Jotunn.</Description>
   </PropertyGroup>
 
