@@ -8,6 +8,7 @@ using ValheimMods.Shared;
 namespace EverythingsANail
 {
     [BepInPlugin(MyPluginInfo.PLUGIN_GUID, MyPluginInfo.PLUGIN_NAME, MyPluginInfo.PLUGIN_VERSION)]
+    [BepInDependency(VoxheimCompat.Guid, BepInDependency.DependencyFlags.SoftDependency)]
     public class Plugin : BaseUnityPlugin
     {
         internal static ManualLogSource Log;
@@ -23,7 +24,10 @@ namespace EverythingsANail
             Settings.Bind(Config);
             ConfigSync.Init(Logger);
             Settings.RulesChanged += ToolSwitcher.Revalidate;
-            if (!SafePatching.PatchAll(new Harmony(MyPluginInfo.PLUGIN_GUID), Logger)) return;
+            var harmony = new Harmony(MyPluginInfo.PLUGIN_GUID);
+            if (!SafePatching.PatchAll(harmony, Logger)) return;
+            // Optional, after the mod's own patches, so a changed Voxheim can't turn the whole mod off
+            VoxheimCompat.Apply(harmony, Logger);
             WatchConfigFile();
             Logger.LogInfo($"{ModInfo.Name} {ModInfo.Version} loaded");
         }
