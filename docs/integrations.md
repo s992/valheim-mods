@@ -13,6 +13,7 @@ unless the user asks.
 - My Build Camera (free camera; its own resource pickup)
 - MultiUserChest and chest ownership
 - Jotunn (UtilityBelt's dependency)
+- Voxheim (voxel terrain; hoe levels)
 - Others in the profile
 
 ## Server Devcommands (JereKuusela, GUID `server_devcommands`, 1.115)
@@ -119,6 +120,20 @@ for config sync.
   the mod, needed for a mod that adds items. `VersionCheckOnly` checks versions only when both sides have it.
 - The boot test installs it: `tools/boot_test.py` installs the dependencies in each mod's `thunderstore.toml`.
 - `python tools/decompile.py --plugin Jotunn --type ...` fails for Jotunn's namespaced types; use `--project` and grep.
+
+## Voxheim (Voxheim, GUID `com.bogey.voxheim`, 0.1.10)
+
+- Replaces the terrain with voxels; needs Jotunn, and the mod on server and every client.
+- Gives the vanilla `Hoe` more quality levels (`[Hoe] LevelCount`, default 6; it sets the hoe's `m_maxQuality`).
+  Abilities unlock by level (Carve at 4, Add at 5 by default) as pieces in the hoe's own piece table, filtered in a
+  `PieceTable.UpdateAvailable` postfix.
+- `Voxheim.Unity.HoeProgression.GetLevel(Player)` (internal static) is the one place the level is read: the right
+  hand item's `m_quality`, but only if its `m_shared.m_buildPieces` is the hoe's table, else 0.
+- Per-level stamina and durability costs: `BeginPlacementCostOverride(CarverMode, Player)` (from a
+  `Player.UpdatePlacement` prefix) writes them into the real hoe's `SharedData` (`s_hoeShared`: `m_attack.m_attackStamina`,
+  `m_useDurabilityDrain`) only when the hand item's `m_shared` **is** `s_hoeShared`; `EndPlacementCostOverride`
+  (an `UpdatePlacement` finalizer) restores them.
+- No API for any of this. EverythingsANail patches `GetLevel` and the cost pair by hand (`VoxheimCompat.cs`).
 
 ## Others in the profile
 
