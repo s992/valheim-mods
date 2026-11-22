@@ -118,7 +118,8 @@ for config sync.
 - `[NetworkCompatibility(CompatibilityLevel.EveryoneMustHaveMod, VersionStrictness.Minor)]` turns away clients without
   the mod, needed for a mod that adds items. `VersionCheckOnly` checks versions only when both sides have it.
 - The boot test installs it: `tools/boot_test.py` installs the dependencies in each mod's `thunderstore.toml`.
-- `python tools/decompile.py --plugin Jotunn --type ...` fails for Jotunn's namespaced types; use `--project` and grep.
+- Decompile it with `python tools/decompile.py --plugin Jotunn --type Jotunn.Utils.CompatibilityLevel` (full
+  namespaced type names) or `--project` and grep.
 
 ## Others in the profile
 
