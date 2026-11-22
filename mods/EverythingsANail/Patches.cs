@@ -99,6 +99,24 @@ namespace EverythingsANail
         }
     }
 
+    // Remember the best level of each tool carried (ToolLevels). The game skips this hook while the character
+    // loads, so loading has its own.
+    [HarmonyPatch(typeof(Player), nameof(Player.OnInventoryChanged))]
+    internal static class InventoryChangedPatch
+    {
+        private static void Postfix(Player __instance)
+        {
+            if (__instance == Player.m_localPlayer && !__instance.m_isLoading) ToolLevels.RememberCarried(__instance);
+        }
+    }
+
+    [HarmonyPatch(typeof(Player), nameof(Player.Load))]
+    internal static class PlayerLoadPatch
+    {
+        // Only the local character is loaded from a save
+        private static void Postfix(Player __instance) => ToolLevels.RememberCarried(__instance);
+    }
+
     [HarmonyPatch(typeof(ItemDrop.ItemData), nameof(ItemDrop.ItemData.GetTooltip),
         typeof(ItemDrop.ItemData), typeof(int), typeof(bool), typeof(float), typeof(int), typeof(bool))]
     internal static class TooltipPatch

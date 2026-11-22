@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
@@ -132,6 +133,13 @@ namespace EverythingsANail
             {
                 tool.Category = ToolCategories.Fishing;
             }
+            // Every attack clears a little snow; the snow shovel's clears deep snow. Checked before axes and
+            // pickaxes so the shovel is its own tool whatever its skill.
+            else if (IsSnowShovel(shared.m_attack) || IsSnowShovel(shared.m_secondaryAttack))
+            {
+                tool.Category = ToolCategories.Snow;
+                tool.Rank = Math.Max(SnowStrength(shared.m_attack), SnowStrength(shared.m_secondaryAttack));
+            }
             else if (IsHarvest(shared.m_attack) || IsHarvest(shared.m_secondaryAttack))
             {
                 tool.Category = ToolCategories.Harvesting;
@@ -156,5 +164,9 @@ namespace EverythingsANail
         }
 
         private static bool IsHarvest(Attack attack) => attack != null && attack.m_harvest;
+
+        private static bool IsSnowShovel(Attack attack) => attack != null && attack.m_snowShovel && attack.m_snowShovelStrong;
+
+        private static float SnowStrength(Attack attack) => IsSnowShovel(attack) ? attack.m_snowShovelStrength : 0f;
     }
 }

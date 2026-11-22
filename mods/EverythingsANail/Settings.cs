@@ -17,6 +17,7 @@ namespace EverythingsANail
         Fishing = 8,
         Logging = 16,
         Mining = 32,
+        Snow = 64,
     }
 
     // Which tools the hammer may become. Either the local config or, in multiplayer, the server's.
@@ -51,10 +52,12 @@ namespace EverythingsANail
         {
             const string enforced = " In multiplayer the server's setting is used when the server runs this mod.";
             Categories = config.Bind("Tools", "Categories",
-                ToolCategories.Building | ToolCategories.Butchering | ToolCategories.Harvesting | ToolCategories.Fishing,
+                ToolCategories.Building | ToolCategories.Butchering | ToolCategories.Harvesting | ToolCategories.Fishing |
+                ToolCategories.Snow,
                 "Kinds of tools the hammer can become. Building: anything with a build menu (hoe, cultivator, " +
                 "tools from other mods). Butchering: butcher knife. Harvesting: scythe. Fishing: fishing rod. " +
-                "Logging: one-handed axes. Mining: pickaxes. The hammer itself is always available." + enforced);
+                "Logging: one-handed axes. Mining: pickaxes. Snow: the snow shovel (clears deep snow in the Deep North). " +
+                "The hammer itself is always available." + enforced);
             OnlyAllow = config.Bind("Tools", "OnlyAllow", "",
                 "Comma-separated internal item names (e.g. AxeJotunBane, FishingRod). When set, only these tools " +
                 "are available and Categories is ignored. The nail_tools console command lists the names." + enforced);

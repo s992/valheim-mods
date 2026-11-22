@@ -1,3 +1,5 @@
+using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 using EverythingsANail;
 using Xunit;
 
@@ -162,6 +164,88 @@ namespace ValheimMods.Tests
 
             Assert.Null(ToolCatalog.Classify("ServingTray", tray));
             Assert.Null(ToolCatalog.Classify("SwordIron", Item(Skills.SkillType.Swords, damage: new HitData.DamageTypes { m_slash = 50f })));
+        }
+
+        // Attack's constructor calls into Unity (AnimationCurve), so build one without running it
+        private static Attack SnowAttack(bool strong)
+        {
+            var attack = (Attack)RuntimeHelpers.GetUninitializedObject(typeof(Attack));
+            attack.m_snowShovel = true;
+            attack.m_snowShovelStrong = strong;
+            attack.m_snowShovelStrength = 1f;
+            return attack;
+        }
+
+        [Fact]
+        public void SnowShovel_IsRecognisedByItsStrongSnowAttack_EvenWithPickaxeDamage()
+        {
+            ItemDrop.ItemData.SharedData shovel = Item(Skills.SkillType.Pickaxes, damage: new HitData.DamageTypes { m_pickaxe = 10f });
+            shovel.m_attack = SnowAttack(strong: true);
+
+            ToolInfo tool = ToolCatalog.Classify("SnowShovel", shovel);
+
+            Assert.Equal(ToolCategories.Snow, tool.Category);
+            Assert.Equal("Snow", tool.Group);
+        }
+
+        [Fact]
+        public void OrdinarySnowClearingAttacks_DontMakeATool()
+        {
+            // Every attack clears a little snow by default; only the strong (deep snow) one is the shovel's
+            ItemDrop.ItemData.SharedData pickaxe = Item(Skills.SkillType.Pickaxes, damage: new HitData.DamageTypes { m_pickaxe = 40f });
+            pickaxe.m_attack = SnowAttack(strong: false);
+            ItemDrop.ItemData.SharedData sword = Item(Skills.SkillType.Swords, damage: new HitData.DamageTypes { m_slash = 50f });
+            sword.m_attack = SnowAttack(strong: false);
+
+            Assert.Equal(ToolCategories.Mining, ToolCatalog.Classify("PickaxeIron", pickaxe).Category);
+            Assert.Null(ToolCatalog.Classify("SwordIron", sword));
+        }
+    }
+
+    public class EverythingsANailToolLevelsTests
+    {
+        [Fact]
+        public void Remember_KeepsTheBestLevel()
+        {
+            var data = new Dictionary<string, string>();
+
+            Assert.True(ToolLevels.Remember(data, "Hoe", 4));
+            Assert.False(ToolLevels.Remember(data, "Hoe", 3));
+            Assert.True(ToolLevels.Remember(data, "Hoe", 6));
+
+            Assert.Equal(6, ToolLevels.Get(data, "Hoe"));
+            Assert.Equal(0, ToolLevels.Get(data, "Cultivator"));
+        }
+
+        [Fact]
+        public void LevelOne_IsNotStored()
+        {
+            var data = new Dictionary<string, string>();
+
+            Assert.False(ToolLevels.Remember(data, "Hoe", 1));
+            Assert.Empty(data);
+        }
+
+        [Fact]
+        public void LevelFor_IsAtLeastOne_AndCappedByTheToolsCurrentMaximum()
+        {
+            var data = new Dictionary<string, string>();
+            Assert.Equal(1, ToolLevels.LevelFor(data, "Hoe", 6));
+
+            ToolLevels.Remember(data, "Hoe", 6);
+            Assert.Equal(6, ToolLevels.LevelFor(data, "Hoe", 6));
+            // Voxheim's level count lowered after the hoe was upgraded
+            Assert.Equal(4, ToolLevels.LevelFor(data, "Hoe", 4));
+        }
+
+        [Fact]
+        public void Get_IgnoresDataThatIsntALevel()
+        {
+            var data = new Dictionary<string, string> { [ToolLevels.KeyPrefix + "Hoe"] = "six" };
+
+            Assert.Equal(0, ToolLevels.Get(data, "Hoe"));
+            Assert.True(ToolLevels.Remember(data, "Hoe", 2));
+            Assert.Equal(2, ToolLevels.Get(data, "Hoe"));
         }
     }
 }
