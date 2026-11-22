@@ -167,38 +167,54 @@ namespace ValheimMods.Tests
         }
 
         // Attack's constructor calls into Unity (AnimationCurve), so build one without running it
-        private static Attack SnowAttack(bool strong)
+        private static Attack SnowAttack(float radius, float strength = 0.25f)
         {
             var attack = (Attack)RuntimeHelpers.GetUninitializedObject(typeof(Attack));
             attack.m_snowShovel = true;
-            attack.m_snowShovelStrong = strong;
-            attack.m_snowShovelStrength = 1f;
+            attack.m_snowShovelRadius = radius;
+            attack.m_snowShovelStrength = strength;
             return attack;
         }
 
         [Fact]
-        public void SnowShovel_IsRecognisedByItsStrongSnowAttack_EvenWithPickaxeDamage()
+        public void SnowShovel_IsRecognisedByItsWideSnowClearing()
         {
-            ItemDrop.ItemData.SharedData shovel = Item(Skills.SkillType.Pickaxes, damage: new HitData.DamageTypes { m_pickaxe = 10f });
-            shovel.m_attack = SnowAttack(strong: true);
+            // The game's Shovel as of the Deep North: no damage, Farming skill, atgeir animations, 2 m and 3 m snow clearing
+            ItemDrop.ItemData.SharedData shovel = Item(Skills.SkillType.Farming, ItemDrop.ItemData.ItemType.TwoHandedWeapon);
+            shovel.m_animationState = ItemDrop.ItemData.AnimationState.Atgeir;
+            shovel.m_attack = SnowAttack(2f, 0.65f);
+            shovel.m_secondaryAttack = SnowAttack(3f, 1f);
 
-            ToolInfo tool = ToolCatalog.Classify("SnowShovel", shovel);
+            ToolInfo tool = ToolCatalog.Classify("Shovel", shovel);
 
             Assert.Equal(ToolCategories.Snow, tool.Category);
             Assert.Equal("Snow", tool.Group);
+            Assert.Equal(1f, tool.Rank);
         }
 
         [Fact]
-        public void OrdinarySnowClearingAttacks_DontMakeATool()
+        public void IncidentalSnowClearing_DoesntMakeATool()
         {
-            // Every attack clears a little snow by default; only the strong (deep snow) one is the shovel's
+            // Every attack clears a little snow by default
             ItemDrop.ItemData.SharedData pickaxe = Item(Skills.SkillType.Pickaxes, damage: new HitData.DamageTypes { m_pickaxe = 40f });
-            pickaxe.m_attack = SnowAttack(strong: false);
-            ItemDrop.ItemData.SharedData sword = Item(Skills.SkillType.Swords, damage: new HitData.DamageTypes { m_slash = 50f });
-            sword.m_attack = SnowAttack(strong: false);
+            pickaxe.m_attack = SnowAttack(ToolCatalog.IncidentalSnowRadius);
+            ItemDrop.ItemData.SharedData material = Item(type: ItemDrop.ItemData.ItemType.Material);
+            material.m_attack = SnowAttack(ToolCatalog.IncidentalSnowRadius);
 
             Assert.Equal(ToolCategories.Mining, ToolCatalog.Classify("PickaxeIron", pickaxe).Category);
-            Assert.Null(ToolCatalog.Classify("SwordIron", sword));
+            Assert.Null(ToolCatalog.Classify("Wood", material));
+        }
+
+        [Fact]
+        public void WeaponsThatClearSnowWidely_AreStillWeapons()
+        {
+            ItemDrop.ItemData.SharedData sword = Item(Skills.SkillType.Swords, damage: new HitData.DamageTypes { m_slash = 50f });
+            sword.m_attack = SnowAttack(3f);
+            ItemDrop.ItemData.SharedData trinket = Item(type: ItemDrop.ItemData.ItemType.Trinket);
+            trinket.m_attack = SnowAttack(3f);
+
+            Assert.Null(ToolCatalog.Classify("SwordFrost", sword));
+            Assert.Null(ToolCatalog.Classify("Trinket", trinket));
         }
     }
 

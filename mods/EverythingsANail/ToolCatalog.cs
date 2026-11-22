@@ -94,6 +94,7 @@ namespace EverythingsANail
             var byPrefab = new Dictionary<string, ToolInfo>();
             foreach (GameObject prefab in db.m_items)
             {
+
                 ToolInfo tool = Classify(prefab);
                 if (tool == null || byPrefab.ContainsKey(tool.Prefab)) continue;
                 tools.Add(tool);
@@ -133,9 +134,10 @@ namespace EverythingsANail
             {
                 tool.Category = ToolCategories.Fishing;
             }
-            // Every attack clears a little snow; the snow shovel's clears deep snow. Checked before axes and
-            // pickaxes so the shovel is its own tool whatever its skill.
-            else if (IsSnowShovel(shared.m_attack) || IsSnowShovel(shared.m_secondaryAttack))
+            // Every attack clears a little snow around where it lands (0.5 m by default). The snow shovel does no
+            // damage and clears a much wider area (2 and 3 m as of the Deep North); it doesn't set Attack.m_snowShovelStrong.
+            else if (damage.GetTotalDamage() <= 0f && IsHandItem(shared.m_itemType) &&
+                     (IsSnowShovel(shared.m_attack) || IsSnowShovel(shared.m_secondaryAttack)))
             {
                 tool.Category = ToolCategories.Snow;
                 tool.Rank = Math.Max(SnowStrength(shared.m_attack), SnowStrength(shared.m_secondaryAttack));
@@ -165,7 +167,16 @@ namespace EverythingsANail
 
         private static bool IsHarvest(Attack attack) => attack != null && attack.m_harvest;
 
-        private static bool IsSnowShovel(Attack attack) => attack != null && attack.m_snowShovel && attack.m_snowShovelStrong;
+        // Wider than the clearing every attack does by default
+        public const float IncidentalSnowRadius = 0.5f;
+
+        private static bool IsSnowShovel(Attack attack) =>
+            attack != null && attack.m_snowShovel &&
+            (attack.m_snowShovelStrong || attack.m_snowShovelRadius > IncidentalSnowRadius + 0.01f);
+
+        private static bool IsHandItem(ItemDrop.ItemData.ItemType type) =>
+            type == ItemDrop.ItemData.ItemType.OneHandedWeapon || type == ItemDrop.ItemData.ItemType.TwoHandedWeapon ||
+            type == ItemDrop.ItemData.ItemType.TwoHandedWeaponLeft || type == ItemDrop.ItemData.ItemType.Tool;
 
         private static float SnowStrength(Attack attack) => IsSnowShovel(attack) ? attack.m_snowShovelStrength : 0f;
     }
