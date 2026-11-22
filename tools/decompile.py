@@ -88,6 +88,49 @@ def cache_dir(assembly):
     return Path(tempfile.gettempdir()) / "valheim-decompile" / f"{assembly.stem}-{key}"
 
 
+def run_ilspy(args):
+    """Run ilspycmd, keeping its stderr for error messages.
+
+    Decompiled code always goes to files (-o), never through stdout: on Windows ilspycmd writes redirected
+    stdout in the console's OEM code page (Jotunn's "Jötunn" comes out as byte 0x94), which isn't UTF-8.
+    """
+    return subprocess.run(args, stdout=subprocess.DEVNULL, stderr=subprocess.PIPE, text=True,
+                          encoding="utf-8", errors="replace")
+
+
+def first_error_line(result):
+    lines = [line for line in (result.stderr or "").splitlines()
+             if line.strip() and "latest version" not in line.lower() and "please update" not in line.lower()]
+    return lines[0].strip() if lines else f"ilspycmd exited with code {result.returncode}"
+
+
+def has_sources(folder):
+    return folder.is_dir() and any(folder.rglob("*.cs"))
+
+
+def decompile_project(ilspy, assembly, project):
+    # Decompile beside the cache entry and move it in only when it holds code, so a failed or interrupted run
+    # never leaves an empty tree that later calls would take as cached
+    staging = project.with_name(project.name + ".partial")
+    shutil.rmtree(staging, ignore_errors=True)
+    result = run_ilspy([ilspy, "-p", "-o", str(staging), str(assembly)])
+    if result.returncode != 0 or not has_sources(staging):
+        shutil.rmtree(staging, ignore_errors=True)
+        sys.exit(f"Couldn't decompile {assembly.name} as a project (no .cs files written): {first_error_line(result)}")
+    shutil.rmtree(project, ignore_errors=True)
+    staging.rename(project)
+
+
+def decompile_type(ilspy, assembly, type_name, target):
+    with tempfile.TemporaryDirectory(dir=target.parent) as staging:
+        result = run_ilspy([ilspy, "-t", type_name, "-o", staging, str(assembly)])
+        written = [p for p in Path(staging).glob("*.cs") if p.stat().st_size > 0]
+        if result.returncode != 0 or not written:
+            # Usually "Could not find type definition": a typo, a missing namespace, or another assembly
+            sys.exit(f"Couldn't decompile {type_name}: {first_error_line(result)}")
+        shutil.move(str(written[0]), target)
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--assembly", default="assembly_valheim", help="Assembly name in the game's Managed folder, or a path")
@@ -114,18 +157,14 @@ def main():
 
     if args.project:
         project = out / "project"
-        if not project.exists():
-            subprocess.run([ilspy, "-p", "-o", str(project), str(assembly)], check=True, stdout=subprocess.DEVNULL)
+        if not has_sources(project):
+            decompile_project(ilspy, assembly, project)
         print(project)
 
     for type_name in args.type:
         target = out / f"{type_name}.cs"
         if not target.exists():
-            result = subprocess.run([ilspy, "-t", type_name, str(assembly)], capture_output=True, text=True, encoding="utf-8")
-            if result.returncode != 0:
-                # Usually "type not found in this module": it lives in another assembly
-                sys.exit(f"Couldn't decompile {type_name}: {result.stderr.strip().splitlines()[0] if result.stderr else 'unknown error'}")
-            target.write_text(result.stdout, encoding="utf-8")
+            decompile_type(ilspy, assembly, type_name, target)
         print(target)
 
 
