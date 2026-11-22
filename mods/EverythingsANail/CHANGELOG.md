@@ -4,7 +4,7 @@
 
 ## 1.1.0
 
-- The hammer now remembers the best level of each tool the character has carried. With Voxheim installed, the hammer works as a hoe of that level, so Voxheim's higher-level hoe abilities (Carve, Add) and their stamina and durability costs apply. Other tools still use the hammer's own level.
+- Voxheim support: the hammer working as a hoe now counts as the best hoe the character has carried, instead of a level 1 hoe. Voxheim's higher-level hoe abilities (Carve, Add) unlock as they would with that hoe, with their stamina and durability costs. The upgraded hoe doesn't need to stay in the inventory.
 - Added the snow shovel as a new Snow category, on by default for new configs. Existing configs keep their saved categories, so Snow has to be added to the Categories setting there.
 
 ## 1.0.3
